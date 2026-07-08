@@ -1,0 +1,18 @@
+# Secrets and credentials
+.env
+.env.*
+*.token
+.clasprc.json
+.google_token
+.netlify_token
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+
+# Data files (district PII — never commit)
+*.xlsx
+*.xls
+*.csv
+*.tsv
