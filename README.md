@@ -63,7 +63,7 @@ Google Apps Script · Google Sheets · HTML/CSS/JS scanner UI · `clasp` deploym
 - **Multi-day PD across eight session dates.** Summer PD ran across multiple Day 1 and Day 2 sessions on different calendar dates. The original `ScanLog` recorded every scan but had no way to label which session a scan belonged to. Filtering by day required manual date math.
 - **Schema migration on a live sheet.** Adding `PD Day` and `Session` columns to an existing `ScanLog` with real data required an idempotent migration — not a wipe-and-rebuild.
 - **Column insertion side effect.** Inserting new columns leaked the Station dropdown validation into the new columns. The values were correct; the dropdowns were wrong. This only surfaced after real scans were logged.
-- **District email reality.** The first email-digest design assumed Gmail drafts. The district runs on Outlook. Apps Script cannot create Outlook drafts natively, so the workflow had to be redesigned around a mail-merge-friendly sheet export.
+- **District email reality.** The first email-digest design assumed Gmail drafts. That was not how I actually sent PD attendance receipts. I use **Form Mule** to mail merge with templates, so the workflow was redesigned around a merge-ready sheet that Apps Script populates each day.
 - **Concurrent scanning at scale.** Multiple stations scanning simultaneously required lock handling, staff caching, and load testing before district-wide rollout.
 
 **What worked**
@@ -74,11 +74,11 @@ Google Apps Script · Google Sheets · HTML/CSS/JS scanner UI · `clasp` deploym
 - **Station-specific URLs** — clearer reporting and simpler operator training
 - **Local UI preview** — a browser mockup of the scanner interface before merging styles into production
 - **Staff cache with warm trigger** — repeat scans stay fast under load
-- **`Today's PD Emails` sheet** — personalized attendance receipts prepared for Outlook mail merge, with dedup tracking
+- **`Today's PD Emails` sheet** — personalized attendance receipts prepared for **Form Mule** mail merge with templates, with dedup tracking
 
 **What did not work**
 
-- **Gmail draft workflow** — technically correct inside Google, wrong for the district's Outlook environment
+- **Gmail draft workflow** — technically correct inside Google, but not my actual send process; Form Mule + sheet-driven templates was the right fit
 - **Assuming timestamp alone was enough** — executives and operators needed human-readable session labels, not just raw datetime filtering
 - **Shipping column changes without re-running validation** — taught me to always pair structural migrations with explicit validation cleanup
 
@@ -220,7 +220,7 @@ These lessons came directly from bugs, pivots, and production feedback across al
 
 ### 1. Plan the real-world constraints first
 
-Before writing code, I now ask: What email system does the district use? How many days does the event run? Who edits content after launch? The PD email digest and Showcase admin security model both changed because I asked too late.
+Before writing code, I now ask: What email tooling does the team use (e.g. Form Mule)? How many days does the event run? Who edits content after launch? The PD email digest and Showcase admin security model both changed because I asked too late.
 
 ### 2. Ship an MVP, then iterate
 
@@ -269,7 +269,7 @@ Every project started with questions about audience, constraints, and success cr
 | **Deployment** | `clasp push` | `clasp` + redeploy scripts | `clasp` + dev/live scripts | `update_dashboard.py` one command |
 | **UI approach** | Local scanner preview | Single Operations Hub URL | Public/Admin HTML split | Standalone bundled HTML |
 | **User auth** | Station URLs + admin PIN | EID sign-in + allowlist | Portal ID + private admin link | No auth (leadership internal tool) |
-| **Email** | Outlook mail-merge sheet | Auto-send via `MailApp` | Registration + principal CC | N/A |
+| **Email** | Form Mule mail merge + templates | Auto-send via `MailApp` | Registration + principal CC | N/A |
 | **Content editing** | Settings sheet | Admin email templates | Site & Appearance tab | Manual resolution tracking |
 | **First deploy** | Menu-driven init | `runSetup()` + API bootstrap | `setupSheets()` | `process_surveys.py` |
 | **Lessons applied forward** | Established barcode pattern | Became gold standard | Skipped React on pivot | Learned data normalization |
@@ -300,7 +300,7 @@ Each project has its own git repository. Links below are placeholders — update
 | Version control | Git + GitHub | Source code history and collaboration |
 | Deployment CLI | `clasp` | Push local `.gs` and `.html` files to Apps Script projects |
 | Barcode generation | JsBarcode + PDF scripts | Printable labels for kits and PD badges |
-| Email | GAS `MailApp` + Outlook mail merge | Auto-send where possible; sheet export where district policy requires Outlook |
+| Email | GAS `MailApp` (ESCA, Showcase) · Form Mule mail merge + templates (PD System) | Auto-send where it fits; sheet export + Form Mule where templates and merge control matter |
 
 ---
 
