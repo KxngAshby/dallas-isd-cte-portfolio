@@ -1,0 +1,2888 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Hub — Middle School Showcase</title>
+  <style>
+    :root {
+      --primary:      #0a1628;
+      --primary-mid:  #112240;
+      --accent:       #c9a84c;
+      --text-light:   #f0f4ff;
+      --text-muted:   #9eadd4;
+      --white:        #ffffff;
+      --surface:      #f7f9fc;
+      --card-bg:      #ffffff;
+      --border:       #e2e8f0;
+      --green:        #276749;
+      --green-bg:     #f0fff4;
+      --red:          #c53030;
+      --red-bg:       #fff5f5;
+      --nav-height:   68px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: var(--surface); color: #1a202c; line-height: 1.6; }
+
+    /* NAV */
+    .nav { position: fixed; top: 0; left: 0; right: 0; height: var(--nav-height); background: var(--primary); border-bottom: 2px solid var(--accent); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; z-index: 1000; box-shadow: 0 2px 16px rgba(0,0,0,0.4); }
+    .nav-brand { display: flex; align-items: center; gap: 12px; }
+    .nav-brand .badge { width: 52px; height: 52px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: var(--primary); flex-shrink: 0; overflow: hidden; }
+    .nav-brand .badge.has-logo { width: auto; height: auto; background: none; padding: 0; border-radius: 0; overflow: visible; }
+    .nav-brand .badge img { max-height: 46px; width: auto; max-width: 200px; object-fit: contain; display: block; }
+    .nav-brand .title { font-size: 17px; font-weight: 700; color: var(--white); line-height: 1.2; }
+    .nav-brand .subtitle { font-size: 11px; color: var(--text-muted); }
+    .admin-pill { background: rgba(201,168,76,0.15); color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 14px; border-radius: 999px; border: 1px solid rgba(201,168,76,0.3); }
+
+    .page-body { padding-top: var(--nav-height); }
+
+    /* LOADING SCREEN */
+    .load-wrap { min-height: calc(100vh - var(--nav-height)); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; background: linear-gradient(135deg, #0a1628 0%, #1a3a6e 100%); color: var(--text-muted); font-size: 15px; }
+    .load-spinner { width: 40px; height: 40px; border: 3px solid rgba(201,168,76,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* DASHBOARD */
+    .page-header { background: linear-gradient(135deg, var(--primary) 0%, #1a3a6e 100%); padding: 36px 32px; color: var(--white); }
+    .page-header .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+    .page-header h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+    .page-header p { color: var(--text-muted); font-size: 14px; }
+    .page-header .ph-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+    .admin-wrap { max-width: 1140px; margin: 0 auto; padding: 28px 24px 60px; }
+    .stat-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 24px; }
+    @media (max-width: 700px) { .stat-strip { grid-template-columns: 1fr 1fr; } }
+    .stat-cell { background: var(--card-bg); padding: 18px 20px; text-align: center; }
+    .stat-cell .num { font-size: 26px; font-weight: 800; color: var(--primary); line-height: 1; }
+    .stat-cell .lbl { font-size: 11px; color: #a0aec0; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .admin-layout { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: start; }
+    @media (max-width: 820px) { .admin-layout { grid-template-columns: 1fr; } }
+
+    .sidebar { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; position: sticky; top: calc(var(--nav-height) + 16px); }
+    .sidebar-section { padding: 10px 18px 6px; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #a0aec0; border-bottom: 1px solid var(--border); }
+    .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 12px 18px; font-size: 14px; font-weight: 500; color: #4a5568; cursor: pointer; border-bottom: 1px solid var(--border); transition: background .12s, color .12s; }
+    .sidebar-item:last-child { border-bottom: none; }
+    .sidebar-item:hover { background: rgba(10,22,40,0.03); color: var(--primary); }
+    .sidebar-item.active { background: rgba(10,22,40,0.06); color: var(--primary); font-weight: 700; border-left: 3px solid var(--accent); }
+    .sidebar-item .sicon { width: 16px; height: 16px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .sidebar-item .sbadge { margin-left: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; font-size: 11px; padding: 1px 8px; color: #718096; }
+
+    /* PANELS */
+    .panel { display: none; }
+    .panel.active { display: block; animation: fadeIn .2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    .panel-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 20px; }
+    .panel-head { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .panel-head h2 { font-size: 17px; font-weight: 700; color: var(--primary); }
+    .panel-head p { font-size: 13px; color: #718096; margin-top: 2px; }
+    .panel-body { padding: 24px; }
+
+    /* FORMS */
+    .field-grid { display: grid; grid-template-columns: 180px 1fr; gap: 12px 16px; align-items: start; max-width: 680px; }
+    @media (max-width: 600px) { .field-grid { grid-template-columns: 1fr; } .field-grid label { font-weight: 600; } }
+    .field-grid label { font-size: 13px; color: #4a5568; padding-top: 10px; }
+    .field-grid input, .field-grid textarea, .field-grid select {
+      padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--primary); font-size: 14px; font-family: inherit;
+      transition: border-color .15s; width: 100%;
+    }
+    .field-grid input:focus, .field-grid textarea:focus, .field-grid select:focus { outline: none; border-color: var(--accent); }
+    .field-grid textarea { resize: vertical; min-height: 80px; }
+    .section-divider { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin: 24px 0 12px; grid-column: 1/-1; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); max-width: 480px; }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-row .tlabel { font-size: 14px; color: #4a5568; }
+    .toggle-row .tdesc { font-size: 12px; color: #a0aec0; margin-top: 2px; }
+    .switch { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e0; border-radius: 26px; transition: .2s; }
+    .slider:before { content: ""; position: absolute; height: 20px; width: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+    .switch input:checked + .slider { background: var(--green); }
+    .switch input:checked + .slider:before { transform: translateX(20px); }
+
+    /* TABLES */
+    .toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+    .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table th { padding: 10px 12px; background: var(--surface); color: #718096; font-weight: 600; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    table td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    table tr:last-child td { border-bottom: none; }
+    table input, table select { width: 100%; min-width: 80px; padding: 7px 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--primary); font-size: 13px; font-family: inherit; }
+    table input:focus, table select:focus { outline: none; border-color: var(--accent); }
+    .status-active   { color: var(--green); font-weight: 600; font-size: 12px; }
+    .status-inactive { color: #a0aec0; font-size: 12px; }
+
+    /* BUTTONS */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: .15s; }
+    .btn-primary { background: var(--primary); color: var(--white); }
+    .btn-primary:hover { background: #1a3a6e; }
+    .btn-save { background: var(--green); color: var(--white); }
+    .btn-save:hover { opacity: .9; }
+    .btn-outline { background: transparent; color: #4a5568; border: 1px solid var(--border); }
+    .btn-outline:hover { background: var(--surface); }
+    .btn-danger { background: var(--red); color: var(--white); padding: 5px 10px; font-size: 12px; }
+    .btn-danger:hover { opacity: .9; }
+    .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-muted); }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.4); color: var(--white); }
+    .btn:disabled { opacity: .6; cursor: default; }
+
+    /* STATUS MESSAGES */
+    .save-msg { font-size: 13px; margin-top: 10px; min-height: 18px; transition: opacity .3s; }
+    .save-msg.ok  { color: var(--green); }
+    .save-msg.err { color: var(--red); }
+
+    /* SETTINGS */
+    .settings-cell { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; }
+    .settings-cell .lbl { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+    .settings-cell .val { font-size: 14px; color: var(--primary); word-break: break-all; font-family: "Courier New", monospace; }
+
+    .footer { text-align: center; color: #a0aec0; font-size: 12px; margin-top: 40px; padding-bottom: 16px; }
+
+    /* CSV UPLOAD */
+    .csv-drop-area { border: 2px dashed var(--border); border-radius: 10px; padding: 28px 20px; text-align: center; background: var(--surface); margin-bottom: 16px; transition: border-color .15s; }
+    .csv-drop-area:hover { border-color: var(--accent); }
+    .csv-drop-area input[type="file"] { display: none; }
+    .csv-drop-label { font-size: 14px; color: #718096; margin-bottom: 10px; }
+    .csv-drop-label strong { color: var(--primary); }
+    .csv-preview-hdr { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin: 18px 0 8px; }
+    .csv-row-count { font-size: 13px; color: #4a5568; margin-bottom: 12px; }
+    .csv-warning { font-size: 12px; color: var(--red); background: rgba(197,48,48,0.06); border: 1px solid rgba(197,48,48,0.2); border-radius: 8px; padding: 8px 14px; margin-bottom: 12px; }
+
+    /* REPORTING */
+    .report-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+    @media (max-width: 800px) { .report-stat-grid { grid-template-columns: 1fr 1fr; } }
+    .report-stat { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px 18px; }
+    .report-stat .rs-val { font-size: 32px; font-weight: 800; color: var(--primary); line-height: 1; }
+    .report-stat .rs-lbl { font-size: 12px; color: #718096; margin-top: 5px; letter-spacing: 0.3px; }
+    .report-stat .rs-sub { font-size: 11px; color: var(--accent); font-weight: 600; margin-top: 3px; }
+    .report-section-hdr { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin: 24px 0 14px; }
+    .fill-bar-wrap { width: 100%; background: var(--surface); border-radius: 999px; height: 8px; overflow: hidden; min-width: 80px; }
+    .fill-bar { height: 100%; border-radius: 999px; background: var(--accent); transition: width .4s; }
+    .fill-bar.full { background: var(--green); }
+    .reg-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+    .reg-badge.yes { background: rgba(39,103,73,0.1); color: var(--green); border: 1px solid rgba(39,103,73,0.25); }
+    .reg-badge.no  { background: rgba(160,174,192,0.15); color: #718096; border: 1px solid var(--border); }
+    .report-empty { text-align: center; padding: 48px 24px; color: #a0aec0; font-size: 14px; }
+
+    /* CSV COLUMN MAPPER */
+    .csv-mapper-wrap { margin-top: 16px; }
+    .csv-mapper-title { font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+    .csv-mapper-sub { font-size: 12px; color: #718096; margin-bottom: 14px; }
+    .csv-mapper-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; margin-bottom: 16px; }
+    @media (max-width: 700px) { .csv-mapper-grid { grid-template-columns: 1fr; } }
+    .csv-mapper-row { display: flex; flex-direction: column; gap: 3px; }
+    .csv-mapper-label { font-size: 12px; font-weight: 600; color: #4a5568; }
+    .csv-mapper-label span { font-weight: 400; color: #a0aec0; font-size: 11px; margin-left: 4px; }
+    .csv-mapper-row select { padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 12px; color: var(--primary); background: var(--card-bg); font-family: inherit; cursor: pointer; }
+    .csv-mapper-row select:focus { outline: none; border-color: var(--accent); }
+    .csv-mapper-row select.mapped { border-color: #68d391; background: #f0fff4; }
+    .csv-mapper-actions { display: flex; gap: 10px; align-items: center; margin-top: 4px; }
+    .csv-mapper-err { font-size: 12px; color: #e53e3e; font-weight: 600; }
+
+    /* EXEC DASHBOARD */
+    .exec-filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    .exec-filter-bar select { padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; color: var(--primary); background: var(--card-bg); font-family: inherit; cursor: pointer; min-width: 160px; }
+    .exec-filter-bar select:focus { outline: none; border-color: var(--accent); }
+    .exec-filter-bar .filter-reset { background: none; border: 1px solid var(--border); color: #718096; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .exec-filter-bar .filter-reset:hover { border-color: #cbd5e0; color: var(--primary); }
+
+    /* EMAIL COMMUNICATIONS */
+    .email-coming-soon { background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.2); border-radius: 12px; padding: 18px 22px; margin-bottom: 20px; font-size: 13px; color: #7a5c00; line-height: 1.65; }
+    .email-template-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 700px) { .email-template-grid { grid-template-columns: 1fr; } }
+    .email-template-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; }
+    .email-template-card .et-badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; margin-bottom: 10px; }
+    .et-badge.soon { background: rgba(201,168,76,0.1); color: #7a5c00; border: 1px solid rgba(201,168,76,0.3); }
+    .et-badge.auto { background: rgba(39,103,73,0.1); color: var(--green); border: 1px solid rgba(39,103,73,0.25); }
+    .email-template-card h4 { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 5px; }
+    .email-template-card .et-audience { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); margin-bottom: 8px; }
+    .email-template-card p { font-size: 13px; color: #4a5568; line-height: 1.6; }
+    .email-compose-placeholder { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin-top: 8px; }
+    .email-compose-placeholder .ec-row { display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .email-compose-placeholder .ec-lbl { font-size: 12px; font-weight: 600; color: #718096; }
+    .email-compose-placeholder .ec-val { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; color: #a0aec0; font-style: italic; }
+    .email-compose-placeholder .ec-body { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 14px; min-height: 100px; font-size: 13px; color: #a0aec0; font-style: italic; margin-top: 4px; line-height: 1.7; }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-brand">
+      <div class="badge" id="adminBadge">⚙</div>
+      <div>
+        <div class="title">Admin Hub</div>
+        <div class="subtitle">Middle School Showcase · Dallas ISD CTE</div>
+      </div>
+    </div>
+    <div class="admin-pill">Administrator</div>
+  </nav>
+
+  <div class="page-body">
+
+    <!-- LOADING SCREEN -->
+    <div id="adminLoad">
+      <div class="load-wrap">
+        <div class="load-spinner"></div>
+        <div>Loading dashboard…</div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="adminDash" style="display:none">
+
+      <div class="page-header">
+        <div class="ph-row">
+          <div>
+            <div class="eyebrow">Internal Use Only</div>
+            <h1>Manage Showcase</h1>
+            <p>Edit event info, vendors, teachers, documents, and the public site appearance.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-wrap">
+        <div class="stat-strip">
+          <div class="stat-cell"><div class="num" id="statVendors">—</div><div class="lbl">Vendors</div></div>
+          <div class="stat-cell"><div class="num" id="statAttendees">—</div><div class="lbl">Attendees</div></div>
+          <div class="stat-cell"><div class="num" id="statDocs">—</div><div class="lbl">Documents</div></div>
+          <div class="stat-cell"><div class="num" id="statActive">—</div><div class="lbl">Active Vendors</div></div>
+        </div>
+
+        <div class="admin-layout">
+
+          <!-- SIDEBAR -->
+          <nav class="sidebar">
+            <div class="sidebar-section">Management</div>
+            <div class="sidebar-item" onclick="showPanel('exhibitorReg',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z"/></svg></span>Exhibitor Registrations<span class="sbadge" id="sbExhibitorReg">0</span></div>
+            <div class="sidebar-item" onclick="showPanel('attendeeReg',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg></span>Attendee Registrations<span class="sbadge" id="sbAttendeeReg">0</span></div>
+            <div class="sidebar-item active" onclick="showPanel('vendors',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg></span>Vendors<span class="sbadge" id="sbVendors">0</span></div>
+            <div class="sidebar-item" onclick="showPanel('checkin',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>Vendor Check-In<span class="sbadge" id="sbCheckIn">0</span></div>
+            <div class="sidebar-item" onclick="showPanel('attendees',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"/></svg></span>Attendees<span class="sbadge" id="sbAttendeesPanel">0</span></div>
+            <div class="sidebar-item" onclick="showPanel('allergy',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z"/></svg></span>Allergy Disclosures<span class="sbadge" id="sbAllergy">0</span></div>
+            <div class="sidebar-item" onclick="showPanel('checklist',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></span>Checklist<span class="sbadge" id="sbChecklist">0</span></div>
+            <div class="sidebar-item" onclick="showPanel('campuses',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg></span>Campuses<span class="sbadge" id="sbCampuses">0</span></div>
+            <div class="sidebar-item" onclick="showPanel('documents',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></span>Documents<span class="sbadge" id="sbDocs">0</span></div>
+            <div class="sidebar-item" onclick="showPanel('portalUploads',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15"/></svg></span>Portal Uploads<span class="sbadge" id="sbPortalUploads">0</span></div>
+            <div class="sidebar-item" onclick="showPanel('email',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg></span>Email Communications</div>
+            <div class="sidebar-item" onclick="showPanel('reporting',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg></span>Reporting</div>
+            <div class="sidebar-item" onclick="showPanel('exec',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg></span>Executive Dashboard</div>
+            <div class="sidebar-item" onclick="showPanel('registration',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></span>Registration Settings</div>
+            <div class="sidebar-section" style="margin-top:4px">Site Control</div>
+            <div class="sidebar-item" onclick="showPanel('faq',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg></span>FAQ</div>
+            <div class="sidebar-item" onclick="showPanel('appearance',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"/></svg></span>Site &amp; Appearance</div>
+            <div class="sidebar-item" onclick="showPanel('settings',this)"><span class="sicon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg></span>Settings &amp; Links</div>
+          </nav>
+
+          <!-- CONTENT PANELS -->
+          <div id="panels">
+
+            <!-- OVERVIEW -->
+            <!-- VENDORS -->
+            <div id="panel-vendors" class="panel active">
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div><h2>Vendors</h2><p>Manage vendor records and portal access.</p></div>
+                  <div style="display:flex;gap:8px">
+                    <button class="btn btn-outline" onclick="addRow('vendors')">+ Add Row</button>
+                    <button class="btn btn-save" onclick="saveTable('vendors')">Save Changes</button>
+                  </div>
+                </div>
+                <div class="panel-body">
+                  <div class="table-wrap">
+                    <table>
+                      <thead><tr>
+                        <th>Vendor ID</th><th>Company Name</th><th>Contact</th>
+                        <th>Email</th><th>Status</th><th>Notes</th><th>Doc Links</th><th></th>
+                      </tr></thead>
+                      <tbody id="tbody-vendors"></tbody>
+                    </table>
+                  </div>
+                  <div class="save-msg" id="vendors-msg"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- VENDOR CHECK-IN -->
+            <div id="panel-checkin" class="panel">
+              <!-- Kiosk link card -->
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div>
+                    <h2>iPad Kiosk Link</h2>
+                    <p>Open this URL on the event-day iPad and bookmark it. Staff keep the iPad at the check-in desk — no login required.</p>
+                  </div>
+                </div>
+                <div class="panel-body">
+                  <div class="settings-cell" style="grid-column:1/-1">
+                    <div class="lbl">Check-In Kiosk URL</div>
+                    <div class="val"><a id="kioskLinkDisplay" href="#" target="_blank" style="color:var(--accent)">Loading&hellip;</a></div>
+                    <div style="font-size:11px;color:#a0aec0;margin-top:4px">Bookmark on the iPad. Share with check-in staff only.</div>
+                  </div>
+                </div>
+              </div>
+              <!-- Status panel -->
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div><h2>Check-In Status</h2><p>Live view of which vendors have arrived. Updates when you click Refresh.</p></div>
+                  <button class="btn btn-outline" onclick="refreshCheckIn()">&#8635; Refresh</button>
+                </div>
+                <div class="panel-body">
+                  <div style="display:flex;gap:24px;margin-bottom:20px;flex-wrap:wrap">
+                    <div><div style="font-size:26px;font-weight:800;color:var(--primary)" id="ciStatTotal">—</div><div style="font-size:11px;color:#a0aec0;text-transform:uppercase;letter-spacing:.5px">Total Active</div></div>
+                    <div><div style="font-size:26px;font-weight:800;color:var(--green)" id="ciStatIn">—</div><div style="font-size:11px;color:#a0aec0;text-transform:uppercase;letter-spacing:.5px">Checked In</div></div>
+                    <div><div style="font-size:26px;font-weight:800;color:#e2a000" id="ciStatOut">—</div><div style="font-size:11px;color:#a0aec0;text-transform:uppercase;letter-spacing:.5px">Not Yet Arrived</div></div>
+                  </div>
+                  <div id="checkInTableWrap" style="overflow-x:auto">
+                    <div style="text-align:center;color:#a0aec0;font-size:14px;padding:32px">Loading&hellip;</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ATTENDEES QUICK-VIEW -->
+            <div id="panel-attendees" class="panel">
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div><h2>Attendees</h2><p>Approved and waitlisted campuses attending the showcase.</p></div>
+                  <button class="btn btn-outline" onclick="refreshAttendeesPanel()">Refresh</button>
+                </div>
+                <div class="panel-body">
+                  <div id="attendeesPanelBody">
+                    <p style="color:#a0aec0;font-size:13px;padding:16px 0">Loading…</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TEACHERS -->
+            <!-- DOCUMENTS -->
+            <div id="panel-documents" class="panel">
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div><h2>Documents</h2><p>Manage the document library. Control access level per document.</p></div>
+                  <div style="display:flex;gap:8px">
+                    <button class="btn btn-outline" onclick="addRow('documents')">+ Add Row</button>
+                    <button class="btn btn-save" onclick="saveTable('documents')">Save Changes</button>
+                  </div>
+                </div>
+                <div class="panel-body">
+                  <div class="table-wrap">
+                    <table>
+                      <thead><tr>
+                        <th>Document Name</th><th>Google Drive URL</th><th>Access Level</th><th>Category</th><th></th>
+                      </tr></thead>
+                      <tbody id="tbody-documents"></tbody>
+                    </table>
+                  </div>
+                  <div class="save-msg" id="documents-msg"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ALLERGY DISCLOSURES -->
+            <div id="panel-allergy" class="panel">
+              <div class="panel-card">
+                <div class="panel-head"><div><h2>Allergy Disclosures</h2><p>Read-only view of allergen and dietary disclosures submitted by vendors through their portal. Vendors update this themselves when logged in.</p></div></div>
+                <div class="panel-body">
+                  <div id="allergyMatrix"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CHECKLIST -->
+            <div id="panel-checklist" class="panel">
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div><h2>Attendee Checklist</h2><p>One card per campus. Green = Complete, amber = Pending, red = Incomplete. Auto-managed items update automatically; manual items can be changed here.</p></div>
+                  <button class="btn btn-save" onclick="saveChecklistGrouped()">Save All Changes</button>
+                </div>
+                <div class="panel-body">
+                  <div id="checklistGroupBody">
+                    <p style="color:#a0aec0;font-size:13px;padding:16px 0">Loading…</p>
+                  </div>
+                  <div class="save-msg" id="checklist-msg"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CAMPUSES -->
+            <div id="panel-campuses" class="panel">
+              <!-- Card 1: CSV Upload -->
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div><h2>Campus Roster</h2><p>Upload a CSV to replace all campus data, or edit rows manually below.</p></div>
+                </div>
+                <div class="panel-body">
+                  <div class="csv-drop-area" id="csvDropArea" onclick="document.getElementById('campusCsvFile').click()">
+                    <div class="csv-drop-label"><strong>Click to select a CSV file</strong><br>or drag and drop here</div>
+                    <input type="file" id="campusCsvFile" accept=".csv" onchange="parseCampusCsv(this)">
+                  </div>
+                  <div id="csvParseStatus" style="font-size:13px;color:#718096;margin-bottom:8px"></div>
+
+                  <!-- COLUMN MAPPER (shown after file load, before preview) -->
+                  <div id="csvMapperWrap" style="display:none" class="csv-mapper-wrap">
+                    <div class="csv-mapper-title">Map Your Columns</div>
+                    <div class="csv-mapper-sub">Match each system field to a column in your CSV. Fields set to "Skip" will be left blank.</div>
+                    <div class="csv-mapper-grid">
+                      <div class="csv-mapper-row"><label class="csv-mapper-label">Campus Name <span>required*</span></label><select id="map_campusName" onchange="highlightMapper(this)"><option value="">-- Skip this column --</option></select></div>
+                      <div class="csv-mapper-row"><label class="csv-mapper-label">Org # <span>required*</span></label><select id="map_orgNumber" onchange="highlightMapper(this)"><option value="">-- Skip this column --</option></select></div>
+                      <div class="csv-mapper-row"><label class="csv-mapper-label">Region</label><select id="map_region" onchange="highlightMapper(this)"><option value="">-- Skip this column --</option></select></div>
+                      <div class="csv-mapper-row"><label class="csv-mapper-label">Principal Name</label><select id="map_principalName" onchange="highlightMapper(this)"><option value="">-- Skip this column --</option></select></div>
+                      <div class="csv-mapper-row"><label class="csv-mapper-label">Principal Email</label><select id="map_principalEmail" onchange="highlightMapper(this)"><option value="">-- Skip this column --</option></select></div>
+                      <div class="csv-mapper-row"><label class="csv-mapper-label">Office Manager Name</label><select id="map_officeManagerName" onchange="highlightMapper(this)"><option value="">-- Skip this column --</option></select></div>
+                      <div class="csv-mapper-row"><label class="csv-mapper-label">Office Manager Email</label><select id="map_officeManagerEmail" onchange="highlightMapper(this)"><option value="">-- Skip this column --</option></select></div>
+                      <div class="csv-mapper-row"><label class="csv-mapper-label">Campus Phone</label><select id="map_campusPhone" onchange="highlightMapper(this)"><option value="">-- Skip this column --</option></select></div>
+                      <div class="csv-mapper-row"><label class="csv-mapper-label">Regional Director</label><select id="map_regionalDirector" onchange="highlightMapper(this)"><option value="">-- Skip this column --</option></select></div>
+                      <div class="csv-mapper-row"><label class="csv-mapper-label">Executive Director</label><select id="map_executiveDirector" onchange="highlightMapper(this)"><option value="">-- Skip this column --</option></select></div>
+                      <div class="csv-mapper-row"><label class="csv-mapper-label">Trustee</label><select id="map_trustee" onchange="highlightMapper(this)"><option value="">-- Skip this column --</option></select></div>
+                      <div class="csv-mapper-row"><label class="csv-mapper-label">DISD Region</label><select id="map_disDRegion" onchange="highlightMapper(this)"><option value="">-- Skip this column --</option></select></div>
+                    </div>
+                    <div class="csv-mapper-actions">
+                      <button class="btn btn-save" onclick="applyCsvMapping()">Apply Mapping &amp; Preview</button>
+                      <button class="btn btn-outline" onclick="clearCsvPreview()">Cancel</button>
+                      <span class="csv-mapper-err" id="mapperErr"></span>
+                    </div>
+                  </div>
+
+                  <div id="csvPreviewWrap" style="display:none">
+                    <div class="csv-warning">Re-importing is safe and never deletes records. Rows matching an existing Org # will be updated; new Org #s will be added. Review the preview below before uploading.</div>
+                    <div class="csv-preview-hdr">Preview</div>
+                    <div class="csv-row-count" id="csvRowCount"></div>
+                    <div class="table-wrap" id="csvPreviewTable"></div>
+                    <div style="display:flex;gap:8px;margin-top:14px">
+                      <button class="btn btn-save" onclick="doUploadCampuses()">Upload to Sheet</button>
+                      <button class="btn btn-outline" onclick="clearCsvPreview()">Cancel</button>
+                    </div>
+                    <div class="save-msg" id="campusUpload-msg"></div>
+                  </div>
+                </div>
+              </div>
+              <!-- Card 2: Add Campus Manually -->
+              <div class="panel-card" id="addCampusCard">
+                <div class="panel-head">
+                  <div>
+                    <h2>Add Campus Manually</h2>
+                    <p>Use for one-off additions. Org Number is the unique key — submitting an existing Org Number updates that record.</p>
+                  </div>
+                  <button class="btn btn-outline" onclick="toggleAddCampusForm()">+ Add Campus</button>
+                </div>
+                <div id="addCampusFormWrap" style="display:none">
+                  <div class="panel-body">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin-bottom:16px">
+                      <div><label class="field-label">Campus Name *</label><input class="field-input" id="ac_campusName" placeholder="e.g. Thomas Edison MS"></div>
+                      <div><label class="field-label">Org Number *</label><input class="field-input" id="ac_orgNumber" placeholder="e.g. 921"></div>
+                      <div><label class="field-label">Region</label><input class="field-input" id="ac_region"></div>
+                      <div><label class="field-label">Principal Name</label><input class="field-input" id="ac_principalName"></div>
+                      <div><label class="field-label">Principal Email</label><input class="field-input" id="ac_principalEmail" type="email"></div>
+                      <div><label class="field-label">Campus Phone</label><input class="field-input" id="ac_campusPhone"></div>
+                      <div><label class="field-label">Regional Director</label><input class="field-input" id="ac_regionalDirector"></div>
+                      <div><label class="field-label">Executive Director</label><input class="field-input" id="ac_executiveDirector"></div>
+                      <div><label class="field-label">Trustee</label><input class="field-input" id="ac_trustee"></div>
+                      <div><label class="field-label">DISD Region</label><input class="field-input" id="ac_disDRegion"></div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center">
+                      <button class="btn btn-save" onclick="submitAddCampus()">Save Campus</button>
+                      <button class="btn btn-outline" onclick="toggleAddCampusForm()">Cancel</button>
+                      <span class="save-msg" id="addCampus-msg" style="margin-left:8px"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Card 3: Current Data (read-only with per-row edit) -->
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div><h2>Current Campus Data</h2><p>Click <strong>Edit</strong> on any row to make changes. Campuses are identified by their district Org Number.</p></div>
+                </div>
+                <div class="panel-body">
+                  <div id="campusTableWrap" style="overflow-x:auto">
+                    <div style="text-align:center;color:#a0aec0;font-size:14px;padding:32px">Loading&hellip;</div>
+                  </div>
+                  <div class="save-msg" id="campuses-msg"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- REPORTING -->
+            <div id="panel-reporting" class="panel">
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div><h2>Regional Reporting</h2><p>Live registration breakdown by region — for executive leadership visibility.</p></div>
+                  <button class="btn btn-outline" onclick="refreshReport()">Refresh</button>
+                </div>
+                <div class="panel-body" id="reportingBody">
+                  <div class="report-empty">Load the Campuses roster first to see regional reporting.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- EXECUTIVE DASHBOARD -->
+            <div id="panel-exec" class="panel">
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div><h2>Executive Dashboard</h2><p>Campus leadership reference — trustee, DISD region, and director data cross-referenced with registration status.</p></div>
+                  <button class="btn btn-outline" onclick="refreshExecDash()">Refresh</button>
+                </div>
+                <div class="panel-body">
+                  <div class="report-stat-grid" id="execStatGrid">
+                    <div class="report-empty" style="grid-column:1/-1">Load the Campuses roster first to see executive data.</div>
+                  </div>
+                  <div class="exec-filter-bar" id="execFilterBar" style="display:none">
+                    <select id="execFilterTrustee" onchange="renderExecDashboard()"><option value="">All Trustees</option></select>
+                    <select id="execFilterDisDRegion" onchange="renderExecDashboard()"><option value="">All DISD Regions</option></select>
+                    <select id="execFilterStatus" onchange="renderExecDashboard()">
+                      <option value="">All Statuses</option>
+                      <option value="registered">Registered</option>
+                      <option value="notyet">Not Yet Registered</option>
+                    </select>
+                    <button class="filter-reset" onclick="resetExecFilters()">Reset Filters</button>
+                  </div>
+                  <div id="execTableWrap"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- EMAIL COMMUNICATIONS -->
+            <div id="panel-email" class="panel">
+
+              <!-- AUTO-SEND section -->
+              <div class="panel-card">
+                <div class="panel-head"><div><h2>Automated Emails</h2><p>These fire automatically. No action needed — shown here for reference only.</p></div></div>
+                <div class="panel-body">
+                  <div class="email-template-grid">
+                    <div class="email-template-card"><div class="et-badge auto">Active — Auto</div><h4>Exhibitor Registration Confirmation</h4><div class="et-audience">Triggered: On exhibitor form submit &rarr; Exhibitor email</div><p>Full confirmation with next steps, meal ticket info, event schedule, and action deadlines.</p></div>
+                    <div class="email-template-card"><div class="et-badge auto">Active — Auto</div><h4>Attendee Registration Confirmation</h4><div class="et-audience">Triggered: On campus form submit &rarr; Teacher email (+ Principal CC)</div><p>Full confirmation with registration status checklist, paperwork deadlines, split-day instructions if applicable, and materials pickup info.</p></div>
+                    <div class="email-template-card"><div class="et-badge auto">Active — Auto</div><h4>Admin New Registration Alert</h4><div class="et-audience">Triggered: Every new registration &rarr; Admin email</div><p>Full data summary for every new exhibitor or attendee submission.</p></div>
+                    <div class="email-template-card"><div class="et-badge auto">Active — Auto</div><h4>Principal CC Notification</h4><div class="et-audience">Triggered: Attendee confirmation &rarr; Principal CC (if campus in roster)</div><p>Fired silently alongside the attendee confirmation. Upload your Campuses CSV to activate.</p></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- MANUAL BROADCAST section -->
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div><h2>Manual Broadcasts</h2><p>You control when and to whom these are sent. Select a template, choose your audience, review, and send.</p></div>
+                  <button class="btn btn-outline" onclick="addEmailTemplate()">+ New Template</button>
+                </div>
+                <div class="panel-body">
+                  <div id="emailTemplateGrid" class="email-template-grid" style="margin-bottom:0">
+                    <div style="color:#a0aec0;font-size:13px;padding:16px 0">Loading templates&hellip;</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- COMPOSE DRAWER (hidden until a template is selected) -->
+              <div class="panel-card" id="emailComposeCard" style="display:none">
+                <div class="panel-head">
+                  <div><h2 id="composeTitle">Compose &amp; Send</h2><p id="composeCategory"></p></div>
+                  <button class="btn btn-outline" onclick="closeCompose()">&#10005; Close</button>
+                </div>
+                <div class="panel-body">
+                  <!-- Audience -->
+                  <div style="margin-bottom:16px">
+                    <label style="font-size:12px;font-weight:600;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Audience</label>
+                    <select id="composeAudience" onchange="previewEmailAudience()" style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;background:#fff">
+                      <option value="">Select audience&hellip;</option>
+                    </select>
+                    <div id="audiencePreview" style="font-size:12px;color:#a0aec0;margin-top:6px"></div>
+                  </div>
+                  <!-- Subject -->
+                  <div style="margin-bottom:16px">
+                    <label style="font-size:12px;font-weight:600;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Subject</label>
+                    <input type="text" id="composeSubject" style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px">
+                  </div>
+                  <!-- Body -->
+                  <div style="margin-bottom:16px">
+                    <label style="font-size:12px;font-weight:600;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Body <span style="font-weight:400;color:#a0aec0;text-transform:none">(plain text — editable before sending)</span></label>
+                    <textarea id="composeBody" rows="14" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'Courier New',monospace;resize:vertical"></textarea>
+                  </div>
+                  <!-- Save + Send -->
+                  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+                    <button class="btn btn-outline" onclick="saveCurrentTemplate()">Save Template</button>
+                    <button class="btn" id="sendEmailBtn" onclick="confirmAndSend()" style="background:var(--primary);color:#fff">Send Now</button>
+                    <span id="sendStatusMsg" style="font-size:13px;color:#a0aec0"></span>
+                  </div>
+                  <!-- Confirm step (hidden) -->
+                  <div id="sendConfirmBox" style="display:none;margin-top:16px;padding:16px;background:#fff8e1;border:1px solid #f6c026;border-radius:10px">
+                    <div style="font-weight:600;margin-bottom:8px">Confirm Send</div>
+                    <div id="sendConfirmMsg" style="font-size:14px;margin-bottom:12px"></div>
+                    <div style="display:flex;gap:10px">
+                      <button class="btn" onclick="executeSend()" style="background:var(--green);color:#fff">Yes, Send</button>
+                      <button class="btn btn-outline" onclick="document.getElementById('sendConfirmBox').style.display='none'">Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SEND HISTORY -->
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div><h2>Send History</h2><p>Last 50 manual broadcasts sent from this hub.</p></div>
+                  <button class="btn btn-outline" onclick="refreshEmailLog()">&#8635; Refresh</button>
+                </div>
+                <div class="panel-body">
+                  <div id="emailLogWrap" style="overflow-x:auto">
+                    <div style="color:#a0aec0;font-size:13px;padding:16px 0">Loading history&hellip;</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- FAQ -->
+            <div id="panel-faq" class="panel">
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div><h2>FAQ Management</h2><p>Add, edit, or remove questions. Click Save All to publish changes to the public site.</p></div>
+                  <div style="display:flex;gap:8px">
+                    <button class="btn btn-outline" onclick="addFaqRow()">+ Add Question</button>
+                    <button class="btn btn-save" onclick="saveAllFaqs()">Save All</button>
+                  </div>
+                </div>
+                <div class="panel-body">
+                  <div id="faqEditorWrap"></div>
+                  <div class="save-msg" id="faq-msg" style="margin-top:12px"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SITE & APPEARANCE -->
+            <div id="panel-appearance" class="panel">
+              <div class="panel-card">
+                <div class="panel-head"><div><h2>Site &amp; Appearance</h2><p>Control the text and visibility of the public-facing site.</p></div></div>
+                <div class="panel-body">
+                  <div class="field-grid">
+                    <div class="section-divider">Branding &amp; Background</div>
+                    <label>Background Image</label>
+                    <div>
+                      <input type="file" id="bgImageFile" accept="image/*" style="font-size:13px">
+                      <button class="btn btn-outline" style="margin-left:8px;padding:6px 14px" onclick="uploadBranding('background')">Upload Image</button>
+                      <div class="save-msg" id="bgImage-msg" style="margin-top:6px"></div>
+                      <div id="bgImagePreview" style="margin-top:8px"></div>
+                      <div style="font-size:12px;color:#718096;margin-top:4px">Shown behind the home page title when no background video is set.</div>
+                    </div>
+                    <label>Background Video (YouTube)</label>
+                    <div>
+                      <input id="sc_heroVideoUrl" placeholder="https://www.youtube.com/watch?v=..." style="width:100%">
+                      <div style="font-size:12px;color:#718096;margin-top:4px">Paste a YouTube link; it plays muted and loops behind the title. Leave blank to use the image.</div>
+                    </div>
+                    <label>Logo</label>
+                    <div>
+                      <input type="file" id="logoFile" accept="image/*" style="font-size:13px">
+                      <button class="btn btn-outline" style="margin-left:8px;padding:6px 14px" onclick="uploadBranding('logo')">Upload Logo</button>
+                      <div class="save-msg" id="logo-msg" style="margin-top:6px"></div>
+                      <div id="logoPreview" style="margin-top:8px"></div>
+                    </div>
+                    <div class="section-divider">Text &amp; Branding</div>
+                    <label>Site Title</label><input id="sc_siteTitle">
+                    <label>Organization Line</label><input id="sc_orgLine">
+                    <label>Info (1-3 sentences)</label><textarea id="sc_introText" rows="3"></textarea>
+                    <label>About / What is the Middle School Showcase?</label><textarea id="sc_aboutText" rows="4"></textarea>
+                    <div class="section-divider">Vendor Portal Card</div>
+                    <label>Card Title</label><input id="sc_vendorCardTitle">
+                    <label>Card Description</label><textarea id="sc_vendorCardDesc" rows="2"></textarea>
+                    <div class="section-divider">Attendee Portal Card</div>
+                    <label>Card Title</label><input id="sc_teacherCardTitle">
+                    <label>Card Description</label><textarea id="sc_teacherCardDesc" rows="2"></textarea>
+                  </div>
+                  <div style="margin-top:24px">
+                    <div class="section-divider" style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:0">Visibility Toggles</div>
+                    <div class="toggle-row">
+                      <div><div class="tlabel">Show Vendor Portal</div><div class="tdesc">Display the Vendor tab on the public nav</div></div>
+                      <label class="switch"><input type="checkbox" id="sc_showVendorPortal"><span class="slider"></span></label>
+                    </div>
+                    <div class="toggle-row">
+                      <div><div class="tlabel">Show Attendee Portal</div><div class="tdesc">Display the Attendees tab on the public nav</div></div>
+                      <label class="switch"><input type="checkbox" id="sc_showTeacherPortal"><span class="slider"></span></label>
+                    </div>
+                    <div class="toggle-row">
+                      <div><div class="tlabel">Show Registration Portal</div><div class="tdesc">Display the Registration tab on the public nav</div></div>
+                      <label class="switch"><input type="checkbox" id="sc_showRegistrationPortal"><span class="slider"></span></label>
+                    </div>
+                    <div class="toggle-row">
+                      <div><div class="tlabel">Show Event Schedule</div><div class="tdesc">Display the schedule block on the home view</div></div>
+                      <label class="switch"><input type="checkbox" id="sc_showSchedule"><span class="slider"></span></label>
+                    </div>
+                  </div>
+                  <button class="btn btn-save" style="margin-top:24px" onclick="saveSiteContent()">Save Site Settings</button>
+                  <div class="save-msg" id="sc-msg"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- REGISTRATION SETTINGS -->
+            <div id="panel-registration" class="panel">
+              <div class="panel-card">
+                <div class="panel-head"><div><h2>Registration Settings</h2><p>Control the registration gate code and admin notification email.</p></div></div>
+                <div class="panel-body">
+                  <div style="margin-bottom:20px">
+                    <div class="section-divider" style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:0">Registration Status</div>
+                    <div class="toggle-row">
+                      <div>
+                        <div class="tlabel" style="font-size:15px;font-weight:700;color:var(--primary)">Registration Open</div>
+                        <div class="tdesc">Turn on to allow registrants to access and submit forms. Turn off to close registration with one click — the code stays saved for next time.</div>
+                      </div>
+                      <label class="switch"><input type="checkbox" id="sc_registrationOpen"><span class="slider"></span></label>
+                    </div>
+                  </div>
+                  <div class="field-grid">
+                    <div class="section-divider">Gate &amp; Access</div>
+                    <label>Registration Code</label>
+                    <div>
+                      <input id="sc_registrationCode" placeholder="e.g. SHOWCASE2026">
+                      <div style="font-size:12px;color:#a0aec0;margin-top:5px">Registrants must enter this code to access the Exhibitor and Attendee forms. Leave blank to close registration.</div>
+                    </div>
+                    <div class="section-divider">Notifications</div>
+                    <label>Admin Email</label>
+                    <div>
+                      <input id="sc_adminEmail" type="email" placeholder="admin@dallasisd.org">
+                      <div style="font-size:12px;color:#a0aec0;margin-top:5px">All new registrations send an admin notification to this address. Also included in attendee confirmation emails as the trip paperwork submission contact.</div>
+                    </div>
+                  </div>
+                  <button class="btn btn-save" style="margin-top:20px" onclick="saveRegistrationSettings()">Save Registration Settings</button>
+                  <div class="save-msg" id="reg-msg"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PORTAL UPLOADS -->
+            <div id="panel-portalUploads" class="panel">
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div>
+                    <h2>Portal Uploads</h2>
+                    <p>Documents uploaded by vendors and campus attendees through their portal dashboards.</p>
+                  </div>
+                  <button class="btn btn-outline" onclick="loadPortalUploads()">&#8635; Refresh</button>
+                </div>
+                <div class="panel-body">
+                  <div id="portalUploadsList">
+                    <div style="text-align:center;color:#a0aec0;font-size:14px;padding:32px">Loading uploads&hellip;</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- EXHIBITOR REGISTRATIONS -->
+            <div id="panel-exhibitorReg" class="panel">
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div>
+                    <h2>Exhibitor Registrations</h2>
+                    <p>All submitted exhibitor / vendor registration forms. Use the Status dropdown to approve, deny, or waitlist each entry.</p>
+                  </div>
+                  <button class="btn btn-outline" onclick="refreshExhibitorRegs()">&#8635; Refresh</button>
+                </div>
+                <div class="panel-body">
+                  <div id="exhibitorRegTableWrap" style="overflow-x:auto">
+                    <div style="text-align:center;color:#a0aec0;font-size:14px;padding:32px">Loading&hellip;</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ATTENDEE REGISTRATIONS -->
+            <div id="panel-attendeeReg" class="panel">
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div>
+                    <h2>Attendee / Campus Registrations</h2>
+                    <p>All submitted campus / attendee registration forms. Use the Status dropdown to approve, deny, or waitlist each entry.</p>
+                  </div>
+                  <button class="btn btn-outline" onclick="refreshAttendeeRegs()">&#8635; Refresh</button>
+                </div>
+                <div class="panel-body">
+                  <div id="attendeeRegTableWrap" style="overflow-x:auto">
+                    <div style="text-align:center;color:#a0aec0;font-size:14px;padding:32px">Loading&hellip;</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SETTINGS -->
+            <div id="panel-settings" class="panel">
+              <div class="panel-card">
+                <div class="panel-head"><div><h2>Settings &amp; Links</h2><p>Quick reference for deployment URLs and system IDs.</p></div></div>
+                <div class="panel-body" id="settingsBody">
+                  <!-- DEV environment helper — only shown when env=DEV -->
+                  <div id="devInitBanner" style="display:none;background:#fff8e1;border:1px solid #f6c026;border-radius:10px;padding:14px 18px;margin-bottom:16px">
+                    <div style="font-weight:700;color:#7b5e00;margin-bottom:6px">DEV Environment</div>
+                    <div style="font-size:13px;color:#5a4100;margin-bottom:10px">You are on the development site. If saves or uploads are failing, the DEV Google Sheet may be missing required tabs. Click below to create any missing sheets (safe — never erases existing data).</div>
+                    <button id="initDevSheetsBtn" class="btn" onclick="initDevSheets()" style="background:#d69e2e;color:#fff;font-size:13px">Initialize Dev Sheets</button>
+                  </div>
+                  <div class="section-divider" style="margin-top:0">System Status</div>
+                  <div class="settings-cell" style="grid-column:1/-1">
+                    <div class="lbl">Environment</div>
+                    <div class="val" id="systemStatusVal" style="color:var(--green);font-weight:600">Checking&hellip;</div>
+                  </div>
+                  <div class="section-divider">Deployment Links</div>
+                  <div class="settings-cell">
+                    <div class="lbl">Live Site (Public / Exhibitor)</div>
+                    <div class="val"><a href="https://script.google.com/macros/s/AKfycbzl6wT6r9NKdoRJFisIidiG-3kuZJERxgkxlmsDrI2pp3GEvvkSX7fzWfPDHRymn0Vapw/exec" target="_blank" style="color:var(--accent)">https://script.google.com/macros/s/AKfycbzl6wT6r9NKdoRJFisIidiG-3kuZJERxgkxlmsDrI2pp3GEvvkSX7fzWfPDHRymn0Vapw/exec</a></div>
+                    <div style="font-size:11px;color:#a0aec0;margin-top:4px">Share this link with vendors and attendees. Updates only when you publish a new version.</div>
+                  </div>
+                  <div class="settings-cell">
+                    <div class="lbl">Admin Hub</div>
+                    <div class="val"><a href="https://script.google.com/macros/s/AKfycbzl6wT6r9NKdoRJFisIidiG-3kuZJERxgkxlmsDrI2pp3GEvvkSX7fzWfPDHRymn0Vapw/exec?page=admin" target="_blank" style="color:var(--accent)">https://script.google.com/macros/s/AKfycbzl6wT6r9NKdoRJFisIidiG-3kuZJERxgkxlmsDrI2pp3GEvvkSX7fzWfPDHRymn0Vapw/exec?page=admin</a></div>
+                    <div style="font-size:11px;color:#a0aec0;margin-top:4px">Internal use only. Same live deployment as above, with the admin view.</div>
+                  </div>
+                  <div class="settings-cell">
+                    <div class="lbl">Dev Site (Testing Only)</div>
+                    <div class="val"><a href="https://script.google.com/a/dallasisd.org/macros/s/AKfycbwYhBgWwSVrYRapgFtT7hicB6GZuH5MrMDvPvXwmFt-/dev" target="_blank" style="color:var(--accent)">https://script.google.com/a/dallasisd.org/macros/s/AKfycbwYhBgWwSVrYRapgFtT7hicB6GZuH5MrMDvPvXwmFt-/dev</a></div>
+                    <div style="font-size:11px;color:#a0aec0;margin-top:4px">For your own testing. Always shows the latest pushed code automatically. Do not share &mdash; requires editor access.</div>
+                  </div>
+                  <div class="settings-cell">
+                    <div class="lbl">Admin Hub (Dev / Testing)</div>
+                    <div class="val"><a href="https://script.google.com/a/dallasisd.org/macros/s/AKfycbwYhBgWwSVrYRapgFtT7hicB6GZuH5MrMDvPvXwmFt-/dev?page=admin" target="_blank" style="color:var(--accent)">https://script.google.com/a/dallasisd.org/macros/s/AKfycbwYhBgWwSVrYRapgFtT7hicB6GZuH5MrMDvPvXwmFt-/dev?page=admin</a></div>
+                    <div style="font-size:11px;color:#a0aec0;margin-top:4px">The dev admin hub. Shows your latest pushed code automatically. Do not share &mdash; requires editor access.</div>
+                  </div>
+                  <div class="settings-cell">
+                    <div class="lbl">Vendor Check-In Kiosk (Live)</div>
+                    <div class="val"><a id="kioskLiveLinkSettings" href="https://script.google.com/macros/s/AKfycbzl6wT6r9NKdoRJFisIidiG-3kuZJERxgkxlmsDrI2pp3GEvvkSX7fzWfPDHRymn0Vapw/exec?page=checkin" target="_blank" style="color:var(--accent)">https://script.google.com/macros/s/AKfycbzl6wT6r9NKdoRJFisIidiG-3kuZJERxgkxlmsDrI2pp3GEvvkSX7fzWfPDHRymn0Vapw/exec?page=checkin</a></div>
+                    <div style="font-size:11px;color:#a0aec0;margin-top:4px">Open on the event-day iPads. Bookmark it for quick access. No login required.</div>
+                  </div>
+                  <div class="settings-cell">
+                    <div class="lbl">Vendor Check-In Kiosk (Dev / Testing)</div>
+                    <div class="val"><a href="https://script.google.com/a/dallasisd.org/macros/s/AKfycbwYhBgWwSVrYRapgFtT7hicB6GZuH5MrMDvPvXwmFt-/dev?page=checkin" target="_blank" style="color:var(--accent)">https://script.google.com/a/dallasisd.org/macros/s/AKfycbwYhBgWwSVrYRapgFtT7hicB6GZuH5MrMDvPvXwmFt-/dev?page=checkin</a></div>
+                    <div style="font-size:11px;color:#a0aec0;margin-top:4px">Test version of the check-in kiosk. Do not use on event day.</div>
+                  </div>
+                  <div class="section-divider">System IDs</div>
+                  <div class="settings-cell"><div class="lbl">Script ID</div><div class="val">1fPt4TM2M_9MUUjywtgP64GMynqtYus5lqqfNLv2yMwNMO6E56bdlzT_2</div></div>
+                  <div class="settings-cell"><div class="lbl">Spreadsheet ID</div><div class="val">10zG55oCftTO1v1pnxObMlCIQ5-r1pdAHucnouVczlBE</div></div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /panels -->
+        </div><!-- /admin-layout -->
+        <div class="footer">Middle School Showcase &nbsp;·&nbsp; Admin Hub &nbsp;·&nbsp; Dallas ISD CTE &nbsp;·&nbsp; Internal Use Only</div>
+      </div>
+    </div><!-- /adminDash -->
+  </div>
+
+  <script>
+    // ── STATE ───────────────────────────────────────────────────
+    var DATA = {};
+
+    // ── SERVER BRIDGE ────────────────────────────────────────────
+    function server(fn) {
+      var args = Array.prototype.slice.call(arguments, 1);
+      return new Promise(function (resolve, reject) {
+        var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
+        r[fn].apply(r, args);
+      });
+    }
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function isOn(v) { return String(v == null ? 'yes' : v).trim().toLowerCase() !== 'no'; }
+    function showMsg(id, msg, isError) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = msg;
+      el.className = 'save-msg' + (isError ? ' error' : ' ok');
+      if (!isError) setTimeout(function() { if (el.textContent === msg) el.textContent = ''; }, 4000);
+    }
+
+    // ── BOOT — load dashboard directly, no password required ─────
+    function bootAdmin() {
+      server('adminGetAll').then(function (all) {
+        if (all && all.success === false) { showBootError(all.message || 'Unknown server error.'); return; }
+        DATA = all.data || {};
+        document.getElementById('adminLoad').style.display = 'none';
+        document.getElementById('adminDash').style.display = 'block';
+        populateDash();
+        loadSystemStatus();
+      }).catch(function (err) {
+        var detail = (err && err.message) ? err.message : 'The connection to the server failed.';
+        showBootError(detail);
+      });
+    }
+
+    function loadSystemStatus() {
+      var el = document.getElementById('systemStatusVal');
+      if (!el) return;
+      server('ping').then(function (res) {
+        if (!res || res.success === false) { el.textContent = 'Unavailable'; el.style.color = '#ff8a80'; return; }
+        var isLive = res.env === 'LIVE';
+        el.style.color = isLive ? 'var(--green)' : '#d69e2e';
+        el.innerHTML = '<strong>' + esc(res.env || '?') + '</strong> &middot; v' + esc(res.version || '?') +
+          '<div style="font-size:11px;color:#a0aec0;font-weight:400;margin-top:4px;font-family:\'Courier New\',monospace;word-break:break-all">sheet: ' + esc(res.spreadsheetId || '?') + '</div>';
+
+        // Show DEV helper banner if not on live
+        if (!isLive) {
+          var banner = document.getElementById('devInitBanner');
+          if (banner) banner.style.display = 'block';
+        }
+      }).catch(function () {
+        el.textContent = 'Unavailable'; el.style.color = '#ff8a80';
+      });
+    }
+
+    function initDevSheets() {
+      var btn = document.getElementById('initDevSheetsBtn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Initializing\u2026'; }
+      server('setupSheets').then(function(res) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Initialize Dev Sheets'; }
+        alert('Dev sheets initialized successfully. Refresh the page to reload data.');
+      }).catch(function(e) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Initialize Dev Sheets'; }
+        alert('Error: ' + (e && e.message ? e.message : 'Could not initialize sheets.'));
+      });
+    }
+
+    // ── VENDOR CHECK-IN PANEL ────────────────────────────────────────────────
+    var LIVE_BASE = 'https://script.google.com/macros/s/AKfycbzl6wT6r9NKdoRJFisIidiG-3kuZJERxgkxlmsDrI2pp3GEvvkSX7fzWfPDHRymn0Vapw/exec';
+    var KIOSK_URL = LIVE_BASE + '?page=checkin';
+
+    function setupKioskLinks() {
+      var el = document.getElementById('kioskLinkDisplay');
+      if (el) { el.href = KIOSK_URL; el.textContent = KIOSK_URL; }
+    }
+
+    function refreshCheckIn() {
+      document.getElementById('checkInTableWrap').innerHTML =
+        '<div style="text-align:center;color:#a0aec0;font-size:14px;padding:32px">Loading&hellip;</div>';
+      server('getCheckInStatus').then(function(res) {
+        if (!res || res.success === false) {
+          document.getElementById('checkInTableWrap').innerHTML =
+            '<div style="color:#ff8a80;padding:16px">Could not load check-in data.</div>';
+          return;
+        }
+        var vendors = res.vendors || [];
+        var active = vendors.filter(function(v){ return String(v.status||'').trim() === 'Active'; });
+        var checkedIn = active.filter(function(v){ return String(v.checkedIn||'').trim().toLowerCase() === 'yes'; });
+        document.getElementById('ciStatTotal').textContent = active.length;
+        document.getElementById('ciStatIn').textContent    = checkedIn.length;
+        document.getElementById('ciStatOut').textContent   = active.length - checkedIn.length;
+        document.getElementById('sbCheckIn').textContent   = checkedIn.length;
+
+        if (!active.length) {
+          document.getElementById('checkInTableWrap').innerHTML =
+            '<div style="text-align:center;color:#a0aec0;font-size:14px;padding:32px">No active vendors found.</div>';
+          return;
+        }
+
+        var rows = active.map(function(v) {
+          var isIn  = String(v.checkedIn||'').trim().toLowerCase() === 'yes';
+          var badge = isIn
+            ? '<span style="background:#c6f6d5;color:#276749;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600">Checked In</span>'
+            : '<span style="background:#fed7d7;color:#9b2c2c;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600">Not Arrived</span>';
+          return '<tr>' +
+            '<td>' + esc(v.vendorId) + '</td>' +
+            '<td>' + esc(v.companyName) + '</td>' +
+            '<td>' + esc(v.contact) + '</td>' +
+            '<td>' + badge + '</td>' +
+            '<td style="color:#a0aec0;font-size:12px">' + esc(v.checkInTime) + '</td>' +
+            '</tr>';
+        });
+
+        document.getElementById('checkInTableWrap').innerHTML =
+          '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+          '<thead><tr style="background:rgba(0,0,0,0.04)">' +
+            '<th style="text-align:left;padding:8px 10px;font-weight:600;color:#4a5568;white-space:nowrap">Vendor ID</th>' +
+            '<th style="text-align:left;padding:8px 10px;font-weight:600;color:#4a5568">Company</th>' +
+            '<th style="text-align:left;padding:8px 10px;font-weight:600;color:#4a5568">Contact</th>' +
+            '<th style="text-align:left;padding:8px 10px;font-weight:600;color:#4a5568">Status</th>' +
+            '<th style="text-align:left;padding:8px 10px;font-weight:600;color:#4a5568">Time</th>' +
+          '</tr></thead><tbody>' + rows.join('') + '</tbody></table>';
+      }).catch(function() {
+        document.getElementById('checkInTableWrap').innerHTML =
+          '<div style="color:#ff8a80;padding:16px">Server error. Please try again.</div>';
+      });
+    }
+
+    // ── EMAIL COMMUNICATIONS ──────────────────────────────────────────────────
+    var _emailTemplates  = [];   // loaded from DATA
+    var _audienceGroups  = [];   // loaded from server
+    var _activeTemplateId = null;
+
+    function renderEmailPanel() {
+      _emailTemplates = DATA.emailTemplates || [];
+      renderEmailTemplateGrid();
+      renderEmailLog(DATA.emailLog || []);
+      // Load audience groups
+      server('getAudienceGroups').then(function(res) {
+        _audienceGroups = (res && res.groups) || [];
+        buildAudienceDropdown();
+        renderEmailTemplateGrid(); // re-render now that friendly labels are available
+      }).catch(function(){});
+    }
+
+    function renderEmailTemplateGrid() {
+      var grid = document.getElementById('emailTemplateGrid');
+      if (!grid) return;
+      if (!_emailTemplates.length) {
+        grid.innerHTML = '<div style="color:#a0aec0;font-size:13px;padding:16px 0">No broadcast templates yet. Click "+ New Template" to add one.</div>';
+        return;
+      }
+      grid.innerHTML = _emailTemplates.map(function(t) {
+        var tid = esc(t['TemplateID'] || '');
+        var hasBody = String(t['Body'] || '').trim().length > 0;
+        return '<div class="email-template-card">' +
+          '<div class="et-badge" style="background:#e9d8fd;color:#553c9a">' + esc(t['Category'] || 'Broadcast') + '</div>' +
+          '<h4>' + esc(t['TemplateName'] || '') + '</h4>' +
+          '<div class="et-audience">Default audience: ' + esc(audienceLabel(t['DefaultAudience'] || '')) + '</div>' +
+          '<p style="font-size:12px;color:#a0aec0;margin-top:4px">' + (hasBody ? 'Template content ready.' : 'No body yet — add content before sending.') + '</p>' +
+          (t['LastModified'] ? '<div style="font-size:11px;color:#a0aec0;margin-top:4px">Last saved: ' + esc(t['LastModified']) + '</div>' : '') +
+          '<button class="btn" onclick="openCompose(\'' + tid + '\')" style="margin-top:12px;background:var(--primary);color:#fff;font-size:13px;padding:7px 16px">Compose &amp; Send</button>' +
+          '</div>';
+      }).join('');
+    }
+
+    function audienceLabel(key) {
+      for (var i = 0; i < _audienceGroups.length; i++) {
+        if (_audienceGroups[i].key === key) return _audienceGroups[i].label;
+      }
+      return key || '—';
+    }
+
+    function buildAudienceDropdown() {
+      var sel = document.getElementById('composeAudience');
+      if (!sel) return;
+      var cur = sel.value;
+      sel.innerHTML = '<option value="">Select audience&hellip;</option>' +
+        _audienceGroups.map(function(g) {
+          return '<option value="' + esc(g.key) + '"' + (g.key === cur ? ' selected' : '') + '>' + esc(g.label) + '</option>';
+        }).join('');
+    }
+
+    function openCompose(templateId) {
+      var t = null;
+      for (var i = 0; i < _emailTemplates.length; i++) {
+        if (_emailTemplates[i]['TemplateID'] === templateId) { t = _emailTemplates[i]; break; }
+      }
+      if (!t) return;
+      _activeTemplateId = templateId;
+      document.getElementById('composeTitle').textContent = t['TemplateName'] || 'Compose & Send';
+      document.getElementById('composeCategory').textContent = t['Category'] || '';
+      document.getElementById('composeSubject').value = t['Subject'] || '';
+      document.getElementById('composeBody').value    = t['Body']    || '';
+      document.getElementById('sendConfirmBox').style.display = 'none';
+      document.getElementById('sendStatusMsg').textContent    = '';
+      // Pre-select default audience
+      buildAudienceDropdown();
+      var sel = document.getElementById('composeAudience');
+      if (sel && t['DefaultAudience']) sel.value = t['DefaultAudience'];
+      previewEmailAudience();
+      var card = document.getElementById('emailComposeCard');
+      card.style.display = 'block';
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function closeCompose() {
+      document.getElementById('emailComposeCard').style.display = 'none';
+      _activeTemplateId = null;
+    }
+
+    function previewEmailAudience() {
+      var audienceKey = document.getElementById('composeAudience').value;
+      var el = document.getElementById('audiencePreview');
+      if (!audienceKey) { el.textContent = ''; return; }
+      el.textContent = 'Counting recipients\u2026';
+      server('previewAudience', audienceKey).then(function(res) {
+        if (!res || res.success === false) { el.textContent = 'Could not load preview.'; return; }
+        var msg = res.count + ' recipient' + (res.count !== 1 ? 's' : '');
+        if (res.sample && res.sample.length) msg += ' \u2014 e.g. ' + res.sample.join(', ');
+        el.textContent = msg;
+      }).catch(function(){ el.textContent = 'Preview unavailable.'; });
+    }
+
+    function saveCurrentTemplate() {
+      if (!_activeTemplateId) return;
+      var t = null;
+      for (var i = 0; i < _emailTemplates.length; i++) {
+        if (_emailTemplates[i]['TemplateID'] === _activeTemplateId) { t = _emailTemplates[i]; break; }
+      }
+      var row = Object.assign({}, t || {}, {
+        TemplateID:      _activeTemplateId,
+        Subject:         document.getElementById('composeSubject').value,
+        Body:            document.getElementById('composeBody').value,
+        DefaultAudience: document.getElementById('composeAudience').value,
+      });
+      document.getElementById('sendStatusMsg').textContent = 'Saving\u2026';
+      server('saveEmailTemplate', row).then(function(res) {
+        if (res && res.success) {
+          // Update local cache
+          for (var i = 0; i < _emailTemplates.length; i++) {
+            if (_emailTemplates[i]['TemplateID'] === _activeTemplateId) { _emailTemplates[i] = row; break; }
+          }
+          document.getElementById('sendStatusMsg').textContent = 'Saved.';
+          renderEmailTemplateGrid();
+        } else {
+          document.getElementById('sendStatusMsg').textContent = 'Save failed: ' + ((res && res.message) || 'Unknown error.');
+        }
+      }).catch(function(e) { document.getElementById('sendStatusMsg').textContent = 'Save error.'; });
+    }
+
+    function confirmAndSend() {
+      var audienceKey = document.getElementById('composeAudience').value;
+      var subject     = document.getElementById('composeSubject').value.trim();
+      var body        = document.getElementById('composeBody').value.trim();
+      if (!audienceKey) { alert('Please select an audience before sending.'); return; }
+      if (!subject)     { alert('Subject is required.'); return; }
+      if (!body)        { alert('Email body is required.'); return; }
+      var preview = document.getElementById('audiencePreview').textContent || audienceLabel(audienceKey);
+      document.getElementById('sendConfirmMsg').innerHTML =
+        'You are about to send <strong>' + esc(subject) + '</strong> to <strong>' + esc(preview) + '</strong>.<br>This cannot be undone.';
+      document.getElementById('sendConfirmBox').style.display = 'block';
+    }
+
+    function executeSend() {
+      var audienceKey  = document.getElementById('composeAudience').value;
+      var subject      = document.getElementById('composeSubject').value.trim();
+      var body         = document.getElementById('composeBody').value.trim();
+      var templateName = '';
+      for (var i = 0; i < _emailTemplates.length; i++) {
+        if (_emailTemplates[i]['TemplateID'] === _activeTemplateId) { templateName = _emailTemplates[i]['TemplateName'] || ''; break; }
+      }
+      document.getElementById('sendConfirmBox').style.display = 'none';
+      document.getElementById('sendStatusMsg').textContent = 'Sending\u2026';
+      document.getElementById('sendEmailBtn').disabled = true;
+      server('sendBroadcastEmail', {
+        templateId:   _activeTemplateId,
+        templateName: templateName,
+        audienceKey:  audienceKey,
+        subject:      subject,
+        body:         body,
+      }).then(function(res) {
+        document.getElementById('sendEmailBtn').disabled = false;
+        if (res && res.success) {
+          document.getElementById('sendStatusMsg').textContent = '\u2713 Sent to ' + res.recipientCount + ' recipient' + (res.recipientCount !== 1 ? 's' : '') + '.';
+          document.getElementById('sendStatusMsg').style.color = 'var(--green)';
+          refreshEmailLog();
+        } else {
+          document.getElementById('sendStatusMsg').textContent = 'Send failed: ' + ((res && res.message) || 'Unknown error.');
+          document.getElementById('sendStatusMsg').style.color = 'var(--red, #e53e3e)';
+        }
+      }).catch(function(e) {
+        document.getElementById('sendEmailBtn').disabled = false;
+        document.getElementById('sendStatusMsg').textContent = 'Connection error.';
+      });
+    }
+
+    function addEmailTemplate() {
+      var name = prompt('Template name (e.g. "Registration Reminder #2"):');
+      if (!name || !name.trim()) return;
+      var id = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      var row = { TemplateID: id, TemplateName: name.trim(), Category: 'Broadcast', Subject: '', Body: '', DefaultAudience: '', LastModified: '' };
+      server('saveEmailTemplate', row).then(function(res) {
+        if (res && res.success) {
+          _emailTemplates.push(row);
+          renderEmailTemplateGrid();
+          openCompose(id);
+        } else { alert('Could not create template: ' + ((res && res.message) || 'Unknown error.')); }
+      });
+    }
+
+    function renderEmailLog(rows) {
+      var wrap = document.getElementById('emailLogWrap');
+      if (!wrap) return;
+      if (!rows || !rows.length) {
+        wrap.innerHTML = '<div style="color:#a0aec0;font-size:13px;padding:16px 0">No sends recorded yet.</div>';
+        return;
+      }
+      wrap.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+        '<thead><tr style="background:rgba(0,0,0,0.04)">' +
+          '<th style="text-align:left;padding:8px 10px;font-weight:600;color:#4a5568;white-space:nowrap">Date / Time</th>' +
+          '<th style="text-align:left;padding:8px 10px;font-weight:600;color:#4a5568">Template</th>' +
+          '<th style="text-align:left;padding:8px 10px;font-weight:600;color:#4a5568">Audience</th>' +
+          '<th style="text-align:left;padding:8px 10px;font-weight:600;color:#4a5568">Recipients</th>' +
+          '<th style="text-align:left;padding:8px 10px;font-weight:600;color:#4a5568">Subject</th>' +
+        '</tr></thead><tbody>' +
+        rows.map(function(r) {
+          return '<tr style="border-top:1px solid #f0f0f0">' +
+            '<td style="padding:7px 10px;white-space:nowrap;color:#718096">' + esc(r['Timestamp'] || '') + '</td>' +
+            '<td style="padding:7px 10px;font-weight:500">' + esc(r['TemplateName'] || '') + '</td>' +
+            '<td style="padding:7px 10px;color:#718096;font-size:12px">' + esc(r['Audience'] || '') + '</td>' +
+            '<td style="padding:7px 10px;text-align:center;font-weight:700;color:var(--primary)">' + esc(r['RecipientCount'] || '0') + '</td>' +
+            '<td style="padding:7px 10px;color:#718096;font-size:12px">' + esc(r['Subject'] || '') + '</td>' +
+          '</tr>';
+        }).join('') + '</tbody></table>';
+    }
+
+    function refreshEmailLog() {
+      var wrap = document.getElementById('emailLogWrap');
+      if (wrap) wrap.innerHTML = '<div style="color:#a0aec0;font-size:13px;padding:16px 0">Loading&hellip;</div>';
+      server('getEmailLog').then(function(res) {
+        var rows = (res && res.log) ? res.log.slice(-50).reverse() : [];
+        renderEmailLog(rows);
+      }).catch(function(){ if (wrap) wrap.innerHTML = '<div style="color:#ff8a80;padding:16px">Could not load history.</div>'; });
+    }
+
+    function showBootError(detail) {
+      var lw = document.querySelector('.load-wrap');
+      if (!lw) return;
+      lw.innerHTML =
+        '<div style="max-width:480px;text-align:center;padding:24px;color:var(--text-light)">' +
+          '<div style="font-size:40px;margin-bottom:12px">⚠️</div>' +
+          '<div style="font-size:18px;font-weight:700;margin-bottom:10px">Could not load the dashboard</div>' +
+          '<div style="font-size:13px;color:#ff8a80;background:rgba(0,0,0,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;word-break:break-word">' + (String(detail).replace(/</g,"&lt;")) + '</div>' +
+          '<div style="font-size:13px;color:var(--text-muted);line-height:1.6">If this mentions permission or authorization, open the Apps Script editor, run <strong style="color:var(--accent)">setupSheets</strong>, and approve all permission prompts (including any "Advanced &rarr; Go to project" step). Then reopen this page.</div>' +
+        '</div>';
+    }
+
+    // ── POPULATE DASHBOARD ────────────────────────────────────────
+    function populateDash() {
+      var v  = DATA.vendors    || [];
+      var d  = DATA.documents  || [];
+      var cl = DATA.checklist  || [];
+      var ca = DATA.campuses   || [];
+      var sc = DATA.siteContent || {};
+
+      // Stat strip
+      document.getElementById('statVendors').textContent   = v.length;
+      document.getElementById('statAttendees').textContent = (DATA.attendeeReg || []).length;
+      document.getElementById('statDocs').textContent      = d.length;
+      document.getElementById('statActive').textContent    = v.filter(function(x){return x.status==='Active';}).length;
+
+      // Sidebar badges
+      document.getElementById('sbVendors').textContent   = v.length;
+      document.getElementById('sbDocs').textContent      = d.length;
+      document.getElementById('sbChecklist').textContent = cl.length;
+
+      // Allergy badge = vendors who have submitted at least one allergy field
+      var allergyCount = v.filter(function(vv){
+        return ['allergyMilk','allergyEggs','allergyFish','allergyShellfish','allergyTreeNuts',
+                'allergyPeanuts','allergyWheat','allergySoy','allergySesame','isVegetarian','isVegan']
+          .some(function(k){ return String(vv[k]||'').trim().toLowerCase() === 'yes'; });
+      }).length;
+      document.getElementById('sbAllergy').textContent = allergyCount;
+
+      // Site content fields
+      ['siteTitle','orgLine','introText','aboutText','heroVideoUrl','vendorCardTitle','vendorCardDesc','teacherCardTitle','teacherCardDesc','registrationCode','adminEmail'].forEach(function(k){
+        var el = document.getElementById('sc_'+k);
+        if (el) el.value = sc[k] || '';
+      });
+      ['showVendorPortal','showTeacherPortal','showRegistrationPortal','showSchedule','registrationOpen'].forEach(function(k){
+        var el = document.getElementById('sc_'+k);
+        if (el) el.checked = isOn(sc[k]);
+      });
+      // Branding media previews
+      renderBrandingPreview('background', sc.heroBackgroundImageUrl);
+      renderBrandingPreview('logo', sc.logoUrl);
+      // Apply logo to the Admin Hub header badge
+      var adminBadge = document.getElementById('adminBadge');
+      if (adminBadge) {
+        if (sc.logoUrl) {
+          adminBadge.classList.add('has-logo');
+          adminBadge.innerHTML = '<img src="' + sc.logoUrl + '" alt="Logo">';
+        } else {
+          adminBadge.classList.remove('has-logo');
+          adminBadge.textContent = '⚙';
+        }
+      }
+
+      document.getElementById('sbCampuses').textContent = ca.length;
+
+      // Tables
+      renderTable('vendors', v);
+      renderTable('documents', d);
+      renderChecklistGrouped(cl);
+      renderCampusesTable(ca);
+      renderAllergyMatrix(v);
+      renderRegionalReport();
+      renderExecDashboard();
+      loadPortalUploads();
+      renderExhibitorRegs(DATA.exhibitorReg || []);
+      renderAttendeeRegs(DATA.attendeeReg   || []);
+      renderFaqEditor(DATA.faqs || []);
+
+      // Check-in panel setup
+      setupKioskLinks();
+      refreshCheckIn();
+
+      // Email communications panel
+      renderEmailPanel();
+
+      // Attendees quick-view panel
+      var approvedAttendees = (DATA.attendeeReg || []).filter(function(r){
+        return r.status === 'Approved' || r.status === 'Waitlisted';
+      });
+      document.getElementById('sbAttendeesPanel').textContent = approvedAttendees.length;
+      renderAttendeesPanel(approvedAttendees);
+    }
+
+    function refreshAttendeesPanel() {
+      server('adminGetAll').then(function(all) {
+        if (all && all.data) DATA.attendeeReg = all.data.attendeeReg || [];
+        var rows = (DATA.attendeeReg || []).filter(function(r){
+          return r.status === 'Approved' || r.status === 'Waitlisted';
+        });
+        document.getElementById('sbAttendeesPanel').textContent = rows.length;
+        renderAttendeesPanel(rows);
+      }).catch(function(){ renderAttendeesPanel([]); });
+    }
+
+    function renderAttendeesPanel(rows) {
+      var body = document.getElementById('attendeesPanelBody');
+      if (!body) return;
+      if (!rows || rows.length === 0) {
+        body.innerHTML = '<p style="color:#a0aec0;font-size:13px;padding:16px 0">No approved or waitlisted campuses yet.</p>';
+        return;
+      }
+      var totalStudents = rows.reduce(function(sum, r){ return sum + (parseInt(r.studentCount, 10) || 0); }, 0);
+      var statusBadge = function(s) {
+        var color = s === 'Approved' ? 'var(--green)' : '#f6ad55';
+        return '<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;background:' + color + '20;color:' + color + '">' + esc(s) + '</span>';
+      };
+      var rowsHtml = rows.map(function(r) {
+        return '<tr>' +
+          '<td>' + esc(r.campusOrgNumber || '') + '</td>' +
+          '<td style="font-weight:600">' + esc(r.campus || '') + '</td>' +
+          '<td>' + statusBadge(r.status || '') + '</td>' +
+          '<td style="text-align:center">' + esc(r.studentCount || '—') + '</td>' +
+          '<td>' + esc(r.teacherName || '') + '</td>' +
+          '<td>' + esc(r.eventDate || '') + '</td>' +
+          '</tr>';
+      }).join('');
+      body.innerHTML =
+        '<div class="table-wrap"><table>' +
+        '<thead><tr>' +
+        '<th>Org #</th><th>School / Campus</th><th>Status</th>' +
+        '<th style="text-align:center">Students</th><th>Contact</th><th>Date</th>' +
+        '</tr></thead>' +
+        '<tbody>' + rowsHtml + '</tbody>' +
+        '</table></div>' +
+        '<p style="font-size:12px;color:#718096;margin-top:12px;font-weight:600">' +
+        'Total confirmed students: ' + totalStudents + ' across ' + rows.length + ' campus' + (rows.length !== 1 ? 'es' : '') +
+        '</p>';
+    }
+
+    function loadPortalUploads() {
+      server('getAllPortalUploads').then(function(res) {
+        var uploads = (res && res.uploads) ? res.uploads : [];
+        document.getElementById('sbPortalUploads').textContent = uploads.length;
+        renderPortalUploads(uploads);
+      }).catch(function() {
+        renderPortalUploads([]);
+      });
+    }
+
+    // ── CHECKLIST GROUPED VIEW ────────────────────────────────────────
+    function renderChecklistGrouped(cl) {
+      var body = document.getElementById('checklistGroupBody');
+      if (!body) return;
+      if (!cl || cl.length === 0) {
+        body.innerHTML = '<p style="color:#a0aec0;font-size:13px;padding:16px 0">No checklist data yet. Campuses will appear here once they register.</p>';
+        return;
+      }
+
+      // Build campus name lookup from DATA.campuses
+      var campusMap = {};
+      (DATA.campuses || []).forEach(function(c) {
+        if (c.orgNumber) campusMap[String(c.orgNumber).trim()] = c.campusName || '';
+      });
+
+      // Group checklist rows by orgNumber
+      var groups = {};
+      var order  = [];
+      cl.forEach(function(r) {
+        var org = String(r.orgNumber || '').trim();
+        if (!groups[org]) { groups[org] = []; order.push(org); }
+        groups[org].push(r);
+      });
+
+      var statusColor = function(s) {
+        var v = String(s || '').toLowerCase();
+        if (v === 'complete')   return 'var(--green)';
+        if (v === 'pending')    return '#ed8936';
+        if (v === 'upcoming')   return '#3182ce';
+        return '#e53e3e';
+      };
+      var statusBg = function(s) {
+        var v = String(s || '').toLowerCase();
+        if (v === 'complete')   return 'rgba(72,187,120,0.12)';
+        if (v === 'pending')    return 'rgba(237,137,54,0.12)';
+        if (v === 'upcoming')   return 'rgba(49,130,206,0.12)';
+        return 'rgba(229,62,62,0.12)';
+      };
+
+      var html = '';
+      order.forEach(function(org) {
+        var items     = groups[org];
+        var name      = campusMap[org] || '';
+        var total     = items.length;
+        var complete  = items.filter(function(i){ return String(i.status||'').toLowerCase() === 'complete'; }).length;
+        var pillColor = complete === total ? 'var(--green)' : complete === 0 ? '#e53e3e' : '#ed8936';
+
+        html += '<div style="border:1.5px solid #e2e8f0;border-radius:10px;margin-bottom:16px;overflow:hidden">';
+
+        // Card header
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#f7fafc;border-bottom:1px solid #e2e8f0">';
+        html += '<div>';
+        html += '<span style="font-weight:700;font-size:14px;color:#1a3a5c">' + esc(org) + '</span>';
+        if (name) html += '<span style="font-size:13px;color:#718096;margin-left:10px">' + esc(name) + '</span>';
+        html += '</div>';
+        html += '<span style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;background:' + pillColor + '20;color:' + pillColor + '">' + complete + ' / ' + total + ' Complete</span>';
+        html += '</div>';
+
+        // Items table
+        html += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+        html += '<thead><tr style="background:#fff">' +
+          '<th style="padding:8px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#a0aec0;font-weight:700;border-bottom:1px solid #e2e8f0">Item</th>' +
+          '<th style="padding:8px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#a0aec0;font-weight:700;border-bottom:1px solid #e2e8f0;width:160px">Status</th>' +
+          '<th style="padding:8px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#a0aec0;font-weight:700;border-bottom:1px solid #e2e8f0">Notes</th>' +
+          '</tr></thead><tbody>';
+
+        items.forEach(function(r, idx) {
+          var isAuto  = String(r.autoManaged || '').toLowerCase() === 'yes';
+          var safeOrg  = esc(r.orgNumber  || '');
+          var safeItem = esc(r.itemName   || '');
+          var curSt    = r.status || 'Pending';
+          var sc       = statusColor(curSt);
+          var sb       = statusBg(curSt);
+          var rowBg    = idx % 2 === 0 ? '#fff' : '#fafafa';
+
+          html += '<tr style="background:' + rowBg + '">';
+
+          // Item name + Auto badge
+          html += '<td style="padding:10px 16px;color:#2d3748;font-weight:500">' + safeItem;
+          if (isAuto) html += ' <span style="font-size:10px;background:#ebf4ff;color:#3182ce;border-radius:4px;padding:1px 6px;font-weight:700;vertical-align:middle">Auto</span>';
+          html += '</td>';
+
+          // Status — dropdown for manual, read-only pill for auto
+          html += '<td style="padding:10px 16px">';
+          if (isAuto) {
+            html += '<span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;background:' + sb + ';color:' + sc + '">' + esc(curSt) + '</span>';
+          } else {
+            html += '<select data-org="' + safeOrg + '" data-item="' + safeItem + '" class="cl-status-sel" ' +
+              'onchange="this.style.color=getChecklistColor(this.value)" ' +
+              'style="border:1.5px solid #e2e8f0;border-radius:6px;padding:4px 8px;font-size:12px;font-family:inherit;outline:none;color:' + sc + ';font-weight:700;background:' + sb + '">';
+            ['Complete','Pending','Incomplete','Upcoming'].forEach(function(opt) {
+              html += '<option value="' + opt + '"' + (opt === curSt ? ' selected' : '') + '>' + opt + '</option>';
+            });
+            html += '</select>';
+          }
+          html += '</td>';
+
+          // Notes
+          html += '<td style="padding:10px 16px">';
+          html += '<input type="text" data-org="' + safeOrg + '" data-item="' + safeItem + '" class="cl-notes-inp" value="' + esc(r.notes || '') + '" ' +
+            'style="border:1.5px solid #e2e8f0;border-radius:6px;padding:4px 10px;font-size:12px;font-family:inherit;width:100%;box-sizing:border-box;outline:none" placeholder="—">';
+          html += '</td>';
+
+          html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+      });
+
+      body.innerHTML = html;
+    }
+
+    function getChecklistColor(val) {
+      if (String(val).toLowerCase() === 'complete')   return 'var(--green)';
+      if (String(val).toLowerCase() === 'pending')    return '#ed8936';
+      if (String(val).toLowerCase() === 'upcoming')   return '#3182ce';
+      return '#e53e3e';
+    }
+
+    function saveChecklistGrouped() {
+      var msgEl = document.getElementById('checklist-msg');
+      msgEl.className = 'save-msg'; msgEl.textContent = 'Saving…';
+
+      // Build a lookup of current data keyed by org+item
+      var lookup = {};
+      (DATA.checklist || []).forEach(function(r) {
+        var key = String(r.orgNumber||'').trim() + '||' + String(r.itemName||'').trim();
+        lookup[key] = r;
+      });
+
+      // Collect status changes from dropdowns (manual items only)
+      document.querySelectorAll('.cl-status-sel').forEach(function(sel) {
+        var key = String(sel.dataset.org||'').trim() + '||' + String(sel.dataset.item||'').trim();
+        if (lookup[key]) lookup[key] = Object.assign({}, lookup[key], { status: sel.value });
+      });
+
+      // Collect notes changes
+      document.querySelectorAll('.cl-notes-inp').forEach(function(inp) {
+        var key = String(inp.dataset.org||'').trim() + '||' + String(inp.dataset.item||'').trim();
+        if (lookup[key]) lookup[key] = Object.assign({}, lookup[key], { notes: inp.value });
+      });
+
+      var updatedRows = Object.values(lookup);
+      DATA.checklist = updatedRows;
+
+      server('adminUpdate', { checklist: updatedRows })
+        .then(function(res) {
+          if (res && res.success === false) {
+            msgEl.className = 'save-msg err'; msgEl.textContent = '✗ ' + (res.message || 'Save failed.');
+          } else {
+            msgEl.className = 'save-msg ok'; msgEl.textContent = '✓ Checklist saved.';
+            renderChecklistGrouped(updatedRows);
+            setTimeout(function(){ msgEl.textContent = ''; }, 3000);
+          }
+        })
+        .catch(function() {
+          msgEl.className = 'save-msg err'; msgEl.textContent = '✗ Connection error.';
+        });
+    }
+
+    function renderPortalUploads(uploads) {
+      var el = document.getElementById('portalUploadsList');
+      if (!el) return;
+      if (!uploads || !uploads.length) {
+        el.innerHTML = '<div style="text-align:center;color:#a0aec0;font-size:14px;padding:48px">No documents have been uploaded yet. They will appear here once vendors or campus attendees upload files through their portals.</div>';
+        return;
+      }
+      var html = '<div class="table-wrap"><table><thead><tr>' +
+        '<th>Type</th><th>ID</th><th>File Name</th><th>Uploaded On</th><th>File</th><th>Status</th><th>Action</th>' +
+        '</tr></thead><tbody>';
+      uploads.forEach(function(u) {
+        var typeBadge = u.type === 'vendor'
+          ? '<span style="background:rgba(10,22,40,0.08);color:var(--primary);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 8px;border-radius:999px">Vendor</span>'
+          : '<span style="background:rgba(39,103,73,0.08);color:var(--green);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid rgba(39,103,73,0.2)">Attendee</span>';
+        var st = u.status || 'Pending';
+        var stColor = st === 'Approved' ? 'var(--green)' : st === 'Denied' ? '#e53e3e' : '#ed8936';
+        var stBg    = st === 'Approved' ? 'rgba(72,187,120,0.12)' : st === 'Denied' ? 'rgba(229,62,62,0.12)' : 'rgba(237,137,54,0.12)';
+        var statusBadge = '<span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 10px;border-radius:999px;background:' + stBg + ';color:' + stColor + '">' + esc(st) + '</span>';
+        var actionBtns = st === 'Approved'
+          ? '<button onclick="updateUploadStatus(' + u._row + ',\'Denied\')" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1.5px solid #e53e3e;color:#e53e3e;background:#fff;cursor:pointer;font-weight:700">Deny</button>'
+          : st === 'Denied'
+          ? '<button onclick="updateUploadStatus(' + u._row + ',\'Approved\')" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1.5px solid var(--green);color:var(--green);background:#fff;cursor:pointer;font-weight:700">Approve</button>'
+          : '<button onclick="updateUploadStatus(' + u._row + ',\'Approved\')" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1.5px solid var(--green);color:var(--green);background:#fff;cursor:pointer;font-weight:700;margin-right:4px">Approve</button>' +
+            '<button onclick="updateUploadStatus(' + u._row + ',\'Denied\')" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1.5px solid #e53e3e;color:#e53e3e;background:#fff;cursor:pointer;font-weight:700">Deny</button>';
+        html += '<tr>' +
+          '<td>' + typeBadge + '</td>' +
+          '<td style="font-weight:600;color:var(--primary)">' + esc(u.id) + '</td>' +
+          '<td>' + esc(u.fileName) + '</td>' +
+          '<td style="color:#718096;font-size:12px">' + esc(u.timestamp) + '</td>' +
+          '<td>' + (u.driveLink ? '<a href="' + esc(u.driveLink) + '" target="_blank" style="color:var(--accent);font-weight:600;font-size:12px">Open &#8594;</a>' : '<span style="color:#a0aec0;font-size:12px">No link</span>') + '</td>' +
+          '<td>' + statusBadge + '</td>' +
+          '<td>' + actionBtns + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div>';
+      el.innerHTML = html;
+    }
+
+    function updateUploadStatus(row, status) {
+      server('updatePortalUploadStatus', { row: row, status: status }).then(function(res) {
+        if (!res || !res.success) { alert('Update failed. Please try again.'); return; }
+        loadPortalUploads();
+      }).catch(function() { alert('Connection error. Please try again.'); });
+    }
+
+    /* ── Exhibitor & Attendee Registration panels ─────────────────────── */
+
+    var EXHIBITOR_STATUS_OPTIONS = ['Pending','Approved','Approval Waitlist'];
+    var ATTENDEE_STATUS_OPTIONS  = ['Pending','Approved','Waitlist','Deny'];
+
+    function statusBadge(s) {
+      var color = {Pending:'#d69e2e',Approved:'var(--green)',Denied:'#e53e3e',Waitlisted:'#718096'}[s] || '#718096';
+      return '<span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:' + color + '">' + esc(s||'Pending') + '</span>';
+    }
+
+    function saveRegStatus(type, rowIndex, status, badgeId, rows) {
+      server('updateRegistrationStatus', {type: type, rowIndex: rowIndex, status: status}).then(function(r) {
+        if (!r || !r.success) { alert('Save failed: ' + (r && r.message ? r.message : 'Unknown error')); return; }
+        var pending = 0;
+        rows.forEach(function(row) { if (row._row === rowIndex) row.status = status; if ((row.status||'Pending')==='Pending') pending++; });
+        var badge = document.getElementById(badgeId);
+        if (badge) badge.textContent = pending;
+      }).catch(function(err) {
+        alert('Save failed: ' + (err && err.message ? err.message : 'Unknown error'));
+      });
+    }
+
+    function renderExhibitorRegs(rows) {
+      var wrap = document.getElementById('exhibitorRegTableWrap');
+      if (!wrap) return;
+      var pending = rows.filter(function(r){ return (r.status||'Pending')==='Pending'; }).length;
+      var badge = document.getElementById('sbExhibitorReg');
+      if (badge) badge.textContent = pending;
+
+      if (!rows || !rows.length) {
+        wrap.innerHTML = '<div style="text-align:center;color:#a0aec0;font-size:14px;padding:48px">No exhibitor registrations have been submitted yet.</div>';
+        return;
+      }
+
+      var cols = [
+        {label:'Status',         key:'status',               special:'status'},
+        {label:'Submitted',      key:'timestamp'},
+        {label:'Full Name',      key:'fullName'},
+        {label:'Email',          key:'email'},
+        {label:'Phone',          key:'cellPhone'},
+        {label:'Campus / Company',key:'campusCompany'},
+        {label:'Career Cluster', key:'careerCluster'},
+        {label:'Returning?',     key:'returningExhibitor'},
+        {label:'Booth Staff',    key:'boothStaff'},
+        {label:'Student Ambassadors',key:'studentAmbassadors'},
+        {label:'Activity',       key:'activityDescription'},
+        {label:'Electricity?',   key:'electricityNeeded'},
+        {label:'Elec. Type',     key:'electricityType'},
+        {label:'WiFi?',          key:'wifiNeeded'},
+        {label:'Tables/Chairs',  key:'tablesChairs'},
+        {label:'Accommodations', key:'specialAccommodations'},
+        {label:'Giveaways',      key:'studentGiveaways'},
+        {label:'Meeting Avail.', key:'meetingAvailability'},
+        {label:'2nd Contact',    key:'secondaryName'},
+        {label:'2nd Email',      key:'secondaryEmail'},
+        {label:'2nd Phone',      key:'secondaryPhone'},
+      ];
+
+      var html = '<table style="min-width:1500px"><thead><tr><th>Action</th>' + cols.map(function(c){ return '<th>' + c.label + '</th>'; }).join('') + '</tr></thead><tbody>';
+      rows.forEach(function(row) {
+        html += '<tr>';
+        // Approve button column
+        if ((row.status || 'Pending') === 'Approved') {
+          html += '<td><span style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.5px">Approved</span></td>';
+        } else {
+          var safeEmail   = esc(row.email        || '');
+          var safeName    = esc(row.fullName      || '');
+          var safeCompany = esc(row.campusCompany || '');
+          html += '<td><button onclick="openApproveModal(' + row._row + ',\'' + safeEmail + '\',\'' + safeName + '\',\'' + safeCompany + '\')" ' +
+            'style="font-size:11px;font-weight:700;padding:4px 10px;background:#1a3a5c;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap">' +
+            'Approve</button></td>';
+        }
+        cols.forEach(function(col) {
+          if (col.special === 'status') {
+            html += '<td><select onchange="saveRegStatus(\'exhibitor\',' + row._row + ',this.value,\'sbExhibitorReg\',DATA.exhibitorReg)" style="font-size:12px;border:1px solid #e2e8f0;border-radius:4px;padding:2px 6px">';
+            EXHIBITOR_STATUS_OPTIONS.forEach(function(opt) {
+              html += '<option value="' + opt + '"' + ((row.status||'Pending')===opt?' selected':'') + '>' + opt + '</option>';
+            });
+            html += '</select></td>';
+          } else {
+            html += '<td style="font-size:12px;white-space:nowrap">' + esc(row[col.key]||'') + '</td>';
+          }
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+    }
+
+    function refreshExhibitorRegs() {
+      server('adminGetAll').then(function(res) {
+        if (res && res.data && res.data.exhibitorReg) {
+          DATA.exhibitorReg = res.data.exhibitorReg;
+          renderExhibitorRegs(DATA.exhibitorReg);
+        }
+      });
+    }
+
+    // Lookup table so onclick handlers can find row data without embedding JSON in HTML
+    var _attendeeRegMap = {};
+
+    function renderAttendeeRegs(rows) {
+      var wrap = document.getElementById('attendeeRegTableWrap');
+      if (!wrap) return;
+      var pending = rows.filter(function(r){ return (r.status||'Pending')==='Pending'; }).length;
+      var badge = document.getElementById('sbAttendeeReg');
+      if (badge) badge.textContent = pending;
+
+      if (!rows || !rows.length) {
+        wrap.innerHTML = '<div style="text-align:center;color:#a0aec0;font-size:14px;padding:48px">No attendee / campus registrations have been submitted yet.</div>';
+        return;
+      }
+
+      // Store rows by _row index so buttons can look them up safely
+      _attendeeRegMap = {};
+      rows.forEach(function(r) { _attendeeRegMap[r._row] = r; });
+
+      var cols = [
+        {label:'Status',        key:'status',           special:'status'},
+        {label:'Submitted',     key:'timestamp'},
+        {label:'Campus',        key:'campus'},
+        {label:'Org Number',    key:'campusOrgNumber'},
+        {label:'Region',        key:'region'},
+        {label:'Teacher / Lead',key:'teacherName'},
+        {label:'Email',         key:'email'},
+        {label:'Phone',         key:'cellPhone'},
+        {label:'Event Date',    key:'eventDate'},
+        {label:'Students',      key:'studentCount'},
+        {label:'Wheelchair Bus?',key:'wheelchairBus'},
+        {label:'Main Contact',  key:'mainContact'},
+        {label:'Alt Contact',   key:'altContactName'},
+        {label:'Paperwork',     key:'paperworkStatus'},
+        {label:'Principal Email',key:'principalEmail'},
+      ];
+
+      var html = '<table style="min-width:1200px"><thead><tr><th>Actions</th>' + cols.map(function(c){ return '<th>' + c.label + '</th>'; }).join('') + '</tr></thead><tbody>';
+      rows.forEach(function(row) {
+        html += '<tr>';
+        var curStatus = row.status || 'Pending';
+        var r = row._row;
+        var actionBtns = '';
+        if (curStatus !== 'Approved') {
+          actionBtns += '<button onclick="promptAttendeeStatus(' + r + ',\'Approved\')" ' +
+            'style="font-size:11px;font-weight:700;padding:3px 8px;background:#276749;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-right:3px">Approve</button>';
+        }
+        if (curStatus !== 'Waitlist') {
+          actionBtns += '<button onclick="promptAttendeeStatus(' + r + ',\'Waitlist\')" ' +
+            'style="font-size:11px;font-weight:700;padding:3px 8px;background:#d69e2e;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-right:3px">Waitlist</button>';
+        }
+        if (curStatus !== 'Deny') {
+          actionBtns += '<button onclick="promptAttendeeStatus(' + r + ',\'Deny\')" ' +
+            'style="font-size:11px;font-weight:700;padding:3px 8px;background:#e53e3e;color:#fff;border:none;border-radius:4px;cursor:pointer">Deny</button>';
+        }
+        if (!actionBtns) actionBtns = '<span style="font-size:11px;color:#a0aec0">—</span>';
+        html += '<td style="white-space:nowrap">' + actionBtns + '</td>';
+        cols.forEach(function(col) {
+          if (col.special === 'status') {
+            html += '<td><select onchange="saveRegStatus(\'attendee\',' + r + ',this.value,\'sbAttendeeReg\',DATA.attendeeReg)" style="font-size:12px;border:1px solid #e2e8f0;border-radius:4px;padding:2px 6px">';
+            ATTENDEE_STATUS_OPTIONS.forEach(function(opt) {
+              html += '<option value="' + opt + '"' + (curStatus===opt?' selected':'') + '>' + opt + '</option>';
+            });
+            html += '</select></td>';
+          } else {
+            html += '<td style="font-size:12px;white-space:nowrap">' + esc(row[col.key]||'') + '</td>';
+          }
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+    }
+
+    function refreshAttendeeRegs() {
+      server('adminGetAll').then(function(res) {
+        if (res && res.data && res.data.attendeeReg) {
+          DATA.attendeeReg = res.data.attendeeReg;
+          renderAttendeeRegs(DATA.attendeeReg);
+        }
+      });
+    }
+
+    /* ── Attendee Status Modal ─────────────────────────────────────────── */
+
+    var _attendeeStatusCtx = {};
+
+    function promptAttendeeStatus(rowIndex, newStatus) {
+      var row = _attendeeRegMap[rowIndex];
+      if (!row) { alert('Row data not found. Please refresh the panel.'); return; }
+      _attendeeStatusCtx = {
+        row:      row,
+        newStatus:newStatus,
+      };
+
+      var statusLabels = {
+        'Approved': 'Approved — campus confirmed, portal access granted.',
+        'Waitlist': 'Waitlist — portal access granted; meeting required before final confirmation.',
+        'Deny':     'Deny — campus will be notified they cannot be accommodated.',
+      };
+
+      document.getElementById('attendeeStatusSubtitle').textContent =
+        (row.campus || row.teacherName || 'Campus') + ' — Org #' + (row.campusOrgNumber || '');
+      document.getElementById('attendeeStatusInfo').innerHTML =
+        '<strong>New status:</strong> ' + esc(newStatus) + '<br>' +
+        '<span style="color:#718096">' + esc(statusLabels[newStatus] || '') + '</span><br><br>' +
+        '<strong>Email notification will be sent to:</strong> ' + esc(row.email || '(no email on file)');
+
+      var errEl = document.getElementById('attendeeStatusErr');
+      errEl.style.display = 'none'; errEl.textContent = '';
+      var btn = document.getElementById('attendeeStatusBtn');
+      btn.disabled = false; btn.textContent = 'Confirm & Send';
+
+      document.getElementById('attendeeStatusModal').style.display = 'flex';
+    }
+
+    function cancelAttendeeStatus() {
+      document.getElementById('attendeeStatusModal').style.display = 'none';
+      _attendeeStatusCtx = {};
+    }
+
+    function confirmAttendeeStatus() {
+      var ctx = _attendeeStatusCtx;
+      var btn = document.getElementById('attendeeStatusBtn');
+      var errEl = document.getElementById('attendeeStatusErr');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Sending\u2026';
+
+      server('updateAttendeeStatus', {
+        regRow:      ctx.row._row,
+        status:      ctx.newStatus,
+        teacherName: ctx.row.teacherName || '',
+        campus:      ctx.row.campus      || '',
+        email:       ctx.row.email       || '',
+        orgNumber:   ctx.row.campusOrgNumber || '',
+      }).then(function(res) {
+        btn.disabled = false; btn.textContent = 'Confirm & Send';
+        if (!res || !res.success) {
+          errEl.textContent = (res && res.message) || 'Failed to update status. Please try again.';
+          errEl.style.display = 'block';
+          return;
+        }
+        // Update local data and badge
+        ctx.row.status = ctx.newStatus;
+        var pending = (DATA.attendeeReg || []).filter(function(r){ return (r.status||'Pending')==='Pending'; }).length;
+        var badge = document.getElementById('sbAttendeeReg');
+        if (badge) badge.textContent = pending;
+        document.getElementById('attendeeStatusModal').style.display = 'none';
+        _attendeeStatusCtx = {};
+      }).catch(function() {
+        btn.disabled = false; btn.textContent = 'Confirm & Send';
+        errEl.textContent = 'Connection error. Please try again.';
+        errEl.style.display = 'block';
+      });
+    }
+
+    /* ── Vendor Approval Modal ─────────────────────────────────────────── */
+
+    var _approveCtx = {};
+
+    function openApproveModal(regRow, email, fullName, campusCompany) {
+      _approveCtx = { regRow: regRow, email: email, fullName: fullName, campusCompany: campusCompany };
+      var subtitle = document.getElementById('approveModalSubtitle');
+      subtitle.textContent = (campusCompany || fullName) + ' — ' + email;
+      document.getElementById('approveBoothInput').value = '';
+      var errEl = document.getElementById('approveModalErr');
+      errEl.style.display = 'none'; errEl.textContent = '';
+      document.getElementById('approveModalBtn').disabled = false;
+      document.getElementById('approveModalBtn').textContent = 'Approve & Notify';
+      var modal = document.getElementById('approveVendorModal');
+      modal.style.display = 'flex';
+      document.getElementById('approveBoothInput').focus();
+    }
+
+    function closeApproveModal() {
+      document.getElementById('approveVendorModal').style.display = 'none';
+      _approveCtx = {};
+    }
+
+    function submitVendorApproval() {
+      var vendorId = document.getElementById('approveBoothInput').value.trim();
+      var errEl    = document.getElementById('approveModalErr');
+      errEl.style.display = 'none';
+      if (!vendorId) { errEl.textContent = 'Please enter a booth / vendor number.'; errEl.style.display = 'block'; return; }
+
+      var btn = document.getElementById('approveModalBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Approving\u2026';
+
+      server('approveVendor', {
+        regRow:       _approveCtx.regRow,
+        vendorId:     vendorId,
+        email:        _approveCtx.email,
+        fullName:     _approveCtx.fullName,
+        campusCompany:_approveCtx.campusCompany,
+      }).then(function(res) {
+        btn.disabled = false;
+        btn.textContent = 'Approve & Notify';
+        if (!res || !res.success) {
+          errEl.textContent = (res && res.message) || 'Approval failed. Please try again.';
+          errEl.style.display = 'block';
+          return;
+        }
+        closeApproveModal();
+        // Refresh the exhibitor reg panel to show updated status
+        refreshExhibitorRegs();
+        alert('Approved! ' + (_approveCtx.campusCompany || _approveCtx.fullName) + ' has been notified with booth number ' + vendorId + '.');
+      }).catch(function(err) {
+        btn.disabled = false;
+        btn.textContent = 'Approve & Notify';
+        errEl.textContent = 'Connection error. Please try again.';
+        errEl.style.display = 'block';
+      });
+    }
+
+    /* ──────────────────────────────────────────────────────────────────── */
+
+    function renderAllergyMatrix(vendors) {
+      var el = document.getElementById('allergyMatrix');
+      if (!el) return;
+      var allergens = [
+        { key: 'allergyMilk',      label: 'Milk' },
+        { key: 'allergyEggs',      label: 'Eggs' },
+        { key: 'allergyFish',      label: 'Fish' },
+        { key: 'allergyShellfish', label: 'Shellfish' },
+        { key: 'allergyTreeNuts',  label: 'Tree Nuts' },
+        { key: 'allergyPeanuts',   label: 'Peanuts' },
+        { key: 'allergyWheat',     label: 'Wheat' },
+        { key: 'allergySoy',       label: 'Soy' },
+        { key: 'allergySesame',    label: 'Sesame' },
+        { key: 'isVegetarian',     label: 'Vegetarian' },
+        { key: 'isVegan',          label: 'Vegan' },
+      ];
+      var active = vendors.filter(function(v){ return String(v.status||'').trim() === 'Active'; });
+      if (!active.length) {
+        el.innerHTML = '<p style="color:#a0aec0;font-size:14px;padding:24px 0">No active vendors found. Vendor allergy disclosures will appear here once submitted through the Vendor Portal.</p>';
+        return;
+      }
+      var html = '<div class="table-wrap"><table><thead><tr><th>Vendor</th>';
+      allergens.forEach(function(a){ html += '<th style="font-size:11px;text-align:center">'+esc(a.label)+'</th>'; });
+      html += '</tr></thead><tbody>';
+      active.forEach(function(v) {
+        html += '<tr><td style="font-weight:600;font-size:13px">'+esc(v.companyName||v.vendorId)+'</td>';
+        allergens.forEach(function(a) {
+          var isYes = String(v[a.key]||'').trim().toLowerCase() === 'yes';
+          html += '<td style="text-align:center">' +
+            (isYes
+              ? '<span style="display:inline-block;background:rgba(201,168,76,0.15);color:#7a5c00;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;border:1px solid rgba(201,168,76,0.3)">YES</span>'
+              : '<span style="font-size:11px;color:#cbd5e0">—</span>') +
+            '</td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table></div>';
+      html += '<p style="font-size:12px;color:#a0aec0;margin-top:10px">Disclosures are submitted by vendors through the Vendor Portal and are read-only here.</p>';
+      el.innerHTML = html;
+    }
+
+    // ── PANEL NAVIGATION ─────────────────────────────────────────
+    function showPanel(name, el) {
+      document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+      var p = document.getElementById('panel-'+name);
+      if (p) p.classList.add('active');
+      document.querySelectorAll('.sidebar-item').forEach(function(i){i.classList.remove('active');});
+      if (el) el.classList.add('active');
+    }
+
+    // ── TABLE RENDERING ───────────────────────────────────────────
+    var COL_DEFS = {
+      vendors:   ['vendorId','companyName','contact','email','status','notes','documentLinks'],
+      documents: ['docName','url','accessLevel','category'],
+      campuses:  ['campusName','orgNumber','region','principalName','principalEmail',
+                  'officeManagerName','officeManagerEmail','campusPhone','regionalDirector','executiveDirector',
+                  'trustee','disDRegion'],
+    };
+    var READONLY_COLS = {};
+
+    function renderTable(kind, rows) {
+      var tbody = document.getElementById('tbody-'+kind);
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      (rows || []).forEach(function(row){ tbody.appendChild(buildRow(kind, row)); });
+    }
+
+    function buildRow(kind, row) {
+      var tr = document.createElement('tr');
+      var cols = COL_DEFS[kind];
+      var readonlyCols = READONLY_COLS[kind] || [];
+      cols.forEach(function(key){
+        var td = document.createElement('td');
+        var val = row[key] || '';
+        if (readonlyCols.indexOf(key) !== -1) {
+          // Read-only display + hidden input to preserve value on save
+          td.style.cssText = 'font-size:12px;color:#a0aec0;padding:6px 8px;min-width:70px';
+          td.textContent = val || '—';
+          var hidden = document.createElement('input');
+          hidden.type = 'hidden'; hidden.setAttribute('data-k', key); hidden.value = val;
+          td.appendChild(hidden);
+        } else if (key === 'status') {
+          var statusOpts = (kind === 'checklist') ? ['Complete','Pending'] : ['Active','Inactive'];
+          var sel = document.createElement('select');
+          sel.setAttribute('data-k', key);
+          statusOpts.forEach(function(opt){
+            var o = document.createElement('option');
+            o.value = opt; o.textContent = opt;
+            if (val === opt) o.selected = true;
+            sel.appendChild(o);
+          });
+          td.appendChild(sel);
+        } else if (key === 'accessLevel') {
+          var sel2 = document.createElement('select');
+          sel2.setAttribute('data-k', key);
+          ['vendor','teacher','both'].forEach(function(opt){
+            var o = document.createElement('option');
+            o.value = opt; o.textContent = opt;
+            if (val === opt) o.selected = true;
+            sel2.appendChild(o);
+          });
+          td.appendChild(sel2);
+        } else if (key === 'category') {
+          var sel3 = document.createElement('select');
+          sel3.setAttribute('data-k', key);
+          ['', 'Set Up', 'Forms', 'Schedules', 'Procedures', 'Safety'].forEach(function(opt) {
+            var o = document.createElement('option');
+            o.value = opt; o.textContent = opt || '-- Select --';
+            if (val === opt) o.selected = true;
+            sel3.appendChild(o);
+          });
+          td.appendChild(sel3);
+        } else {
+          var inp = document.createElement('input');
+          inp.setAttribute('data-k', key);
+          inp.value = val;
+          td.appendChild(inp);
+        }
+        tr.appendChild(td);
+      });
+      // Delete button
+      var tdDel = document.createElement('td');
+      var btn   = document.createElement('button');
+      btn.className = 'btn btn-danger';
+      btn.textContent = '✕';
+      btn.onclick = function(){ tr.remove(); };
+      tdDel.appendChild(btn);
+      tr.appendChild(tdDel);
+      return tr;
+    }
+
+    function addRow(kind) {
+      var tbody = document.getElementById('tbody-'+kind);
+      if (!tbody) return;
+      tbody.appendChild(buildRow(kind, {}));
+    }
+
+    function collectRows(kind) {
+      var cols = COL_DEFS[kind];
+      var rows = [];
+      document.querySelectorAll('#tbody-'+kind+' tr').forEach(function(tr){
+        var obj = {};
+        cols.forEach(function(k){
+          var el = tr.querySelector('[data-k="'+k+'"]');
+          obj[k] = el ? el.value : '';
+        });
+        if (Object.keys(obj).some(function(k){ return String(obj[k]).trim() !== ''; })) {
+          rows.push(obj);
+        }
+      });
+      return rows;
+    }
+
+    // ── SAVE HANDLERS ─────────────────────────────────────────────
+    function saveTable(kind) {
+      var rows = collectRows(kind);
+      DATA[kind] = rows;
+      doSave(kind, rows, kind+'-msg');
+    }
+
+    function saveEventInfo() {
+      var payload = {};
+      Object.keys(DATA.eventInfo || {}).forEach(function(k){ payload[k] = DATA.eventInfo[k]; });
+      ['eventName','date','time','location','address','description'].forEach(function(k){
+        var el = document.getElementById('ei_'+k);
+        if (el) payload[k] = el.value;
+      });
+      DATA.eventInfo = payload;
+      // Update overview
+      document.getElementById('ov-name').textContent = payload.eventName || '—';
+      document.getElementById('ov-date').textContent = payload.date || '—';
+      document.getElementById('ov-loc').textContent  = payload.location || '—';
+      doSave('eventInfo', payload, 'ei-msg');
+    }
+
+    function saveSiteContent() {
+      var msgEl = document.getElementById('sc-msg');
+      if (msgEl) { msgEl.className = 'save-msg'; msgEl.textContent = 'Saving\u2026'; }
+
+      function buildAndSave(serverSc) {
+        var payload = {};
+        // 1. Server state first (preserves brandingFolderId and any other injected keys)
+        Object.keys(serverSc || {}).forEach(function(k){ payload[k] = serverSc[k]; });
+        // 2. In-memory state (may have freshly uploaded image URLs not yet on server)
+        Object.keys(DATA.siteContent || {}).forEach(function(k){ payload[k] = DATA.siteContent[k]; });
+        // 3. Form fields win (user's current edits)
+        ['siteTitle','orgLine','introText','aboutText','heroVideoUrl',
+         'vendorCardTitle','vendorCardDesc','teacherCardTitle','teacherCardDesc'].forEach(function(k){
+          var el = document.getElementById('sc_'+k);
+          if (el) payload[k] = el.value;
+        });
+        ['showVendorPortal','showTeacherPortal','showRegistrationPortal','showSchedule'].forEach(function(k){
+          var el = document.getElementById('sc_'+k);
+          payload[k] = (el && el.checked) ? 'Yes' : 'No';
+        });
+        DATA.siteContent = payload;
+        doSave('siteContent', payload, 'sc-msg');
+      }
+
+      // Fetch current server state first to avoid wiping injected keys
+      server('getSiteContent').then(function(latest){
+        buildAndSave((latest && latest.data) || {});
+      }).catch(function(){
+        buildAndSave({});
+      });
+    }
+
+    // ── BRANDING MEDIA UPLOAD ──────────────────────────────────────
+    function renderBrandingPreview(kind, url) {
+      var el = document.getElementById(kind === 'logo' ? 'logoPreview' : 'bgImagePreview');
+      if (!el) return;
+      if (url) {
+        el.innerHTML = '<div style="display:flex;align-items:center;gap:10px">' +
+          '<img src="' + url + '" style="max-height:90px;max-width:240px;border:1px solid var(--border);border-radius:6px;object-fit:contain;background:#0a1628;padding:4px">' +
+          '<button class="btn btn-outline" style="padding:6px 14px" onclick="removeBranding(\'' + kind + '\')">Remove</button>' +
+          '</div>';
+      } else {
+        el.innerHTML = '<span style="font-size:12px;color:#a0aec0">No ' + (kind === 'logo' ? 'logo' : 'background image') + ' uploaded yet.</span>';
+      }
+    }
+
+    function removeBranding(kind) {
+      var msgEl = document.getElementById(kind === 'logo' ? 'logo-msg' : 'bgImage-msg');
+      if (msgEl) { msgEl.className = 'save-msg'; msgEl.textContent = 'Removing…'; }
+      server('clearBrandingMedia', kind).then(function(res){
+        if (res && res.success) {
+          var key = (kind === 'logo') ? 'logoUrl' : 'heroBackgroundImageUrl';
+          DATA.siteContent = DATA.siteContent || {};
+          DATA.siteContent[key] = '';
+          renderBrandingPreview(kind, '');
+          if (kind === 'logo') {
+            var adminBadge = document.getElementById('adminBadge');
+            if (adminBadge) { adminBadge.classList.remove('has-logo'); adminBadge.textContent = '⚙'; }
+          }
+          if (msgEl) { msgEl.className = 'save-msg ok'; msgEl.textContent = '✓ Removed.'; setTimeout(function(){ msgEl.textContent=''; }, 3000); }
+        } else {
+          if (msgEl) { msgEl.className = 'save-msg err'; msgEl.textContent = '✗ ' + (res && res.message || 'Remove failed.'); }
+        }
+      }).catch(function(){
+        if (msgEl) { msgEl.className = 'save-msg err'; msgEl.textContent = 'Connection error. Please try again.'; }
+      });
+    }
+
+    function uploadBranding(kind) {
+      var inputId = (kind === 'logo') ? 'logoFile' : 'bgImageFile';
+      var msgId   = (kind === 'logo') ? 'logo-msg' : 'bgImage-msg';
+      var input = document.getElementById(inputId);
+      var msgEl = document.getElementById(msgId);
+      if (!input || !input.files || !input.files.length) {
+        if (msgEl) { msgEl.className = 'save-msg err'; msgEl.textContent = 'Please choose a file first.'; }
+        return;
+      }
+      var file = input.files[0];
+      if (file.size > 15 * 1024 * 1024) {
+        if (msgEl) { msgEl.className = 'save-msg err'; msgEl.textContent = 'File too large (max 15 MB).'; }
+        return;
+      }
+      if (msgEl) { msgEl.className = 'save-msg'; msgEl.textContent = 'Uploading…'; }
+
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var base64 = e.target.result.split(',')[1];
+        var payload = { kind: kind, fileName: file.name, mimeType: file.type || 'application/octet-stream', base64: base64 };
+        server('uploadBrandingMedia', payload).then(function(res){
+          if (res && res.success) {
+            if (msgEl) { msgEl.className = 'save-msg ok'; msgEl.textContent = '✓ Uploaded.'; setTimeout(function(){ msgEl.textContent=''; }, 3000); }
+            var key = (kind === 'logo') ? 'logoUrl' : 'heroBackgroundImageUrl';
+            DATA.siteContent = DATA.siteContent || {};
+            DATA.siteContent[key] = res.url;
+            renderBrandingPreview(kind, res.url);
+            input.value = '';
+          } else {
+            if (msgEl) { msgEl.className = 'save-msg err'; msgEl.textContent = '✗ ' + (res && res.message || 'Upload failed.'); }
+          }
+        }).catch(function(){
+          if (msgEl) { msgEl.className = 'save-msg err'; msgEl.textContent = 'Connection error. Please try again.'; }
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function saveRegistrationSettings() {
+      var payload = {};
+      Object.keys(DATA.siteContent || {}).forEach(function(k){ payload[k] = DATA.siteContent[k]; });
+      ['registrationCode','adminEmail'].forEach(function(k){
+        var el = document.getElementById('sc_'+k);
+        if (el) payload[k] = el.value.trim();
+      });
+      var openEl = document.getElementById('sc_registrationOpen');
+      payload['registrationOpen'] = (openEl && openEl.checked) ? 'Yes' : 'No';
+      DATA.siteContent = payload;
+      doSave('siteContent', payload, 'reg-msg');
+    }
+
+    // ── INIT ──────────────────────────────────────────────────────
+    bootAdmin();
+
+    function doSave(kind, payload, msgId) {
+      var msgEl = document.getElementById(msgId);
+      if (msgEl) { msgEl.className = 'save-msg'; msgEl.textContent = 'Saving…'; }
+      server('adminUpdate', kind, payload).then(function(res){
+        if (!msgEl) return;
+        if (res.success) {
+          msgEl.className = 'save-msg ok';
+          msgEl.textContent = '✓ ' + res.message;
+          setTimeout(function(){ msgEl.textContent = ''; }, 3000);
+        } else {
+          msgEl.className = 'save-msg err';
+          msgEl.textContent = '✗ ' + res.message;
+        }
+      }).catch(function(){
+        if (msgEl) { msgEl.className = 'save-msg err'; msgEl.textContent = 'Save failed. Please try again.'; }
+      });
+    }
+
+    // ── CSV CAMPUS UPLOAD ─────────────────────────────────────────
+    var _parsedCampusRows = [];
+
+    var CSV_HEADER_MAP = {
+      // Campus name
+      campusname: 'campusName', campus: 'campusName', school: 'campusName', campusschool: 'campusName',
+      // Org number
+      orgnumber: 'orgNumber', org: 'orgNumber', orgno: 'orgNumber', 'org number': 'orgNumber', orgnum: 'orgNumber', campusnumber: 'orgNumber',
+      // Region
+      region: 'region', area: 'region', zone: 'region',
+      // Principal
+      principalname: 'principalName', principal: 'principalName', principalsfirstlast: 'principalName',
+      // Principal email
+      principalemail: 'principalEmail', principalsemailaddress: 'principalEmail', 'principal email': 'principalEmail',
+      // Office manager
+      officemanagername: 'officeManagerName', officemanager: 'officeManagerName', om: 'officeManagerName', 'office manager': 'officeManagerName',
+      // Office manager email
+      officemanageremail: 'officeManagerEmail', omemail: 'officeManagerEmail', 'office manager email': 'officeManagerEmail',
+      // Phone
+      campusphone: 'campusPhone', phone: 'campusPhone', phonenumber: 'campusPhone', campusphonenumber: 'campusPhone',
+      // Regional director
+      regionaldirector: 'regionalDirector', rd: 'regionalDirector', 'regional director': 'regionalDirector',
+      // Executive director
+      executivedirector: 'executiveDirector', ed: 'executiveDirector', 'executive director': 'executiveDirector', executiveprincipal: 'executiveDirector',
+      // Trustee
+      trustee: 'trustee', boardtrustee: 'trustee', 'board trustee': 'trustee', trusteename: 'trustee',
+      // DISD Region
+      disdregion: 'disDRegion', 'disd region': 'disDRegion', districtregion: 'disDRegion', 'district region': 'disDRegion', disdarea: 'disDRegion', disddistrict: 'disDRegion',
+    };
+
+    var _rawCsvHeaders = [];
+    var _rawCsvData    = [];
+
+    function parseCsvLine(line) {
+      // RFC-4180 aware split: handles quoted fields containing commas
+      var result = [], cur = '', inQ = false;
+      for (var i = 0; i < line.length; i++) {
+        var ch = line[i];
+        if (ch === '"') {
+          if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+          else inQ = !inQ;
+        } else if (ch === ',' && !inQ) {
+          result.push(cur.trim()); cur = '';
+        } else {
+          cur += ch;
+        }
+      }
+      result.push(cur.trim());
+      return result;
+    }
+
+    /* ── Campus read-only table with per-row edit ──────────────────────── */
+
+    var _campusMap = {}; // rowIndex → row data for safe onclick access
+
+    var CAMPUS_COLS = [
+      {label:'Campus Name',       key:'campusName'},
+      {label:'Org #',             key:'orgNumber'},
+      {label:'Region',            key:'region'},
+      {label:'Principal',         key:'principalName'},
+      {label:'Principal Email',   key:'principalEmail'},
+      {label:'Office Manager',    key:'officeManagerName'},
+      {label:'OM Email',          key:'officeManagerEmail'},
+      {label:'Campus Phone',      key:'campusPhone'},
+      {label:'Regional Director', key:'regionalDirector'},
+      {label:'Executive Director',key:'executiveDirector'},
+      {label:'Trustee',           key:'trustee'},
+      {label:'DISD Region',       key:'disDRegion'},
+    ];
+
+    function renderCampusesTable(rows) {
+      var wrap = document.getElementById('campusTableWrap');
+      if (!wrap) return;
+      _campusMap = {};
+      if (!rows || !rows.length) {
+        wrap.innerHTML = '<div style="text-align:center;color:#a0aec0;font-size:14px;padding:48px">No campus data yet. Upload a CSV above to get started.</div>';
+        return;
+      }
+      rows.forEach(function(r) { _campusMap[r._row] = r; });
+      var html = '<table><thead><tr>' +
+        CAMPUS_COLS.map(function(c){ return '<th>' + c.label + '</th>'; }).join('') +
+        '<th></th></tr></thead><tbody id="tbody-campuses-ro">';
+      rows.forEach(function(row) {
+        html += buildCampusViewRow(row);
+      });
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+    }
+
+    function buildCampusViewRow(row) {
+      var r = row._row;
+      var cells = CAMPUS_COLS.map(function(c) {
+        return '<td style="font-size:12px;white-space:nowrap;padding:6px 8px">' + esc(row[c.key]||'') + '</td>';
+      }).join('');
+      return '<tr id="campus-row-' + r + '">' + cells +
+        '<td style="white-space:nowrap">' +
+        '<button onclick="editCampusRow(' + r + ')" style="font-size:11px;font-weight:700;padding:3px 10px;background:#1a3a5c;color:#fff;border:none;border-radius:4px;cursor:pointer">Edit</button>' +
+        '</td></tr>';
+    }
+
+    function editCampusRow(rowIndex) {
+      var row = _campusMap[rowIndex];
+      if (!row) return;
+      var tr = document.getElementById('campus-row-' + rowIndex);
+      if (!tr) return;
+      var cells = CAMPUS_COLS.map(function(c) {
+        return '<td style="padding:4px 6px"><input data-k="' + c.key + '" value="' + esc(row[c.key]||'') +
+          '" style="width:100%;min-width:80px;font-size:12px;padding:3px 6px;border:1px solid #e2e8f0;border-radius:4px;box-sizing:border-box"></td>';
+      }).join('');
+      tr.innerHTML = cells +
+        '<td style="white-space:nowrap">' +
+        '<button onclick="saveCampusRow(' + rowIndex + ')" style="font-size:11px;font-weight:700;padding:3px 8px;background:#276749;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-right:3px">Save</button>' +
+        '<button onclick="cancelCampusRow(' + rowIndex + ')" style="font-size:11px;font-weight:700;padding:3px 8px;background:#718096;color:#fff;border:none;border-radius:4px;cursor:pointer">Cancel</button>' +
+        '</td>';
+    }
+
+    function cancelCampusRow(rowIndex) {
+      var row = _campusMap[rowIndex];
+      if (!row) return;
+      var tr = document.getElementById('campus-row-' + rowIndex);
+      if (tr) tr.outerHTML = buildCampusViewRow(row);
+    }
+
+    function saveCampusRow(rowIndex) {
+      var tr = document.getElementById('campus-row-' + rowIndex);
+      if (!tr) return;
+      var payload = { _row: rowIndex };
+      tr.querySelectorAll('input[data-k]').forEach(function(inp) {
+        payload[inp.getAttribute('data-k')] = inp.value.trim();
+      });
+      var saveBtn = tr.querySelector('button');
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving\u2026'; }
+
+      server('updateCampusRow', payload).then(function(res) {
+        var msgEl = document.getElementById('campuses-msg');
+        if (!res || !res.success) {
+          if (msgEl) { msgEl.className = 'save-msg err'; msgEl.textContent = '✗ ' + (res && res.message || 'Save failed.'); }
+          if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+          return;
+        }
+        // Update local data and re-render row in view mode
+        Object.assign(_campusMap[rowIndex], payload);
+        var updatedRow = _campusMap[rowIndex];
+        var existingTr = document.getElementById('campus-row-' + rowIndex);
+        if (existingTr) existingTr.outerHTML = buildCampusViewRow(updatedRow);
+        // Also update DATA.campuses
+        if (DATA.campuses) {
+          var idx = DATA.campuses.findIndex(function(c){ return c._row === rowIndex; });
+          if (idx > -1) Object.assign(DATA.campuses[idx], payload);
+        }
+        if (msgEl) {
+          msgEl.className = 'save-msg ok'; msgEl.textContent = '✓ Saved.';
+          setTimeout(function(){ msgEl.textContent = ''; }, 2500);
+        }
+      }).catch(function() {
+        var msgEl = document.getElementById('campuses-msg');
+        if (msgEl) { msgEl.className = 'save-msg err'; msgEl.textContent = 'Connection error. Please try again.'; }
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+      });
+    }
+
+    /* ──────────────────────────────────────────────────────────────────── */
+
+    function parseCampusCsv(input) {
+      var file = input.files[0];
+      if (!file) return;
+      var statusEl = document.getElementById('csvParseStatus');
+      statusEl.textContent = 'Reading ' + file.name + '…';
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var text = e.target.result;
+        var lines = text.split(/\r?\n/).filter(function(l){ return l.trim() !== ''; });
+        if (lines.length < 2) {
+          statusEl.textContent = 'CSV must have a header row and at least one data row.';
+          return;
+        }
+
+        _rawCsvHeaders = parseCsvLine(lines[0]);
+        _rawCsvData = [];
+        for (var i = 1; i < lines.length; i++) {
+          _rawCsvData.push(parseCsvLine(lines[i]));
+        }
+
+        statusEl.textContent = 'Found ' + _rawCsvHeaders.length + ' column' + (_rawCsvHeaders.length === 1 ? '' : 's') + ' and ' + _rawCsvData.length + ' data row' + (_rawCsvData.length === 1 ? '' : 's') + '. Assign columns below.';
+
+        // Populate each mapper dropdown with raw headers
+        var FIELDS = ['campusName','orgNumber','region','principalName','principalEmail',
+                      'officeManagerName','officeManagerEmail','campusPhone',
+                      'regionalDirector','executiveDirector','trustee','disDRegion'];
+        FIELDS.forEach(function(field) {
+          var sel = document.getElementById('map_' + field);
+          if (!sel) return;
+          sel.innerHTML = '<option value="">-- Skip this column --</option>';
+          _rawCsvHeaders.forEach(function(h, idx) {
+            sel.innerHTML += '<option value="'+idx+'">'+esc(h)+'</option>';
+          });
+          sel.value = '';
+          sel.classList.remove('mapped');
+        });
+
+        // Auto-pre-select using CSV_HEADER_MAP as a hint
+        _rawCsvHeaders.forEach(function(h, idx) {
+          var normalized = h.trim().toLowerCase().replace(/\s+/g,' ');
+          var mapped = CSV_HEADER_MAP[normalized] || CSV_HEADER_MAP[normalized.replace(/\s/g,'')] || null;
+          if (mapped) {
+            var sel = document.getElementById('map_' + mapped);
+            if (sel && sel.value === '') {
+              sel.value = String(idx);
+              sel.classList.add('mapped');
+            }
+          }
+        });
+
+        document.getElementById('csvMapperWrap').style.display = '';
+        document.getElementById('csvPreviewWrap').style.display = 'none';
+        document.getElementById('mapperErr').textContent = '';
+      };
+      reader.readAsText(file);
+    }
+
+    function highlightMapper(sel) {
+      sel.classList.toggle('mapped', sel.value !== '');
+    }
+
+    function applyCsvMapping() {
+      var errEl = document.getElementById('mapperErr');
+      errEl.textContent = '';
+
+      var FIELDS = ['campusName','orgNumber','region','principalName','principalEmail',
+                    'officeManagerName','officeManagerEmail','campusPhone',
+                    'regionalDirector','executiveDirector','trustee','disDRegion'];
+
+      // Build colIndex map: field -> column index (or null)
+      var fieldToIdx = {};
+      FIELDS.forEach(function(field) {
+        var sel = document.getElementById('map_' + field);
+        var v = sel ? sel.value : '';
+        fieldToIdx[field] = (v !== '') ? parseInt(v, 10) : null;
+      });
+
+      // Build rows
+      var rows = [];
+      _rawCsvData.forEach(function(cells) {
+        var obj = { campusName: '', orgNumber: '', region: '', principalName: '', principalEmail: '',
+                    officeManagerName: '', officeManagerEmail: '', campusPhone: '',
+                    regionalDirector: '', executiveDirector: '', trustee: '', disDRegion: '' };
+        FIELDS.forEach(function(field) {
+          var idx = fieldToIdx[field];
+          if (idx !== null && cells[idx] !== undefined) obj[field] = cells[idx];
+        });
+        // Only include row if at least one field has data
+        var hasData = FIELDS.some(function(f){ return obj[f].trim() !== ''; });
+        if (hasData) rows.push(obj);
+      });
+
+      if (!rows.length) {
+        errEl.textContent = 'No rows produced. Make sure at least Campus Name or Org # is mapped to a column with data.';
+        return;
+      }
+
+      var hasIdentifier = rows.some(function(r){ return r.campusName.trim() || r.orgNumber.trim(); });
+      if (!hasIdentifier) {
+        errEl.textContent = 'Please map at least Campus Name or Org # so each campus can be identified.';
+        return;
+      }
+
+      _parsedCampusRows = rows;
+      document.getElementById('csvMapperWrap').style.display = 'none';
+      showCsvPreview(rows);
+    }
+
+    function showCsvPreview(rows) {
+      document.getElementById('csvRowCount').textContent = rows.length + ' row' + (rows.length === 1 ? '' : 's') + ' ready to upload.';
+      var cols    = ['campusName','orgNumber','region','principalName','principalEmail','officeManagerName','campusPhone','regionalDirector'];
+      var headers = ['Campus','Org #','Region','Principal','Principal Email','Office Manager','Phone','Regional Director'];
+      var html = '<table><thead><tr>';
+      headers.forEach(function(h){ html += '<th>'+esc(h)+'</th>'; });
+      html += '</tr></thead><tbody>';
+      rows.slice(0, 10).forEach(function(r){
+        html += '<tr>';
+        cols.forEach(function(k){ html += '<td style="font-size:12px">'+esc(r[k]||'')+'</td>'; });
+        html += '</tr>';
+      });
+      if (rows.length > 10) html += '<tr><td colspan="'+cols.length+'" style="text-align:center;font-size:12px;color:#a0aec0">… and '+(rows.length-10)+' more rows</td></tr>';
+      html += '</tbody></table>';
+      document.getElementById('csvPreviewTable').innerHTML = html;
+      document.getElementById('csvPreviewWrap').style.display = 'block';
+      document.getElementById('campusUpload-msg').textContent = '';
+    }
+
+    function toggleAddCampusForm() {
+      var wrap = document.getElementById('addCampusFormWrap');
+      wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function submitAddCampus() {
+      var orgNum = document.getElementById('ac_orgNumber').value.trim();
+      var campusName = document.getElementById('ac_campusName').value.trim();
+      if (!orgNum || !campusName) {
+        showMsg('addCampus-msg', 'Campus Name and Org Number are required.', true);
+        return;
+      }
+      var payload = {
+        campusName:        campusName,
+        orgNumber:         orgNum,
+        region:            document.getElementById('ac_region').value.trim(),
+        principalName:     document.getElementById('ac_principalName').value.trim(),
+        principalEmail:    document.getElementById('ac_principalEmail').value.trim(),
+        campusPhone:       document.getElementById('ac_campusPhone').value.trim(),
+        regionalDirector:  document.getElementById('ac_regionalDirector').value.trim(),
+        executiveDirector: document.getElementById('ac_executiveDirector').value.trim(),
+        trustee:           document.getElementById('ac_trustee').value.trim(),
+        disDRegion:        document.getElementById('ac_disDRegion').value.trim(),
+      };
+      showMsg('addCampus-msg', 'Saving\u2026');
+      server('upsertCampuses', [payload]).then(function(res) {
+        if (res && res.success) {
+          showMsg('addCampus-msg', 'Campus saved. Refreshing table\u2026');
+          ['ac_campusName','ac_orgNumber','ac_region','ac_principalName','ac_principalEmail',
+           'ac_campusPhone','ac_regionalDirector','ac_executiveDirector','ac_trustee','ac_disDRegion']
+            .forEach(function(id){ document.getElementById(id).value = ''; });
+          server('adminGetAll').then(function(all) {
+            if (all && all.data && all.data.campuses) {
+              DATA.campuses = all.data.campuses;
+              renderCampusTable(DATA.campuses);
+            }
+          });
+        } else {
+          showMsg('addCampus-msg', (res && res.message) || 'Save failed.', true);
+        }
+      }).catch(function(e){ showMsg('addCampus-msg', 'Error: ' + e.message, true); });
+    }
+
+    // ─── FAQ MANAGEMENT ───────────────────────────────────────────────────────
+    function escHtml(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function renderFaqEditor(faqs) {
+      var wrap = document.getElementById('faqEditorWrap');
+      if (!wrap) return;
+      wrap.innerHTML = '';
+      (faqs || []).forEach(function(f) { wrap.appendChild(buildFaqRow(f)); });
+    }
+
+    function buildFaqRow(f) {
+      var div = document.createElement('div');
+      div.className = 'faq-editor-row';
+      div.style.cssText = 'border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;background:var(--card-bg);';
+      div.innerHTML =
+        '<div style="margin-bottom:8px"><label class="field-label">Question</label>' +
+        '<input class="field-input faq-q-input" value="' + escHtml(f.question || '') + '" style="width:100%"></div>' +
+        '<div><label class="field-label">Answer</label>' +
+        '<textarea class="field-input faq-a-input" rows="3" style="resize:vertical;width:100%">' + escHtml(f.answer || '') + '</textarea></div>' +
+        '<div style="text-align:right;margin-top:8px"><button class="btn btn-danger" onclick="this.closest(\'.faq-editor-row\').remove()">Remove</button></div>';
+      return div;
+    }
+
+    function addFaqRow() {
+      var wrap = document.getElementById('faqEditorWrap');
+      if (wrap) wrap.appendChild(buildFaqRow({ question: '', answer: '' }));
+    }
+
+    function saveAllFaqs() {
+      var rows = [];
+      document.querySelectorAll('.faq-editor-row').forEach(function(div) {
+        var q = div.querySelector('.faq-q-input').value.trim();
+        var a = div.querySelector('.faq-a-input').value.trim();
+        if (q) rows.push({ question: q, answer: a });
+      });
+      showMsg('faq-msg', 'Saving\u2026');
+      server('saveFaqs', rows).then(function(res) {
+        if (res && res.success) {
+          showMsg('faq-msg', 'FAQs saved successfully.');
+          DATA.faqs = rows;
+        } else {
+          showMsg('faq-msg', (res && res.message) || 'Save failed.', true);
+        }
+      }).catch(function(e){ showMsg('faq-msg', 'Error: ' + e.message, true); });
+    }
+    // ──────────────────────────────────────────────────────────────────────────
+
+    function clearCsvPreview() {
+      _parsedCampusRows = [];
+      _rawCsvHeaders = [];
+      _rawCsvData = [];
+      document.getElementById('csvPreviewWrap').style.display = 'none';
+      document.getElementById('csvMapperWrap').style.display = 'none';
+      document.getElementById('csvParseStatus').textContent = '';
+      document.getElementById('campusCsvFile').value = '';
+      if (document.getElementById('mapperErr')) document.getElementById('mapperErr').textContent = '';
+    }
+
+    function doUploadCampuses() {
+      if (!_parsedCampusRows.length) return;
+      var msgEl = document.getElementById('campusUpload-msg');
+      var btn = document.querySelector('#panel-campuses .btn-save');
+      msgEl.className = 'save-msg'; msgEl.textContent = 'Uploading…';
+      if (btn) btn.disabled = true;
+      server('upsertCampuses', _parsedCampusRows)
+        .then(function(res) {
+          if (btn) btn.disabled = false;
+          if (res.success) {
+            msgEl.className = 'save-msg ok';
+            msgEl.textContent = '✓ ' + res.message;
+            // Reload full campus list from server (upsert may have merged with existing rows)
+            server('adminGetAll').then(function(all) {
+              if (all && all.data && all.data.campuses) {
+                DATA.campuses = all.data.campuses;
+                document.getElementById('sbCampuses').textContent = DATA.campuses.length;
+                renderCampusesTable(DATA.campuses);
+                renderRegionalReport();
+              }
+            });
+            setTimeout(function(){ clearCsvPreview(); msgEl.textContent = ''; }, 3000);
+          } else {
+            msgEl.className = 'save-msg err';
+            msgEl.textContent = '✗ ' + (res.message || 'Upload failed.');
+          }
+        })
+        .catch(function() {
+          if (btn) btn.disabled = false;
+          msgEl.className = 'save-msg err'; msgEl.textContent = 'Connection error. Please try again.';
+        });
+    }
+
+    // ── REGIONAL REPORTING ────────────────────────────────────────
+    function refreshReport() {
+      var body = document.getElementById('reportingBody');
+      body.innerHTML = '<p style="color:#a0aec0;font-size:13px;padding:16px 0">Refreshing…</p>';
+      server('adminGetAll').then(function(all) {
+        if (all && all.data) {
+          DATA.campuses   = all.data.campuses   || DATA.campuses   || [];
+          DATA.attendeeReg = all.data.attendeeReg || DATA.attendeeReg || [];
+        }
+        renderRegionalReport();
+      }).catch(function(){ renderRegionalReport(); });
+    }
+
+    function renderRegionalReport() {
+      var body = document.getElementById('reportingBody');
+      if (!body) return;
+      var campuses = DATA.campuses    || [];
+      var regs     = DATA.attendeeReg || [];
+
+      if (!campuses.length) {
+        body.innerHTML = '<div class="report-empty">No campus data loaded. Upload your campus roster in the Campuses panel first, then refresh.</div>';
+        return;
+      }
+
+      // Build a set of registered org numbers
+      var registeredOrgs = {};
+      regs.forEach(function(r) {
+        var org = String(r.campusOrgNumber || '').trim();
+        if (org) registeredOrgs[org] = true;
+      });
+
+      var totalCampuses  = campuses.length;
+      var totalRegistered = campuses.filter(function(c){ return registeredOrgs[String(c.orgNumber||'').trim()]; }).length;
+      var regRate = totalCampuses ? Math.round((totalRegistered / totalCampuses) * 100) : 0;
+
+      // Region breakdown
+      var regionMap = {};
+      campuses.forEach(function(c) {
+        var reg  = String(c.region || 'Unassigned').trim();
+        var org  = String(c.orgNumber || '').trim();
+        if (!regionMap[reg]) regionMap[reg] = { total: 0, registered: 0 };
+        regionMap[reg].total++;
+        if (org && registeredOrgs[org]) regionMap[reg].registered++;
+      });
+      var regions = Object.keys(regionMap).sort();
+      var regionsWithReg = regions.filter(function(r){ return regionMap[r].registered > 0; }).length;
+
+      // ─ Stat tiles ─
+      var html =
+        '<div class="report-stat-grid">' +
+          statTile(totalCampuses, 'Total Campuses', 'in system') +
+          statTile(totalRegistered, 'Registered', totalCampuses ? totalRegistered + ' of ' + totalCampuses + ' campuses' : '—') +
+          statTile(regionsWithReg + ' / ' + regions.length, 'Regions Engaged', 'at least 1 registration') +
+          statTile(regRate + '%', 'Registration Rate', 'across all campuses') +
+        '</div>';
+
+      // ─ Region breakdown ─
+      html += '<div class="report-section-hdr">By Region</div>';
+      html += '<div class="table-wrap"><table><thead><tr><th>Region</th><th>Campuses</th><th>Registered</th><th>Rate</th><th style="min-width:120px">Progress</th></tr></thead><tbody>';
+      regions.forEach(function(reg) {
+        var d = regionMap[reg];
+        var rate = d.total ? Math.round((d.registered / d.total) * 100) : 0;
+        var isFull = rate === 100;
+        html += '<tr>' +
+          '<td style="font-weight:600;font-size:13px">'+esc(reg)+'</td>' +
+          '<td style="text-align:center">'+d.total+'</td>' +
+          '<td style="text-align:center">'+d.registered+'</td>' +
+          '<td style="text-align:center;font-weight:600">'+rate+'%</td>' +
+          '<td><div class="fill-bar-wrap"><div class="fill-bar'+(isFull?' full':'')+'" style="width:'+rate+'%"></div></div></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div>';
+
+      // ─ Campus detail ─
+      html += '<div class="report-section-hdr">Campus Detail</div>';
+      html += '<div class="table-wrap"><table><thead><tr><th>Campus</th><th>Region</th><th>Org #</th><th>Principal</th><th>Regional Director</th><th>Status</th></tr></thead><tbody>';
+      var sorted = campuses.slice().sort(function(a,b){ return String(a.region||'').localeCompare(String(b.region||'')); });
+      sorted.forEach(function(c) {
+        var org  = String(c.orgNumber || '').trim();
+        var isReg = org && registeredOrgs[org];
+        html += '<tr>' +
+          '<td style="font-weight:500;font-size:13px">'+esc(c.campusName||'—')+'</td>' +
+          '<td style="font-size:12px;color:#718096">'+esc(c.region||'—')+'</td>' +
+          '<td style="font-size:12px;font-family:monospace">'+esc(c.orgNumber||'—')+'</td>' +
+          '<td style="font-size:12px">'+esc(c.principalName||'—')+'</td>' +
+          '<td style="font-size:12px;color:#718096">'+esc(c.regionalDirector||'—')+'</td>' +
+          '<td><span class="reg-badge '+(isReg?'yes':'no')+'">'+(isReg?'Registered':'Not Yet')+'</span></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div>';
+      html += '<p style="font-size:11px;color:#a0aec0;margin-top:14px">Matched by Org Number. Data refreshed from live sheets — use the Refresh button to pull latest registrations.</p>';
+
+      body.innerHTML = html;
+    }
+
+    function statTile(val, label, sub) {
+      return '<div class="report-stat"><div class="rs-val">'+esc(String(val))+'</div><div class="rs-lbl">'+esc(label)+'</div><div class="rs-sub">'+esc(sub)+'</div></div>';
+    }
+
+    /* ── EXECUTIVE DASHBOARD ── */
+    function refreshExecDash() {
+      document.getElementById('execStatGrid').innerHTML = '<div class="report-empty" style="grid-column:1/-1">Refreshing…</div>';
+      document.getElementById('execTableWrap').innerHTML = '';
+      server('adminGetAll').then(function(all) {
+        if (all && all.data) {
+          DATA.campuses    = all.data.campuses    || DATA.campuses    || [];
+          DATA.attendeeReg = all.data.attendeeReg || DATA.attendeeReg || [];
+        }
+        renderExecDashboard();
+      }).catch(function(){ renderExecDashboard(); });
+    }
+
+    function resetExecFilters() {
+      document.getElementById('execFilterTrustee').value    = '';
+      document.getElementById('execFilterDisDRegion').value = '';
+      document.getElementById('execFilterStatus').value     = '';
+      renderExecDashboard();
+    }
+
+    function renderExecDashboard() {
+      var campuses = DATA.campuses    || [];
+      var regs     = DATA.attendeeReg || [];
+
+      var statGrid  = document.getElementById('execStatGrid');
+      var filterBar = document.getElementById('execFilterBar');
+      var tableWrap = document.getElementById('execTableWrap');
+      if (!statGrid) return;
+
+      if (!campuses.length) {
+        statGrid.innerHTML = '<div class="report-empty" style="grid-column:1/-1">No campus data loaded. Upload your campus roster in the Campuses panel first, then refresh.</div>';
+        if (filterBar) filterBar.style.display = 'none';
+        tableWrap.innerHTML = '';
+        return;
+      }
+
+      // Registered org lookup
+      var registeredOrgs = {};
+      regs.forEach(function(r) {
+        var org = String(r.campusOrgNumber || '').trim();
+        if (org) registeredOrgs[org] = true;
+      });
+
+      // Populate filter dropdowns once
+      var trusteeFilter    = document.getElementById('execFilterTrustee');
+      var disDRegionFilter = document.getElementById('execFilterDisDRegion');
+      var statusFilter     = document.getElementById('execFilterStatus');
+
+      var trustees   = Array.from(new Set(campuses.map(function(c){ return String(c.trustee||'').trim(); }).filter(Boolean))).sort();
+      var disdRegions = Array.from(new Set(campuses.map(function(c){ return String(c.disDRegion||'').trim(); }).filter(Boolean))).sort();
+
+      function syncOpts(sel, vals) {
+        var cur = sel.value;
+        sel.innerHTML = '<option value="">'+sel.options[0].text+'</option>';
+        vals.forEach(function(v){ sel.innerHTML += '<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>'+esc(v)+'</option>'; });
+      }
+      syncOpts(trusteeFilter, trustees);
+      syncOpts(disDRegionFilter, disdRegions);
+
+      var filterTrustee   = trusteeFilter.value;
+      var filterDisD      = disDRegionFilter.value;
+      var filterStatus    = statusFilter.value;
+
+      if (filterBar) filterBar.style.display = '';
+
+      // Stats (pre-filter, full picture)
+      var totalCampuses   = campuses.length;
+      var totalRegistered = campuses.filter(function(c){ return registeredOrgs[String(c.orgNumber||'').trim()]; }).length;
+      var trusteesRep     = Array.from(new Set(
+        campuses
+          .filter(function(c){ return registeredOrgs[String(c.orgNumber||'').trim()]; })
+          .map(function(c){ return String(c.trustee||'').trim(); })
+          .filter(Boolean)
+      )).length;
+      var disdRep = Array.from(new Set(
+        campuses
+          .filter(function(c){ return registeredOrgs[String(c.orgNumber||'').trim()]; })
+          .map(function(c){ return String(c.disDRegion||'').trim(); })
+          .filter(Boolean)
+      )).length;
+
+      statGrid.innerHTML =
+        statTile(totalCampuses,   'Total Campuses',      'in system') +
+        statTile(totalRegistered, 'Registered',          totalCampuses ? totalRegistered + ' of ' + totalCampuses : '—') +
+        statTile(trusteesRep,     'Trustees Represented','with at least 1 registration') +
+        statTile(disdRep,         'DISD Regions Covered','with at least 1 registration');
+
+      // Apply filters
+      var filtered = campuses.filter(function(c) {
+        var org  = String(c.orgNumber||'').trim();
+        var isReg = org && registeredOrgs[org];
+        if (filterTrustee && String(c.trustee||'').trim() !== filterTrustee) return false;
+        if (filterDisD    && String(c.disDRegion||'').trim() !== filterDisD)  return false;
+        if (filterStatus === 'registered' && !isReg) return false;
+        if (filterStatus === 'notyet'     &&  isReg) return false;
+        return true;
+      });
+
+      // Sort by DISD Region then Trustee
+      filtered.sort(function(a,b){
+        var dCmp = String(a.disDRegion||'').localeCompare(String(b.disDRegion||''));
+        if (dCmp !== 0) return dCmp;
+        return String(a.trustee||'').localeCompare(String(b.trustee||''));
+      });
+
+      var rows = filtered.map(function(c) {
+        var org  = String(c.orgNumber||'').trim();
+        var isReg = org && registeredOrgs[org];
+        return '<tr>' +
+          '<td style="font-weight:500;font-size:13px">'+esc(c.campusName||'—')+'</td>' +
+          '<td style="font-size:12px;font-family:monospace">'+esc(c.orgNumber||'—')+'</td>' +
+          '<td style="font-size:12px">'+esc(c.disDRegion||'—')+'</td>' +
+          '<td style="font-size:12px">'+esc(c.trustee||'—')+'</td>' +
+          '<td style="font-size:12px;color:#718096">'+esc(c.executiveDirector||'—')+'</td>' +
+          '<td style="font-size:12px;color:#718096">'+esc(c.regionalDirector||'—')+'</td>' +
+          '<td><span class="reg-badge '+(isReg?'yes':'no')+'">'+(isReg?'Registered':'Not Yet')+'</span></td>' +
+          '</tr>';
+      }).join('');
+
+      tableWrap.innerHTML =
+        '<div class="report-section-hdr">Leadership Reference Table' +
+        (filtered.length !== campuses.length ? ' <span style="font-size:12px;font-weight:400;color:#718096">('+filtered.length+' of '+campuses.length+' shown)</span>' : '') +
+        '</div>' +
+        '<div class="table-wrap"><table><thead><tr>' +
+        '<th>Campus</th><th>Org #</th><th>DISD Region</th><th>Trustee</th>' +
+        '<th>Executive Director</th><th>Regional Director</th><th>Reg. Status</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+        '<p style="font-size:11px;color:#a0aec0;margin-top:14px">Read-only reference. Sorted by DISD Region then Trustee. Use the Refresh button to pull latest data from sheets.</p>';
+    }
+  </script>
+
+  <!-- ATTENDEE STATUS MODAL -->
+  <div id="attendeeStatusModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:12px;padding:32px;width:440px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+      <h3 style="margin:0 0 4px;font-size:18px;color:#0a1628">Confirm Status Change</h3>
+      <p id="attendeeStatusSubtitle" style="margin:0 0 16px;font-size:13px;color:#718096"></p>
+      <div id="attendeeStatusInfo" style="background:#f7fafc;border-radius:8px;padding:12px 14px;margin-bottom:20px;font-size:13px;color:#2d3748;line-height:1.6"></div>
+      <p id="attendeeStatusErr" style="color:#e53e3e;font-size:13px;margin:0 0 12px;display:none"></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onclick="cancelAttendeeStatus()" style="padding:9px 18px;border:1.5px solid #e2e8f0;background:#fff;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">Cancel</button>
+        <button id="attendeeStatusBtn" onclick="confirmAttendeeStatus()" style="padding:9px 18px;background:#1a3a5c;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Confirm &amp; Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VENDOR APPROVAL MODAL -->
+  <div id="approveVendorModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:12px;padding:32px;width:420px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+      <h3 style="margin:0 0 4px;font-size:18px;color:#0a1628">Approve Exhibitor</h3>
+      <p id="approveModalSubtitle" style="margin:0 0 20px;font-size:13px;color:#718096"></p>
+      <label style="display:block;font-size:12px;font-weight:700;color:#4a5568;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">
+        Assign Booth / Vendor Number
+      </label>
+      <input id="approveBoothInput" placeholder="e.g. A-105" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:14px;font-family:inherit;outline:none;margin-bottom:6px">
+      <p style="font-size:11px;color:#a0aec0;margin:0 0 20px">This number becomes the exhibitor's login ID for the Vendor Portal.</p>
+      <p id="approveModalErr" style="color:#e53e3e;font-size:13px;margin:0 0 12px;display:none"></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onclick="closeApproveModal()" style="padding:9px 18px;border:1.5px solid #e2e8f0;background:#fff;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">Cancel</button>
+        <button id="approveModalBtn" onclick="submitVendorApproval()" style="padding:9px 18px;background:#1a3a5c;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Approve &amp; Notify</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

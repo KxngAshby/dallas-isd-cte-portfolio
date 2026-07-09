@@ -1,0 +1,156 @@
+// ── SCHEMA ─────────────────────────────────────────────────────────────────
+// Single source of truth for all tab names and column headers.
+// Add a column here + re-run ensureSchema() — existing data is never deleted.
+
+const SCHEMA = {
+  KitTemplates:  ['template_id','name','career','notes','active'],
+  TemplateItems: ['template_id','type_id','qty','reorder_threshold'],
+  Campuses:      ['campus_id','name','region','principal_name','principal_email','active'],
+  Kits:          ['kit_id','name','kit_barcode','template_id','tipweb_tag','location','loan_status','notes','active'],
+  ItemTypes:     ['type_id','name','reorder_threshold','is_consumable','notes'],
+  KitItems:      ['barcode','kit_id','type_id','status','last_updated','updated_by','notes'],
+  AuditLog:      ['timestamp','barcode','kit_id','action','old_status','new_status','user','notes'],
+  Audits:        ['audit_id','kit_id','started','completed','scanned_count','missing_count'],
+  Loans:         ['loan_id','kit_id','campus_id','campus_name','region','tipweb_tag','teacher_name','checked_out_at','checked_out_by',
+                  'checked_in_at','checked_in_by','return_type','notes','status'],
+  CheckoutItems: ['loan_id','barcode','type_id','status_at_checkout','confirmed'],
+  CheckinIssues: ['loan_id','barcode','issue_type','notes','reported_at','reported_by'],
+  Settings:      ['key','value'],
+};
+
+// Dallas ISD Director Regions (stable list — used for campus assignment dropdowns)
+const REGIONS = ['Region I','Region II','Region III','Region IV',
+                 'Region V','Region VI','Magnets & Montessori','Transformation'];
+
+// Allowed values — reference these constants everywhere, never raw strings
+const STATUS      = { AVAILABLE: 'Available', NEEDS_REPLACEMENT: 'Needs Replacement', DEAD: 'Dead' };
+const ISSUE_TYPES = ['Needs Replacement', 'Does Not Work', 'Needs Batteries', 'Missing', 'Other'];
+const LOAN_ST     = { OPEN: 'open', CLOSED: 'closed' };
+const KIT_LOAN_ST = { AVAILABLE: 'available', CHECKED_OUT: 'checked_out' };
+
+const SS_ID = 'YOUR_GOOGLE_SHEET_ID';
+
+// ── SPREADSHEET ─────────────────────────────────────────────────────────────
+
+function ss_() { return SpreadsheetApp.openById(SS_ID); }
+
+// Creates missing tabs and appends missing columns. Safe to re-run at any time.
+function ensureSchema() {
+  const ss = ss_();
+  Object.entries(SCHEMA).forEach(([name, headers]) => {
+    let sh = ss.getSheetByName(name);
+    if (!sh) {
+      sh = ss.insertSheet(name);
+      sh.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
+      sh.setFrozenRows(1);
+      return;
+    }
+    const existing = sh.getLastColumn() > 0
+      ? sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0] : [];
+    headers.forEach(h => {
+      if (!existing.includes(h)) {
+        sh.getRange(1, sh.getLastColumn() + 1).setValue(h).setFontWeight('bold');
+      }
+    });
+  });
+
+  // Seed default settings on first run
+  const stSh = ss.getSheetByName('Settings');
+  const BASE_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+  if (stSh.getLastRow() <= 1) {
+    stSh.getRange(2, 1, 6, 2).setValues([
+      ['barcode_prefix',  'ESCA'],
+      ['next_seq',        '1'],
+      ['schema_version',  '2'],
+      ['allowlist',       ''],
+      ['url_counselor',   BASE_URL],
+      ['url_admin',       BASE_URL + '?view=admin'],
+    ]);
+  } else {
+    // Ensure URL keys exist if this is a re-run on an existing sheet
+    if (!getSetting('url_counselor')) setSetting('url_counselor', BASE_URL);
+    if (!getSetting('url_admin'))     setSetting('url_admin',     BASE_URL + '?view=admin');
+  }
+}
+
+// ── GENERIC SHEET HELPERS ───────────────────────────────────────────────────
+
+function hdrs_(sh) {
+  return sh.getLastColumn() > 0
+    ? sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0] : [];
+}
+
+// Returns all data rows as objects keyed by header name.
+// Each object also has _row (1-based sheet row index) for updates.
+function getRows(tab) {
+  const sh = ss_().getSheetByName(tab);
+  if (!sh || sh.getLastRow() <= 1) return [];
+  const h = hdrs_(sh);
+  return sh.getRange(2, 1, sh.getLastRow() - 1, h.length).getValues()
+    .map((row, i) => { const o = {}; h.forEach((k, j) => o[k] = row[j]); o._row = i + 2; return o; });
+}
+
+function findBy(tab, field, val) {
+  return getRows(tab).find(r => String(r[field]) === String(val)) || null;
+}
+
+function findAllBy(tab, field, val) {
+  return getRows(tab).filter(r => String(r[field]) === String(val));
+}
+
+function appendRow(tab, obj) {
+  const sh = ss_().getSheetByName(tab);
+  const h  = hdrs_(sh);
+  sh.appendRow(h.map(k => obj[k] !== undefined ? obj[k] : ''));
+}
+
+function updateRow(tab, rowIdx, obj) {
+  const sh = ss_().getSheetByName(tab);
+  const h  = hdrs_(sh);
+  h.forEach((k, i) => { if (obj[k] !== undefined) sh.getRange(rowIdx, i + 1).setValue(obj[k]); });
+}
+
+// ── SETTINGS ────────────────────────────────────────────────────────────────
+
+function getSetting(key) {
+  const r = findBy('Settings', 'key', key);
+  return r ? String(r.value) : null;
+}
+
+function setSetting(key, val) {
+  const r = findBy('Settings', 'key', key);
+  r ? updateRow('Settings', r._row, { key, value: String(val) })
+    : appendRow('Settings', { key, value: String(val) });
+}
+
+// ── ID GENERATION ────────────────────────────────────────────────────────────
+
+function nextId(pfx) {
+  const key = 'seq_' + pfx;
+  const n   = parseInt(getSetting(key) || '1', 10);
+  setSetting(key, n + 1);
+  return `${pfx}-${String(n).padStart(4, '0')}`;
+}
+
+// Item barcode: ESCA-{kitShortId}-{seq}   e.g. ESCA-0001-001
+function nextBarcode(kitShortId) {
+  const prefix = getSetting('barcode_prefix') || 'ESCA';
+  const seq    = parseInt(getSetting('next_seq') || '1', 10);
+  setSetting('next_seq', seq + 1);
+  return `${prefix}-${kitShortId}-${String(seq).padStart(3, '0')}`;
+}
+
+// ── AUDIT LOG ────────────────────────────────────────────────────────────────
+
+function logAudit(barcode, kitId, action, oldSt, newSt, user, notes) {
+  appendRow('AuditLog', {
+    timestamp:  new Date().toISOString(),
+    barcode:    barcode   || '',
+    kit_id:     kitId     || '',
+    action,
+    old_status: oldSt     || '',
+    new_status: newSt     || '',
+    user,
+    notes:      notes     || '',
+  });
+}

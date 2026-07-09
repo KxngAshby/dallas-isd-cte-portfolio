@@ -1,0 +1,30 @@
+# ── Secrets / tokens (NEVER commit) ──────────────────────────────
+.google_token
+.netlify_token
+.netlify_site_id
+
+# ── Deployment-specific local config ─────────────────────────────
+appsscript/.clasp.json
+appsscript/.deployment_id
+.appsscript_id
+dashboard_url.txt
+
+# ── Teacher PII / survey data (excluded: code-only repo) ──────────
+*.xlsx
+*.csv
+survey_data.json
+survey_data.js
+dashboard_standalone.html
+index.html
+appsscript/index.html
+CTE_Survey_Report.pdf
+
+# ── Python ───────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ── OS / editor ──────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

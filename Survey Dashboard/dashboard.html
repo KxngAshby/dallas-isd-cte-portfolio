@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>A1CTE Program Survey — Dallas ISD CTE Department</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script src="survey_data.js"></script>
+<style>
+  /* ── Dallas ISD Brand Colors ─────────────────────────────────────── */
+  :root {
+    --disd-navy: #003082;
+    --disd-red:  #C8102E;
+    --disd-navy-dark: #002166;
+    --p1: #ef4444; --p2: #f97316; --p3: #eab308; --p4: #3b82f6; --p5: #22c55e;
+  }
+
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f2f5; }
+
+  /* ── Navigation ──────────────────────────────────────────────────── */
+  .tab-btn { transition: color 0.15s; border-bottom: 3px solid transparent; color: #4b5563; }
+  .tab-btn:hover { color: var(--disd-navy); background: #f8f9ff; }
+  .tab-btn.active { border-bottom-color: var(--disd-red); color: var(--disd-navy); font-weight: 600; }
+
+  /* ── Priority Badges ─────────────────────────────────────────────── */
+  .priority-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 10px; border-radius:9999px; font-size:0.73rem; font-weight:700; white-space:nowrap; letter-spacing:0.01em; }
+  .p1-badge { background:#fef2f2; color:#991b1b; border:1px solid #fca5a5; }
+  .p2-badge { background:#fff7ed; color:#9a3412; border:1px solid #fdba74; }
+  .p3-badge { background:#fefce8; color:#713f12; border:1px solid #fde047; }
+  .p4-badge { background:#f0fdf4; color:#14532d; border:1px solid #86efac; }
+  .p5-badge { background:#f3f4f6; color:#4b5563; border:1px solid #d1d5db; }
+  .p6-badge { background:#f3f4f6; color:#4b5563; border:1px solid #d1d5db; }
+
+  /* ── Issue Summary Pills (inline colored counts) ─────────────────── */
+  .issues-cell { display:flex; flex-direction:column; gap:3px; font-size:0.72rem; }
+  .iss-recurring { color:#991b1b; font-weight:700; }
+  .iss-new       { color:#1e40af; font-weight:600; }
+  .iss-resolved  { color:#14532d; font-weight:600; }
+
+  /* ── Status Badges (modal) ───────────────────────────────────────── */
+  .status-recurring { color:#991b1b; background:#fef2f2; padding:2px 8px; border-radius:6px; font-size:0.68rem; font-weight:700; border:1px solid #fecaca; }
+  .status-resolved  { color:#14532d; background:#f0fdf4; padding:2px 8px; border-radius:6px; font-size:0.68rem; font-weight:700; border:1px solid #bbf7d0; }
+  .status-new       { color:#1e40af; background:#eff6ff; padding:2px 8px; border-radius:6px; font-size:0.68rem; font-weight:700; border:1px solid #bfdbfe; }
+  .status-none      { color:#6b7280; background:#f3f4f6; padding:2px 8px; border-radius:6px; font-size:0.68rem; }
+
+  /* ── Tables ──────────────────────────────────────────────────────── */
+  .data-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+  .data-table thead { position:sticky; top:0; z-index:10; }
+  .data-table thead tr { background:#f8f9fb; border-bottom:2px solid #e5e7eb; }
+  .data-table thead th { padding:10px 12px; text-align:left; font-size:0.7rem; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.06em; white-space:nowrap; }
+  .data-table thead th.center { text-align:center; }
+  .data-table tbody tr { border-bottom:1px solid #f1f3f5; cursor:pointer; transition:background 0.1s; }
+  .data-table tbody tr:nth-child(even) { background:#fafbfc; }
+  .data-table tbody tr:hover td { background:#eef2ff !important; }
+  .data-table td { padding:11px 12px; vertical-align:middle; }
+
+  /* ── Heat Map ────────────────────────────────────────────────────── */
+  .heat-card { border-radius:8px; padding:8px 10px; font-size:0.7rem; font-weight:600; cursor:pointer; transition:transform 0.12s, box-shadow 0.12s; border:1px solid rgba(255,255,255,0.25); }
+  .heat-card:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,0.2); }
+  .region-header { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:10px; margin-bottom:8px; background:#fff; border:1px solid #e5e7eb; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+  .campus-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px; margin-bottom:22px; }
+
+  /* ── Misc ────────────────────────────────────────────────────────── */
+  .bar-fill { height:14px; border-radius:6px; transition:width 0.5s ease; }
+  .kw-tag { display:inline-block; background:#e0e7ff; color:#3730a3; border-radius:4px; padding:1px 6px; font-size:0.68rem; margin:1px; }
+  .section-card { background:#fff; border-radius:12px; border:1px solid #e5e7eb; box-shadow:0 1px 4px rgba(0,0,0,0.04); padding:24px; margin-bottom:20px; }
+  .section-title { font-size:0.95rem; font-weight:700; color:#111827; padding-left:10px; border-left:3px solid var(--disd-red); margin-bottom:16px; }
+  input[type=text]:focus, select:focus { outline:none; box-shadow:0 0 0 2px var(--disd-navy); }
+  select, input[type=text] { background:#fff; }
+  .filter-bar { display:flex; flex-wrap:wrap; gap:8px; }
+  .filter-select { font-size:0.8rem; border:1px solid #d1d5db; border-radius:8px; padding:6px 10px; color:#374151; }
+  .filter-input  { font-size:0.8rem; border:1px solid #d1d5db; border-radius:8px; padding:6px 10px; color:#374151; width:160px; }
+  .result-count { font-size:0.75rem; color:#9ca3af; margin-bottom:8px; }
+  .view-btn { color:var(--disd-navy); font-size:0.75rem; font-weight:600; padding:3px 8px; border:1px solid #d1d5db; border-radius:6px; transition:all 0.1s; background:#f9fafb; }
+  .view-btn:hover { background:var(--disd-navy); color:#fff; border-color:var(--disd-navy); }
+
+  /* ── Print ───────────────────────────────────────────────────────── */
+  @media print {
+    @page { size: landscape; margin: 12mm; }
+    body { background: white; font-size: 9pt; }
+    #nav-bar, #tab-nav, #print-btn, .no-print { display: none !important; }
+    .tab-pane { display: block !important; page-break-before: always; }
+    #tab-summary { page-break-before: avoid; }
+    .heat-card, .priority-badge { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .section-card { box-shadow:none; border:1px solid #ccc; }
+    .data-table thead tr { background:#f3f4f6; }
+    .data-table td, .data-table th { border:1px solid #d1d5db; padding:4px 6px; font-size:7.5pt; }
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
+<header id="nav-bar" class="text-white px-6 py-0 flex items-stretch justify-between shadow-lg no-print" style="background:var(--disd-navy)">
+  <div class="flex items-center gap-0">
+    <!-- Red left accent bar -->
+    <div class="w-1 self-stretch mr-5" style="background:var(--disd-red)"></div>
+    <div class="py-4">
+      <div class="text-xs font-semibold tracking-widest uppercase opacity-75 mb-0.5" style="letter-spacing:0.12em">Dallas Independent School District</div>
+      <h1 class="text-lg font-bold tracking-tight leading-tight">Career &amp; Technical Education</h1>
+      <p class="text-sm mt-0.5" style="color:rgba(255,255,255,0.65)">Program Survey · 2024-25 &amp; 2025-26 Cross-Reference</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-3 py-4">
+    <div id="header-stats" class="text-right text-xs leading-relaxed mr-2" style="color:rgba(255,255,255,0.6)"></div>
+    <button id="excel-btn" onclick="downloadExcel()"
+      class="text-sm font-semibold px-4 py-2 rounded-lg transition shadow-sm border border-white border-opacity-30"
+      style="background:#ffffff;color:var(--disd-navy);"
+      onmouseover="this.style.background='#e8edf7'" onmouseout="this.style.background='#ffffff'">
+      Download Excel
+    </button>
+  </div>
+</header>
+
+<!-- Print-only title block -->
+<div class="hidden print:block px-6 py-4 border-b-4" style="border-color:var(--disd-navy)">
+  <div class="text-xs font-bold tracking-widest uppercase mb-1" style="color:var(--disd-red)">Dallas Independent School District</div>
+  <h1 class="text-2xl font-bold text-gray-900">Career &amp; Technical Education — Program Survey Cross-Reference</h1>
+  <p class="text-gray-500 text-sm mt-1">2024-25 vs 2025-26 &nbsp;|&nbsp; Prepared for Executive Leadership</p>
+</div>
+
+<!-- ── Tab Navigation ──────────────────────────────────────────────────────── -->
+<nav id="tab-nav" class="bg-white border-b border-gray-200 px-6 flex gap-0 no-print" style="box-shadow:0 2px 6px rgba(0,48,130,0.06)">
+  <button class="tab-btn active px-5 py-3.5 text-sm" onclick="showTab('summary',this)">Executive Summary</button>
+  <button class="tab-btn px-5 py-3.5 text-sm" onclick="showTab('queue',this)">Priority Queue</button>
+  <button class="tab-btn px-5 py-3.5 text-sm" onclick="showTab('teachers',this)">Teacher Cross-Reference</button>
+  <button class="tab-btn px-5 py-3.5 text-sm" onclick="showTab('campus',this)">Campus Drill-Down</button>
+  <button class="tab-btn px-5 py-3.5 text-sm" onclick="showTab('improvements',this)">Improvements</button>
+</nav>
+
+<!-- ── Content ────────────────────────────────────────────────────────────── -->
+<main class="max-w-screen-2xl mx-auto px-4 py-6">
+
+<!-- ════════════════════════════════════════════════════════════════
+     TAB 1 — EXECUTIVE SUMMARY
+     ════════════════════════════════════════════════════════════════ -->
+<section id="tab-summary" class="tab-pane">
+
+  <!-- KPI Cards -->
+  <div id="kpi-cards" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-5"></div>
+
+  <!-- Priority Distribution — full width -->
+  <div class="section-card">
+    <h2 class="section-title">Priority Distribution — All Teachers</h2>
+    <div id="priority-bars" class="space-y-4"></div>
+  </div>
+
+  <!-- Campus Heat Map — grouped by region -->
+  <div class="section-card">
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <h2 class="section-title" style="margin-bottom:4px">Campus Priority Heat Map</h2>
+        <p class="text-xs text-gray-500 ml-3">Grouped by district region. Lower average priority score = more urgent need. Click any campus to drill down.</p>
+      </div>
+      <div class="flex items-center gap-3 text-xs text-gray-500 no-print flex-shrink-0 ml-4">
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded-full" style="background:#ef4444"></span>Critical</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded-full" style="background:#f97316"></span>High</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded-full" style="background:#eab308"></span>Medium</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded-full" style="background:#3b82f6"></span>Low</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded-full" style="background:#22c55e"></span>Minimal</span>
+      </div>
+    </div>
+    <div id="heat-map"></div>
+  </div>
+
+  <!-- Recurring Issues by Category -->
+  <div class="section-card">
+    <h2 class="section-title">Recurring Issues by Category</h2>
+    <div id="area-summary" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     TAB 2 — PRIORITY QUEUE
+     ════════════════════════════════════════════════════════════════ -->
+<section id="tab-queue" class="tab-pane hidden">
+  <div class="section-card">
+    <div class="flex items-start justify-between mb-4 gap-4 flex-wrap">
+      <div>
+        <h2 class="section-title">Department Action Queue</h2>
+        <p class="text-xs text-gray-500 -mt-2 ml-3">Sorted by urgency — Priority 1 teachers need attention first. Click any row to view full details.</p>
+      </div>
+      <div class="filter-bar no-print">
+        <select id="q-priority-filter" onchange="renderQueue()" class="filter-select">
+          <option value="">All Priorities</option>
+          <option value="1">P1 — Critical</option>
+          <option value="2">P2 — High</option>
+          <option value="3">P3 — Medium</option>
+          <option value="4">P4 — Resolved</option>
+          <option value="5">P5 — No 2025-26 Response</option>
+        </select>
+        <select id="q-region-filter" onchange="renderQueue()" class="filter-select">
+          <option value="">All Regions</option>
+        </select>
+        <select id="q-campus-filter" onchange="renderQueue()" class="filter-select">
+          <option value="">All Campuses</option>
+        </select>
+        <select id="q-cluster-filter" onchange="renderQueue()" class="filter-select">
+          <option value="">All Clusters</option>
+        </select>
+        <input type="text" id="q-search" onkeyup="renderQueue()" placeholder="Search teacher name..." class="filter-input">
+      </div>
+    </div>
+    <p id="queue-count" class="result-count"></p>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Priority</th>
+            <th>Teacher</th>
+            <th>Campus &amp; Region</th>
+            <th>Cluster</th>
+            <th class="center">Issues</th>
+            <th>Top Recurring Need</th>
+            <th class="no-print"></th>
+          </tr>
+        </thead>
+        <tbody id="queue-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     TAB 3 — TEACHER CROSS-REFERENCE
+     ════════════════════════════════════════════════════════════════ -->
+<section id="tab-teachers" class="tab-pane hidden">
+  <div class="section-card">
+    <div class="flex items-start justify-between mb-4 gap-4 flex-wrap">
+      <div>
+        <h2 class="section-title">Teacher Cross-Reference</h2>
+        <p class="text-xs text-gray-500 -mt-2 ml-3">Click any row to see the full 2024-25 vs 2025-26 side-by-side comparison.</p>
+      </div>
+      <div class="filter-bar no-print">
+        <input type="text" id="t-search" onkeyup="renderTeachers()" placeholder="Search name / email..." class="filter-input">
+        <select id="t-priority-filter" onchange="renderTeachers()" class="filter-select">
+          <option value="">All Priorities</option>
+          <option value="1">P1 — Critical</option>
+          <option value="2">P2 — High</option>
+          <option value="3">P3 — Medium</option>
+          <option value="4">P4 — Resolved</option>
+          <option value="5">P5 — No 2025-26 Response</option>
+        </select>
+        <select id="t-region-filter" onchange="renderTeachers()" class="filter-select">
+          <option value="">All Regions</option>
+        </select>
+        <select id="t-campus-filter" onchange="renderTeachers()" class="filter-select">
+          <option value="">All Campuses</option>
+        </select>
+        <select id="t-cluster-filter" onchange="renderTeachers()" class="filter-select">
+          <option value="">All Clusters</option>
+        </select>
+        <select id="t-year-filter" onchange="renderTeachers()" class="filter-select">
+          <option value="">All Years</option>
+          <option value="both">Both Years</option>
+          <option value="2425">2024-25 Only</option>
+          <option value="2526">2025-26 Only</option>
+        </select>
+      </div>
+    </div>
+    <p id="teachers-count" class="result-count"></p>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Priority</th>
+            <th>Teacher</th>
+            <th>Campus</th>
+            <th>Region</th>
+            <th>Cluster</th>
+            <th class="center">Issues</th>
+            <th class="no-print"></th>
+          </tr>
+        </thead>
+        <tbody id="teachers-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     TAB 4 — CAMPUS DRILL-DOWN
+     ════════════════════════════════════════════════════════════════ -->
+<section id="tab-campus" class="tab-pane hidden">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="section-card" style="margin-bottom:0">
+      <h2 class="section-title">Campuses <span style="font-size:0.75rem;font-weight:400;color:#9ca3af">(by region &amp; priority)</span></h2>
+      <div class="flex gap-2 mb-3 no-print">
+        <input type="text" id="campus-search" onkeyup="renderCampusList()" placeholder="Search campus..." class="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5">
+        <select id="campus-region-filter" onchange="renderCampusList()" class="text-sm border border-gray-200 rounded-lg px-3 py-1.5">
+          <option value="">All Regions</option>
+        </select>
+      </div>
+      <div id="campus-list" class="space-y-1 max-h-[68vh] overflow-y-auto pr-1"></div>
+    </div>
+    <div class="lg:col-span-2 section-card" style="margin-bottom:0">
+      <div id="campus-detail">
+        <div class="text-center text-gray-400 mt-20">
+          <svg class="w-12 h-12 mx-auto mb-3 opacity-25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+          <p class="text-sm">Select a campus from the list to view its teachers and recurring needs.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     TAB 5 — IMPROVEMENTS
+     ════════════════════════════════════════════════════════════════ -->
+<section id="tab-improvements" class="tab-pane hidden">
+  <div class="section-card">
+    <h2 class="section-title">Improvements — Where Department Efforts Paid Off</h2>
+    <p class="text-xs text-gray-500 -mt-2 ml-3 mb-5">Teachers who had substantive needs in 2024-25 but did <strong>not</strong> repeat them in 2025-26 — indicating those needs may have been addressed.</p>
+    <div id="improvements-content"></div>
+  </div>
+</section>
+
+</main>
+
+<!-- ── Teacher Detail Modal ───────────────────────────────────────────────── -->
+<div id="modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden" onclick="closeModal()">
+  <div class="bg-white rounded-xl shadow-2xl max-w-4xl mx-auto mt-12 max-h-[82vh] overflow-y-auto" onclick="event.stopPropagation()">
+    <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-start justify-between gap-4">
+      <div id="modal-header"></div>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-700 text-2xl font-bold leading-none mt-1">&times;</button>
+    </div>
+    <div id="modal-body" class="px-6 py-5"></div>
+  </div>
+</div>
+
+<!-- ── JavaScript ─────────────────────────────────────────────────────────── -->
+<script>
+const D = SURVEY_DATA;
+const teacherMap = {};
+D.teachers.forEach(t => teacherMap[t.id] = t);
+let currentModalTeacher = null;
+
+const pLabels = D.priority_labels;
+const pColors = D.priority_colors;
+const qAreas  = D.question_areas;
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+
+function priorityBadge(p) {
+  return `<span class="priority-badge p${p}-badge">● ${p} — ${pLabels[p]}</span>`;
+}
+
+function yearInline(t) {
+  if (t.in_2425 && t.in_2526) return '<span style="font-size:0.68rem;color:#6d28d9;font-weight:600">Both Years</span>';
+  if (t.in_2425) return '<span style="font-size:0.68rem;color:#6b7280;font-weight:600">2024-25 Only</span>';
+  return '<span style="font-size:0.68rem;color:#2563eb;font-weight:600">2025-26 Only</span>';
+}
+
+function yearBadge(t) {
+  if (t.in_2425 && t.in_2526) return '<span class="text-xs font-semibold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full">Both Years</span>';
+  if (t.in_2425) return '<span class="text-xs font-semibold text-gray-600 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">2024-25 Only</span>';
+  return '<span class="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">2025-26 Only</span>';
+}
+
+function issuesSummary(t) {
+  const parts = [];
+  if (t.recurring_count > 0) parts.push(`<span class="iss-recurring">● ${t.recurring_count} recurring</span>`);
+  if (t.new_count > 0)       parts.push(`<span class="iss-new">● ${t.new_count} new</span>`);
+  if (t.resolved_count > 0)  parts.push(`<span class="iss-resolved">● ${t.resolved_count} resolved</span>`);
+  if (!parts.length) return '<span style="color:#d1d5db;font-size:0.72rem">—</span>';
+  return `<div class="issues-cell">${parts.join('')}</div>`;
+}
+
+function heatColor(avg) {
+  if (avg <= 1.5) return '#ef4444';
+  if (avg <= 2.2) return '#f97316';
+  if (avg <= 2.9) return '#eab308';
+  if (avg <= 3.5) return '#3b82f6';
+  return '#22c55e';
+}
+
+function statusBadge(status) {
+  return { recurring:'<span class="status-recurring">Recurring</span>',
+           resolved: '<span class="status-resolved">Resolved</span>',
+           new:      '<span class="status-new">New</span>',
+           none:     '<span class="status-none">No Response</span>' }[status] || '';
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function trunc(s, n=110) {
+  if (!s) return '<span class="text-gray-400 italic">—</span>';
+  s = String(s);
+  return s.length > n ? esc(s.slice(0,n)) + '…' : esc(s);
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────
+
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.remove('hidden');
+  if (btn) btn.classList.add('active');
+}
+
+// ── Populate filter dropdowns ─────────────────────────────────────────────
+
+function populateFilters() {
+  const regions  = [...new Set(D.teachers.map(t => t.region).filter(Boolean))].sort();
+  const campuses = [...new Set(D.teachers.map(t => t.campus).filter(Boolean))].sort();
+  const clusters = [...new Set(D.teachers.map(t => t.cluster).filter(Boolean))].sort();
+
+  [['q-region-filter','t-region-filter','campus-region-filter'], regions].forEach(() => {});
+
+  const regionSelects  = ['q-region-filter','t-region-filter','campus-region-filter'];
+  const campusSelects  = ['q-campus-filter','t-campus-filter'];
+  const clusterSelects = ['q-cluster-filter','t-cluster-filter'];
+
+  regionSelects.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    // Sort by REGION_ORDER
+    const ordered = D.region_order.filter(r => regions.includes(r));
+    const rest = regions.filter(r => !ordered.includes(r));
+    [...ordered, ...rest].forEach(r => el.add(new Option(r, r)));
+  });
+  campusSelects.forEach(id => {
+    const el = document.getElementById(id);
+    campuses.forEach(c => el.add(new Option(c, c)));
+  });
+  clusterSelects.forEach(id => {
+    const el = document.getElementById(id);
+    clusters.forEach(c => el.add(new Option(c, c)));
+  });
+}
+
+// ── TAB 1: Executive Summary ──────────────────────────────────────────────
+
+function renderSummary() {
+  const s = D.summary;
+
+  document.getElementById('header-stats').innerHTML =
+    `${s.total_teachers_2425} teachers · 2024-25 &nbsp;|&nbsp; ${s.total_teachers_2526} teachers · 2025-26 &nbsp;|&nbsp; ${s.teachers_both_years} in both years`;
+
+  // KPI cards
+  const pc = s.priority_counts;
+  const kpis = [
+    { label:'Total Unique Teachers', value:s.total_unique_teachers, sub:'across both years', bg:'var(--disd-navy)' },
+    { label:'Teachers in Both Years', value:s.teachers_both_years, sub:'matched by Employee ID', bg:'#5b21b6' },
+    { label:'Priority 1 — Critical', value:pc['1']||0, sub:'2+ needs repeated both years', bg:'var(--disd-red)' },
+    { label:'Priority 2 — High', value:pc['2']||0, sub:'1 need repeated both years', bg:'#ea580c' },
+    { label:'Priority 3 — Medium', value:pc['3']||0, sub:'new needs this year', bg:'#ca8a04' },
+    { label:'Resolved', value:pc['4']||0, sub:'needs appear addressed', bg:'#15803d' },
+  ];
+  document.getElementById('kpi-cards').innerHTML = kpis.map(k =>
+    `<div class="rounded-xl text-white p-5 shadow-sm" style="background:${k.bg}">
+      <div class="text-3xl font-extrabold">${k.value}</div>
+      <div class="text-sm font-semibold mt-1">${k.label}</div>
+      <div class="text-xs opacity-70 mt-0.5">${k.sub}</div>
+    </div>`
+  ).join('');
+
+  // Priority bars — full width
+  const total = s.total_unique_teachers;
+  const pDefs = [
+    {p:1, label:'Critical', color:'#ef4444'},
+    {p:2, label:'High',     color:'#f97316'},
+    {p:3, label:'Medium',   color:'#eab308'},
+    {p:4, label:'Resolved', color:'#22c55e'},
+    {p:5, label:'No 2025-26 Response', color:'#9ca3af'},
+  ];
+  document.getElementById('priority-bars').innerHTML = pDefs.filter(pd => (pc[String(pd.p)]||0) > 0).map(pd => {
+    const cnt = pc[String(pd.p)] || 0;
+    const pct = total ? Math.round(cnt / total * 100) : 0;
+    return `<div>
+      <div class="flex justify-between text-sm mb-1.5">
+        <span class="font-semibold text-gray-700">P${pd.p} — ${pd.label}</span>
+        <span class="text-gray-500">${cnt} teachers &nbsp;<span class="font-bold text-gray-700">${pct}%</span></span>
+      </div>
+      <div class="bg-gray-100 rounded-full overflow-hidden" style="height:16px">
+        <div class="bar-fill" style="width:${pct}%;background:${pd.color};height:16px"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Heat map — grouped by region
+  const campusByRegion = {};
+  D.campuses.forEach(c => {
+    const r = c.region || 'Unassigned';
+    if (!campusByRegion[r]) campusByRegion[r] = [];
+    campusByRegion[r].push(c);
+  });
+
+  const regionMap = {};
+  D.regions.forEach(r => regionMap[r.region] = r);
+
+  const orderedRegions = D.region_order.filter(r => campusByRegion[r]);
+  const extraRegions   = Object.keys(campusByRegion).filter(r => !D.region_order.includes(r));
+
+  let heatHtml = '';
+  [...orderedRegions, ...extraRegions].forEach(regionName => {
+    const cList = campusByRegion[regionName] || [];
+    const rData = regionMap[regionName];
+    const rAvg  = rData ? rData.avg_priority : 3;
+    const rColor = heatColor(rAvg);
+
+    heatHtml += `
+      <div class="region-header mb-2">
+        <span class="inline-block w-3 h-3 rounded-full flex-shrink-0" style="background:${rColor}"></span>
+        <span class="font-bold text-gray-800 text-sm">${esc(regionName)}</span>
+        ${rData ? `
+          <span class="text-xs text-gray-500 ml-2">${rData.campus_count} campus${rData.campus_count!==1?'es':''} &nbsp;&middot;&nbsp; ${rData.teacher_count} teachers</span>
+          <span class="ml-auto flex gap-3 text-xs">
+            <span class="text-red-700 font-semibold">${rData.recurring} recurring</span>
+            <span class="text-blue-700 font-semibold">${rData.new_issues} new</span>
+            <span class="text-green-700 font-semibold">${rData.resolved} resolved</span>
+            <span class="font-bold px-2 py-0.5 rounded text-white text-xs" style="background:${rColor}">Avg P${rData.heat_level}</span>
+          </span>` : ''}
+      </div>
+      <div class="campus-grid mb-6">
+        ${cList.map(c => {
+          const bg = heatColor(c.avg_priority);
+          return `<div class="heat-card" style="background:${bg};color:#fff"
+            onclick="openCampusDrilldown(${D.campuses.indexOf(c)})"
+            title="${esc(c.campus)}: ${c.teacher_count} teachers, avg P${c.heat_level}">
+            <div style="font-size:0.63rem;opacity:0.9;line-height:1.3">${esc(c.campus)}</div>
+            <div style="font-size:1.05rem;font-weight:800;margin-top:3px">P${c.heat_level}</div>
+            <div style="font-size:0.6rem;opacity:0.85">${c.teacher_count} teacher${c.teacher_count!==1?'s':''}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  });
+  document.getElementById('heat-map').innerHTML = heatHtml;
+
+  // Area summary
+  const areaCounts = {};
+  qAreas.forEach(q => areaCounts[q.key] = {label:q.label, recurring:0, resolved:0, new_issues:0});
+  D.teachers.forEach(t => t.areas.forEach(a => {
+    if (areaCounts[a.key]) {
+      if (a.status==='recurring') areaCounts[a.key].recurring++;
+      if (a.status==='resolved') areaCounts[a.key].resolved++;
+      if (a.status==='new')      areaCounts[a.key].new_issues++;
+    }
+  }));
+  document.getElementById('area-summary').innerHTML = Object.values(areaCounts).map(a =>
+    `<div class="rounded-xl border border-gray-100 bg-gray-50 p-4">
+      <div class="font-semibold text-gray-800 text-sm mb-3">${a.label}</div>
+      <div class="space-y-1.5 text-xs">
+        <div class="flex justify-between"><span class="text-red-700">Recurring</span><span class="font-bold text-red-700">${a.recurring}</span></div>
+        <div class="flex justify-between"><span class="text-blue-700">New in 2025-26</span><span class="font-bold text-blue-700">${a.new_issues}</span></div>
+        <div class="flex justify-between"><span class="text-green-700">Resolved</span><span class="font-bold text-green-700">${a.resolved}</span></div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+// ── TAB 2: Priority Queue ─────────────────────────────────────────────────
+
+function renderQueue() {
+  const pf  = document.getElementById('q-priority-filter').value;
+  const rf  = document.getElementById('q-region-filter').value;
+  const cf  = document.getElementById('q-campus-filter').value;
+  const clf = document.getElementById('q-cluster-filter').value;
+  const q   = document.getElementById('q-search').value.toLowerCase();
+
+  const ordered = D.priority_queue.map(id => teacherMap[id]).filter(Boolean);
+  const filtered = ordered.filter(t => {
+    if (pf  && String(t.priority) !== pf) return false;
+    if (rf  && t.region  !== rf)          return false;
+    if (cf  && t.campus  !== cf)          return false;
+    if (clf && t.cluster !== clf)         return false;
+    if (q) {
+      const name = `${t.first_name} ${t.last_name}`.toLowerCase();
+      if (!name.includes(q) && !t.email.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('queue-count').textContent =
+    `Showing ${filtered.length} of ${ordered.length} teachers`;
+
+  document.getElementById('queue-tbody').innerHTML = filtered.map(t => {
+    const topArea = t.areas.find(a => a.status === 'recurring');
+    const topText = topArea ? trunc(topArea.response_2526 || topArea.response_2425, 120) : '<span style="color:#d1d5db;font-style:italic">None</span>';
+    const topLabel = topArea ? `<div style="font-size:0.65rem;color:#9ca3af;margin-top:2px">${topArea.label}</div>` : '';
+    return `<tr onclick="openModal('${t.id}')">
+      <td>${priorityBadge(t.priority)}</td>
+      <td>
+        <div style="font-weight:600;color:#111827">${esc(t.last_name)}, ${esc(t.first_name)}${resolvedTag(t)}</div>
+        <div style="font-size:0.7rem;color:#9ca3af;margin-top:1px">${esc(t.email)}</div>
+        <div style="margin-top:3px">${yearInline(t)}</div>
+      </td>
+      <td style="max-width:180px">
+        <div style="font-size:0.8rem;color:#1f2937;font-weight:500">${esc(t.campus)}</div>
+        <div style="font-size:0.7rem;color:#6b7280;margin-top:2px">${esc(t.region)}</div>
+      </td>
+      <td style="font-size:0.8rem;color:#374151">${esc(t.cluster)}</td>
+      <td style="text-align:center">${issuesSummary(t)}</td>
+      <td style="font-size:0.8rem;color:#374151;max-width:240px">${topText}${topLabel}</td>
+      <td class="no-print"><button class="view-btn">View →</button></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" style="padding:24px;text-align:center;color:#9ca3af;font-size:0.875rem">No teachers match the selected filters.</td></tr>`;
+}
+
+// ── TAB 3: Teacher Cross-Reference ────────────────────────────────────────
+
+function renderTeachers() {
+  const pf  = document.getElementById('t-priority-filter').value;
+  const rf  = document.getElementById('t-region-filter').value;
+  const cf  = document.getElementById('t-campus-filter').value;
+  const clf = document.getElementById('t-cluster-filter').value;
+  const yf  = document.getElementById('t-year-filter').value;
+  const q   = document.getElementById('t-search').value.toLowerCase();
+
+  const filtered = D.teachers.filter(t => {
+    if (pf  && String(t.priority) !== pf) return false;
+    if (rf  && t.region  !== rf)          return false;
+    if (cf  && t.campus  !== cf)          return false;
+    if (clf && t.cluster !== clf)         return false;
+    if (yf === 'both' && !(t.in_2425 && t.in_2526))   return false;
+    if (yf === '2425' && !(t.in_2425 && !t.in_2526))  return false;
+    if (yf === '2526' && !(!t.in_2425 && t.in_2526))  return false;
+    if (q) {
+      const name = `${t.first_name} ${t.last_name}`.toLowerCase();
+      if (!name.includes(q) && !t.email.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a,b) => a.priority - b.priority || a.last_name.localeCompare(b.last_name));
+  document.getElementById('teachers-count').textContent =
+    `Showing ${filtered.length} of ${D.teachers.length} teachers`;
+
+  document.getElementById('teachers-tbody').innerHTML = filtered.map(t =>
+    `<tr onclick="openModal('${t.id}')">
+      <td>${priorityBadge(t.priority)}</td>
+      <td>
+        <div style="font-weight:600;color:#111827">${esc(t.last_name)}, ${esc(t.first_name)}${resolvedTag(t)}</div>
+        <div style="font-size:0.7rem;color:#9ca3af;margin-top:1px">${esc(t.email)}</div>
+        <div style="margin-top:3px">${yearInline(t)}</div>
+      </td>
+      <td style="font-size:0.8rem;color:#1f2937;max-width:180px">${esc(t.campus)}</td>
+      <td style="font-size:0.8rem;color:#6b7280">${esc(t.region)}</td>
+      <td style="font-size:0.8rem;color:#374151">${esc(t.cluster)}</td>
+      <td style="text-align:center">${issuesSummary(t)}</td>
+      <td class="no-print"><button class="view-btn">View →</button></td>
+    </tr>`
+  ).join('') || `<tr><td colspan="7" style="padding:24px;text-align:center;color:#9ca3af;font-size:0.875rem">No teachers match the selected filters.</td></tr>`;
+}
+
+// ── TAB 4: Campus Drill-Down ──────────────────────────────────────────────
+
+function renderCampusList() {
+  const search = (document.getElementById('campus-search').value || '').toLowerCase();
+  const rf     = document.getElementById('campus-region-filter').value;
+
+  // Group campuses by region
+  const grouped = {};
+  D.campuses.forEach(c => {
+    if (search && !c.campus.toLowerCase().includes(search)) return;
+    if (rf && c.region !== rf) return;
+    const r = c.region || 'Unassigned';
+    if (!grouped[r]) grouped[r] = [];
+    grouped[r].push(c);
+  });
+
+  const orderedRegions = D.region_order.filter(r => grouped[r]);
+  const extraRegions   = Object.keys(grouped).filter(r => !D.region_order.includes(r));
+
+  let html = '';
+  [...orderedRegions, ...extraRegions].forEach(regionName => {
+    const cList = grouped[regionName];
+    html += `<div class="text-xs font-bold text-gray-400 uppercase tracking-wide px-1 mt-3 mb-1">${esc(regionName)}</div>`;
+    cList.forEach(c => {
+      const bg = heatColor(c.avg_priority);
+      html += `<button onclick="openCampusDrilldown(${D.campuses.indexOf(c)})"
+        class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition flex items-center gap-2">
+        <span class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${bg}"></span>
+        <span class="text-sm text-gray-800 truncate">${esc(c.campus)}</span>
+        <span class="ml-auto text-xs text-gray-400 flex-shrink-0">${c.teacher_count}</span>
+      </button>`;
+    });
+  });
+
+  document.getElementById('campus-list').innerHTML = html ||
+    '<p class="text-xs text-gray-400 px-2 py-4 text-center">No campuses match.</p>';
+}
+
+function openCampusDrilldown(idx) {
+  // Switch to campus tab
+  document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-campus').classList.remove('hidden');
+  document.querySelectorAll('.tab-btn')[3].classList.add('active');
+
+  const campus = D.campuses[idx];
+  if (!campus) return;
+  const campusName = campus.campus;
+
+  const teachers = campus.teacher_ids.map(id => teacherMap[id]).filter(Boolean);
+  teachers.sort((a,b) => a.priority - b.priority || a.last_name.localeCompare(b.last_name));
+
+  const pBreak = [1,2,3,4,5].map(p => ({p, cnt:teachers.filter(t=>t.priority===p).length}));
+
+  document.getElementById('campus-detail').innerHTML = `
+    <div class="flex items-start justify-between mb-4 flex-wrap gap-2">
+      <div>
+        <h3 class="text-lg font-bold text-gray-900">${esc(campusName)}</h3>
+        <p class="text-sm text-gray-500 mt-0.5">${esc(campus.region)} &nbsp;|&nbsp; ${campus.teacher_count} teachers &nbsp;|&nbsp; Avg Priority: <strong>P${campus.heat_level}</strong></p>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        ${pBreak.filter(x=>x.cnt>0).map(x=>`<span class="priority-badge p${x.p}-badge">${x.cnt} × P${x.p}</span>`).join('')}
+      </div>
+    </div>
+    <div class="grid grid-cols-3 gap-3 mb-5 text-center">
+      <div class="rounded-xl bg-red-50 border border-red-100 p-3">
+        <div class="text-2xl font-extrabold text-red-700">${campus.recurring}</div>
+        <div class="text-xs text-red-600 mt-1">Recurring Issues</div>
+      </div>
+      <div class="rounded-xl bg-blue-50 border border-blue-100 p-3">
+        <div class="text-2xl font-extrabold text-blue-700">${campus.new_issues}</div>
+        <div class="text-xs text-blue-600 mt-1">New Issues</div>
+      </div>
+      <div class="rounded-xl bg-green-50 border border-green-100 p-3">
+        <div class="text-2xl font-extrabold text-green-700">${campus.resolved}</div>
+        <div class="text-xs text-green-600 mt-1">Resolved</div>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+          <th class="px-3 py-2 text-left">Priority</th>
+          <th class="px-3 py-2 text-left">Teacher</th>
+          <th class="px-3 py-2 text-center">Years</th>
+          <th class="px-3 py-2 text-center">Recurring</th>
+          <th class="px-3 py-2 text-left">Recurring Areas</th>
+          <th class="px-3 py-2 no-print"></th>
+        </tr></thead>
+        <tbody>
+          ${teachers.map(t => {
+            const recAreas = t.areas.filter(a=>a.status==='recurring').map(a=>a.label).join(', ');
+            return `<tr class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer" onclick="openModal('${t.id}')">
+              <td class="px-3 py-2">${priorityBadge(t.priority)}</td>
+              <td class="px-3 py-2">
+                <div class="font-medium">${esc(t.last_name)}, ${esc(t.first_name)}</div>
+                <div class="text-xs text-gray-400">${esc(t.email)}</div>
+              </td>
+              <td class="px-3 py-2 text-center">${yearBadge(t)}</td>
+              <td class="px-3 py-2 text-center font-bold text-red-700">${t.recurring_count}</td>
+              <td class="px-3 py-2 text-xs text-gray-600">${recAreas||'<span class="text-gray-300">—</span>'}</td>
+              <td class="px-3 py-2 no-print"><button class="text-blue-600 text-xs hover:text-blue-800">View →</button></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ── TAB 5: Improvements ───────────────────────────────────────────────────
+
+function renderImprovements() {
+  const resolved = D.teachers.filter(t => t.priority === 4 || (t.in_2425 && t.in_2526 && t.resolved_count > 0));
+  resolved.sort((a,b) => b.resolved_count - a.resolved_count || a.campus.localeCompare(b.campus));
+
+  const byCampus = {};
+  resolved.forEach(t => {
+    if (!byCampus[t.campus]) byCampus[t.campus] = [];
+    byCampus[t.campus].push(t);
+  });
+
+  document.getElementById('improvements-content').innerHTML =
+    `<p class="text-sm font-medium text-gray-700 mb-5">${resolved.length} teachers show improvement — needs from 2024-25 not repeated in 2025-26</p>` +
+    Object.entries(byCampus).sort((a,b)=>b[1].length-a[1].length).map(([campus, ts]) =>
+      `<div class="mb-6">
+        <h3 class="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+          ${esc(campus)} <span class="text-xs font-normal text-gray-400">(${ts.length} teacher${ts.length!==1?'s':''})</span>
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead><tr class="bg-green-50 text-gray-500 text-xs uppercase">
+              <th class="px-3 py-1.5 text-left">Teacher</th>
+              <th class="px-3 py-1.5 text-center">Resolved Areas</th>
+              <th class="px-3 py-1.5 text-left">What They Had in 2024-25</th>
+              <th class="px-3 py-1.5 no-print"></th>
+            </tr></thead>
+            <tbody>
+              ${ts.map(t => {
+                const ra = t.areas.filter(a=>a.status==='resolved');
+                const sample = ra[0];
+                return `<tr class="border-b border-gray-100 hover:bg-green-50 cursor-pointer" onclick="openModal('${t.id}')">
+                  <td class="px-3 py-1.5 font-medium">${esc(t.last_name)}, ${esc(t.first_name)}</td>
+                  <td class="px-3 py-1.5 text-center font-bold text-green-700">${t.resolved_count}</td>
+                  <td class="px-3 py-1.5 text-gray-500 max-w-sm">${sample ? trunc(sample.response_2425) : '—'}</td>
+                  <td class="px-3 py-1.5 no-print"><button class="text-blue-600 hover:text-blue-800">View →</button></td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`
+    ).join('');
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────
+
+function openModal(teacherId) {
+  const t = teacherMap[teacherId];
+  if (!t) return;
+  currentModalTeacher = teacherId;
+
+  document.getElementById('modal-header').innerHTML = `
+    <div>
+      <div class="flex items-center gap-3 flex-wrap">
+        <h2 class="text-lg font-bold text-gray-900">${esc(t.last_name)}, ${esc(t.first_name)}</h2>
+        ${priorityBadge(t.priority)}
+      </div>
+      <p class="text-sm text-gray-500 mt-1">
+        ${esc(t.campus)} &nbsp;|&nbsp; ${esc(t.region)} &nbsp;|&nbsp; ${esc(t.cluster)}<br>
+        <a href="mailto:${esc(t.email)}" style="color:var(--disd-navy)" class="hover:underline">${esc(t.email)}</a>
+      </p>
+      <div class="flex gap-2 mt-2">${yearBadge(t)}</div>
+    </div>`;
+
+  const statsRow = `
+    <div class="grid grid-cols-3 gap-3 mb-5 text-center">
+      <div class="rounded-xl bg-red-50 border border-red-100 p-3">
+        <div class="text-2xl font-extrabold text-red-700">${t.recurring_count}</div>
+        <div class="text-xs text-red-600 mt-1">Recurring Issues</div>
+      </div>
+      <div class="rounded-xl bg-blue-50 border border-blue-100 p-3">
+        <div class="text-2xl font-extrabold text-blue-700">${t.new_count}</div>
+        <div class="text-xs text-blue-600 mt-1">New Issues</div>
+      </div>
+      <div class="rounded-xl bg-green-50 border border-green-100 p-3">
+        <div class="text-2xl font-extrabold text-green-700">${t.resolved_count}</div>
+        <div class="text-xs text-green-600 mt-1">Resolved</div>
+      </div>
+    </div>`;
+
+  const savedBy = document.getElementById('res-by') ? document.getElementById('res-by').value : '';
+  const persistNote = HAS_BACKEND
+    ? 'Saved for everyone who opens this dashboard.'
+    : 'Saved in this browser only (open via the shared link to sync for everyone).';
+  const resolveBar = `
+    <div class="mb-5 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 no-print">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs font-semibold text-gray-600">Your name (for resolution log):</span>
+        <input id="res-by" type="text" value="${esc(savedBy)}" placeholder="e.g. J. Smith"
+          class="filter-input" style="width:180px" />
+        <span class="text-xs text-gray-400">${persistNote}</span>
+      </div>
+    </div>`;
+
+  const areaHtml = t.areas.map(a => {
+    const s1 = a.response_2425 && !['n/a','na','none',''].includes(a.response_2425.toLowerCase().trim());
+    const s2 = a.response_2526 && !['n/a','na','none',''].includes(a.response_2526.toLowerCase().trim());
+    const kws = a.shared_keywords.length
+      ? `<div class="mt-2 flex flex-wrap gap-1">${a.shared_keywords.map(k=>`<span class="kw-tag">${k}</span>`).join('')}</div>` : '';
+
+    const res = getResolution(t.id, a.key);
+    let resolveFooter;
+    if (res) {
+      const when = res.timestamp ? new Date(res.timestamp).toLocaleDateString() : '';
+      resolveFooter = `<div class="px-4 py-2.5 bg-green-50 border-t border-green-100 flex items-center justify-between gap-3 flex-wrap">
+        <div class="text-xs text-green-800">
+          <span class="font-bold">✓ Marked resolved</span>
+          ${res.resolvedBy ? ' by ' + esc(res.resolvedBy) : ''} ${when ? '· ' + when : ''}
+          ${res.notes ? `<div class="text-green-700 mt-0.5 italic">"${esc(res.notes)}"</div>` : ''}
+        </div>
+        <button onclick="undoResolution('${t.id}','${a.key}')"
+          class="text-xs font-semibold text-gray-500 hover:text-red-600 underline no-print">Undo</button>
+      </div>`;
+    } else {
+      resolveFooter = `<div class="px-4 py-2.5 bg-white border-t border-gray-100 flex items-center gap-2 flex-wrap no-print">
+        <input id="res-notes-${a.key}" type="text" placeholder="Optional note (what was done)…"
+          class="filter-input" style="flex:1;min-width:180px" />
+        <button onclick="markAreaResolved('${t.id}','${a.key}')"
+          class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition"
+          style="background:#16a34a;color:#fff;border-color:#16a34a">Mark Resolved</button>
+      </div>`;
+    }
+
+    return `<div class="mb-4 border border-gray-100 rounded-xl overflow-hidden">
+      <div class="flex items-center justify-between bg-gray-50 px-4 py-2.5 border-b border-gray-100">
+        <span class="text-sm font-semibold text-gray-800">${a.label}</span>
+        ${statusBadge(a.status)}
+      </div>
+      <div class="grid grid-cols-2 text-xs">
+        <div class="p-4 border-r border-gray-100">
+          <div class="text-xs font-bold text-gray-400 uppercase mb-2 tracking-wide">2024-25</div>
+          <div class="text-gray-700 leading-relaxed whitespace-pre-wrap">${s1 ? esc(a.response_2425) : '<span class="text-gray-300 italic">No response</span>'}</div>
+        </div>
+        <div class="p-4 ${a.status==='recurring'?'bg-red-50':a.status==='resolved'?'bg-green-50':a.status==='new'?'bg-blue-50':''}">
+          <div class="text-xs font-bold text-gray-400 uppercase mb-2 tracking-wide">2025-26</div>
+          <div class="text-gray-700 leading-relaxed whitespace-pre-wrap">${s2 ? esc(a.response_2526) : '<span class="text-gray-300 italic">No response</span>'}</div>
+          ${kws}
+        </div>
+      </div>
+      ${resolveFooter}
+    </div>`;
+  }).join('');
+
+  document.getElementById('modal-body').innerHTML = resolveBar + statsRow + areaHtml;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.add('hidden');
+  document.body.style.overflow = '';
+  currentModalTeacher = null;
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── Excel Export ──────────────────────────────────────────────────────────
+
+function priorityText(p) { return `P${p} — ${pLabels[p]}`; }
+
+function yearsText(t) {
+  if (t.in_2425 && t.in_2526) return 'Both Years';
+  if (t.in_2425) return '2024-25 Only';
+  return '2025-26 Only';
+}
+
+function autoWidths(rows) {
+  const widths = [];
+  rows.forEach(row => {
+    row.forEach((cell, i) => {
+      const len = String(cell == null ? '' : cell).length;
+      widths[i] = Math.max(widths[i] || 10, Math.min(len + 2, 60));
+    });
+  });
+  return widths.map(w => ({ wch: w }));
+}
+
+function downloadExcel() {
+  if (typeof XLSX === 'undefined') {
+    alert('The spreadsheet library did not load. Check your internet connection and try again.');
+    return;
+  }
+  const wb = XLSX.utils.book_new();
+  const s = D.summary;
+
+  // ── Sheet 1: Summary ──
+  const summaryRows = [
+    ['Dallas ISD — CTE Program Survey Cross-Reference'],
+    ['Generated', new Date().toLocaleString()],
+    [],
+    ['Metric', 'Value'],
+    ['Total unique teachers', s.total_unique_teachers],
+    ['Responded both years', s.teachers_both_years],
+    ['Only 2024-25', s.teachers_only_2425],
+    ['Only 2025-26', s.teachers_only_2526],
+    ['Total campuses', s.total_campuses],
+    ['Total regions', s.total_regions],
+    ['Total clusters', s.total_clusters],
+    [],
+    ['Priority', 'Label', 'Teacher Count'],
+  ];
+  Object.keys(pLabels).sort().forEach(p => {
+    summaryRows.push([`P${p}`, pLabels[p], (s.priority_counts && s.priority_counts[p]) || 0]);
+  });
+  const ws1 = XLSX.utils.aoa_to_sheet(summaryRows);
+  ws1['!cols'] = autoWidths(summaryRows);
+  XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
+
+  // ── Sheet 2: All Teachers ──
+  const teacherHeader = ['Last Name','First Name','Email','Campus','Region','Level','Cluster',
+    'Years','Priority #','Priority','Recurring','New','Resolved','Recurring Areas'];
+  const teacherRows = [teacherHeader];
+  D.teachers.slice().sort((a,b) => a.priority - b.priority || a.last_name.localeCompare(b.last_name))
+    .forEach(t => {
+      const recAreas = t.areas.filter(a => a.status === 'recurring').map(a => a.label).join('; ');
+      teacherRows.push([
+        t.last_name, t.first_name, t.email, t.campus, t.region, t.level || '', t.cluster,
+        yearsText(t), t.priority, pLabels[t.priority],
+        t.recurring_count, t.new_count, t.resolved_count, recAreas
+      ]);
+    });
+  const ws2 = XLSX.utils.aoa_to_sheet(teacherRows);
+  ws2['!cols'] = autoWidths([teacherHeader, ...teacherRows.slice(1, 40)]);
+  ws2['!autofilter'] = { ref: `A1:N${teacherRows.length}` };
+  XLSX.utils.book_append_sheet(wb, ws2, 'All Teachers');
+
+  // ── Sheet 3: Campuses ──
+  const campusHeader = ['Campus','Region','Level','Teachers','Avg Priority','Recurring','New','Resolved'];
+  const campusRows = [campusHeader];
+  D.campuses.slice().forEach(c => {
+    campusRows.push([c.campus, c.region, c.level || '', c.teacher_count,
+      c.avg_priority, c.recurring, c.new_issues, c.resolved]);
+  });
+  const ws3 = XLSX.utils.aoa_to_sheet(campusRows);
+  ws3['!cols'] = autoWidths([campusHeader, ...campusRows.slice(1, 40)]);
+  ws3['!autofilter'] = { ref: `A1:H${campusRows.length}` };
+  XLSX.utils.book_append_sheet(wb, ws3, 'Campuses');
+
+  // ── Sheet 4: Priority Queue (pre-sorted) ──
+  const queueHeader = ['Rank','Priority #','Priority','Last Name','First Name','Email',
+    'Campus','Region','Recurring','New','Resolved'];
+  const queueRows = [queueHeader];
+  D.priority_queue.map(id => teacherMap[id]).filter(Boolean).forEach((t, i) => {
+    queueRows.push([i + 1, t.priority, pLabels[t.priority], t.last_name, t.first_name,
+      t.email, t.campus, t.region, t.recurring_count, t.new_count, t.resolved_count]);
+  });
+  const ws4 = XLSX.utils.aoa_to_sheet(queueRows);
+  ws4['!cols'] = autoWidths([queueHeader, ...queueRows.slice(1, 40)]);
+  XLSX.utils.book_append_sheet(wb, ws4, 'Priority Queue');
+
+  // ── Sheet: Resolutions Log ──
+  const resHeader = ['Date Resolved','Resolved By','Teacher','Campus','Region','Priority','Issue Area','Notes'];
+  const resRows = [resHeader];
+  Object.values(RESOLUTIONS)
+    .sort((a,b) => String(b.timestamp||'').localeCompare(String(a.timestamp||'')))
+    .forEach(r => {
+      const t = teacherMap[r.teacherId];
+      resRows.push([
+        r.timestamp ? new Date(r.timestamp).toLocaleString() : '',
+        r.resolvedBy || '',
+        t ? `${t.last_name}, ${t.first_name}` : r.teacherId,
+        r.campus || (t ? t.campus : ''),
+        t ? t.region : '',
+        t ? pLabels[t.priority] : '',
+        r.issueLabel || r.issueKey,
+        r.notes || ''
+      ]);
+    });
+  if (resRows.length === 1) resRows.push(['No issues marked resolved yet','','','','','','','']);
+  const wsR = XLSX.utils.aoa_to_sheet(resRows);
+  wsR['!cols'] = autoWidths([resHeader, ...resRows.slice(1, 40)]);
+  if (resRows.length > 1) wsR['!autofilter'] = { ref: `A1:H${resRows.length}` };
+  XLSX.utils.book_append_sheet(wb, wsR, 'Resolutions Log');
+
+  // ── Sheet 5: Issue Detail (every teacher x every area) ──
+  const detailHeader = ['Last Name','First Name','Campus','Region','Priority','Issue Area','Status',
+    'Response 2024-25','Response 2025-26','Manually Resolved','Resolved By','Resolved Notes'];
+  const detailRows = [detailHeader];
+  D.teachers.slice().sort((a,b) => a.priority - b.priority || a.last_name.localeCompare(b.last_name))
+    .forEach(t => {
+      t.areas.forEach(a => {
+        const r = getResolution(t.id, a.key);
+        detailRows.push([
+          t.last_name, t.first_name, t.campus, t.region, pLabels[t.priority],
+          a.label, a.status, a.response_2425 || '', a.response_2526 || '',
+          r ? 'YES' : '', r ? (r.resolvedBy || '') : '', r ? (r.notes || '') : ''
+        ]);
+      });
+    });
+  const ws5 = XLSX.utils.aoa_to_sheet(detailRows);
+  ws5['!cols'] = autoWidths([detailHeader, ...detailRows.slice(1, 40)]);
+  ws5['!autofilter'] = { ref: `A1:L${detailRows.length}` };
+  XLSX.utils.book_append_sheet(wb, ws5, 'Issue Detail');
+
+  const stamp = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `CTE_Survey_Report_${stamp}.xlsx`);
+}
+
+// ── Resolution Tracking (persists to Google Sheet via Apps Script) ──────────
+
+let RESOLUTIONS = {};   // key `${teacherId}||${issueKey}` -> {teacherId, issueKey, issueLabel, campus, notes, resolvedBy, timestamp}
+const HAS_BACKEND = (typeof google !== 'undefined' && google.script && google.script.run);
+
+function resKey(teacherId, issueKey) { return `${teacherId}||${issueKey}`; }
+function getResolution(teacherId, issueKey) { return RESOLUTIONS[resKey(teacherId, issueKey)] || null; }
+
+function loadResolutions() {
+  if (HAS_BACKEND) {
+    google.script.run
+      .withSuccessHandler(rows => { indexResolutions(rows || []); afterResolutionsLoaded(); })
+      .withFailureHandler(err => { console.warn('getResolutions failed', err); afterResolutionsLoaded(); })
+      .getResolutions();
+  } else {
+    try {
+      const local = JSON.parse(localStorage.getItem('cte_resolutions') || '[]');
+      indexResolutions(local);
+    } catch (e) { /* ignore */ }
+    afterResolutionsLoaded();
+  }
+}
+
+function indexResolutions(rows) {
+  RESOLUTIONS = {};
+  rows.forEach(r => {
+    if (r && r.teacherId != null && r.issueKey != null) {
+      RESOLUTIONS[resKey(r.teacherId, r.issueKey)] = r;
+    }
+  });
+}
+
+function afterResolutionsLoaded() {
+  // Re-render any views that show resolution state
+  renderQueue();
+  renderTeachers();
+  if (currentModalTeacher) openModal(currentModalTeacher);
+}
+
+function saveLocalResolutions() {
+  if (HAS_BACKEND) return;
+  localStorage.setItem('cte_resolutions', JSON.stringify(Object.values(RESOLUTIONS)));
+}
+
+function markAreaResolved(teacherId, issueKey) {
+  const t = teacherMap[teacherId];
+  if (!t) return;
+  const area = t.areas.find(a => a.key === issueKey);
+  const issueLabel = area ? area.label : issueKey;
+  const notes = (document.getElementById(`res-notes-${issueKey}`) || {}).value || '';
+  const by = (document.getElementById('res-by') || {}).value || '';
+  const record = {
+    teacherId, issueKey, issueLabel, campus: t.campus,
+    notes, resolvedBy: by, timestamp: new Date().toISOString()
+  };
+  RESOLUTIONS[resKey(teacherId, issueKey)] = record;
+  saveLocalResolutions();
+  if (HAS_BACKEND) {
+    google.script.run
+      .withFailureHandler(err => console.warn('markResolved failed', err))
+      .markResolved(record);
+  }
+  openModal(teacherId);
+}
+
+function undoResolution(teacherId, issueKey) {
+  delete RESOLUTIONS[resKey(teacherId, issueKey)];
+  saveLocalResolutions();
+  if (HAS_BACKEND) {
+    google.script.run
+      .withFailureHandler(err => console.warn('unmarkResolved failed', err))
+      .unmarkResolved(teacherId, issueKey);
+  }
+  openModal(teacherId);
+}
+
+function teacherResolvedCount(t) {
+  return t.areas.reduce((n, a) => n + (getResolution(t.id, a.key) ? 1 : 0), 0);
+}
+
+function resolvedTag(t) {
+  const n = teacherResolvedCount(t);
+  if (!n) return '';
+  return `<span title="${n} issue(s) manually marked resolved"
+    style="display:inline-block;margin-left:6px;font-size:0.62rem;font-weight:700;color:#14532d;background:#dcfce7;border:1px solid #86efac;border-radius:9999px;padding:1px 7px">✓ ${n} addressed</span>`;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+(function init() {
+  populateFilters();
+  renderSummary();
+  renderQueue();
+  renderTeachers();
+  renderCampusList();
+  renderImprovements();
+  loadResolutions();
+})();
+</script>
+</body>
+</html>

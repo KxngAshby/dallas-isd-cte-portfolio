@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Middle School Showcase</title>
+  <style>
+    :root {
+      --primary:      #0a1628;
+      --primary-mid:  #112240;
+      --accent:       #c9a84c;
+      --accent-light: #e8c96a;
+      --text-light:   #f0f4ff;
+      --text-muted:   #9eadd4;
+      --white:        #ffffff;
+      --surface:      #f7f9fc;
+      --card-bg:      #ffffff;
+      --border:       #e2e8f0;
+      --green:        #276749;
+      --red:          #c53030;
+      --nav-height:   68px;
+      --hero-bg: linear-gradient(135deg, #0a1628 0%, #1a3a6e 50%, #0d2444 100%);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: var(--surface); color: #1a202c; line-height: 1.6; }
+    a { text-decoration: none; color: inherit; }
+
+    /* NAV */
+    .nav { position: fixed; top: 0; left: 0; right: 0; height: var(--nav-height); background: var(--primary-mid); border-bottom: 2px solid var(--accent); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; z-index: 1000; box-shadow: 0 2px 16px rgba(0,0,0,0.35); }
+    .nav-brand { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .nav-brand .badge { width: 52px; height: 52px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: var(--primary); flex-shrink: 0; overflow: hidden; }
+    .nav-brand .badge.has-logo { width: auto; height: auto; background: none; padding: 0; border-radius: 0; overflow: visible; }
+    .nav-brand .badge img { max-height: 46px; width: auto; max-width: 200px; object-fit: contain; display: block; }
+    .nav-brand .title { font-size: 17px; font-weight: 700; color: var(--white); line-height: 1.2; }
+    .nav-brand .subtitle { font-size: 11px; color: var(--text-muted); }
+    .nav-links { display: flex; gap: 4px; list-style: none; }
+    .nav-links li button { display: inline-block; padding: 8px 18px; border-radius: 6px; font-size: 14px; font-weight: 500; color: var(--text-muted); background: none; border: none; cursor: pointer; transition: color .15s, background .15s; font-family: inherit; }
+    .nav-links li button:hover { color: var(--white); background: rgba(255,255,255,0.07); }
+    .nav-links li button.active { color: var(--accent); background: rgba(201,168,76,0.12); font-weight: 600; }
+    .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 6px; }
+    .hamburger span { display: block; width: 24px; height: 2px; background: var(--white); border-radius: 2px; }
+    @media (max-width: 700px) {
+      .nav { padding: 0 18px; }
+      .nav-links { display: none; flex-direction: column; position: absolute; top: var(--nav-height); left: 0; right: 0; background: var(--primary-mid); padding: 12px 18px 18px; border-bottom: 2px solid var(--accent); gap: 2px; }
+      .nav-links.open { display: flex; }
+      .hamburger { display: flex; }
+    }
+
+    .page-body { padding-top: var(--nav-height); }
+    .view { display: none; }
+    .view.active { display: block; animation: fadeIn .3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    /* HERO */
+    .hero { min-height: calc(100vh - var(--nav-height)); background: var(--hero-bg); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; text-align: center; padding: 80px 24px 60px; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 60% 40%, rgba(201,168,76,0.08) 0%, transparent 70%); pointer-events: none; z-index: 2; }
+    /* Background media layer (image or YouTube video) */
+    .hero-bg { position: absolute; inset: 0; z-index: 0; background-size: cover; background-position: center; background-repeat: no-repeat; }
+    .hero-bg iframe { position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw; min-height: 100%; min-width: 177.77vh; transform: translate(-50%, -50%); pointer-events: none; border: 0; }
+    .hero-scrim { position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(10,22,40,0.55) 0%, rgba(10,22,40,0.65) 100%); pointer-events: none; }
+    .hero-content { position: relative; z-index: 3; max-width: 760px; }
+    .hero h1 { font-size: clamp(32px, 6vw, 58px); font-weight: 800; color: var(--white); line-height: 1.1; letter-spacing: -1px; margin-bottom: 20px; text-shadow: 0 2px 18px rgba(0,0,0,0.4); }
+    .hero h1 span { color: var(--accent); }
+    .hero p { font-size: 18px; color: rgba(240,244,255,0.92); max-width: 600px; margin: 0 auto 24px; line-height: 1.7; text-shadow: 0 1px 10px rgba(0,0,0,0.35); }
+    .hero-about { font-size: 16px !important; color: rgba(240,244,255,0.82) !important; max-width: 640px !important; }
+    .hero-mute-btn { position: absolute; bottom: 20px; right: 24px; z-index: 4; background: rgba(10,22,40,0.6); border: 1px solid rgba(201,168,76,0.4); border-radius: 999px; padding: 8px 16px; cursor: pointer; display: flex; align-items: center; gap: 7px; color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: 0.5px; backdrop-filter: blur(4px); transition: background .15s; }
+    .hero-mute-btn:hover { background: rgba(10,22,40,0.88); }
+    .hero-cta { display: inline-block; margin-top: 16px; padding: 16px 44px; font-size: 16px; font-weight: 700; letter-spacing: 0.5px; color: var(--primary); background: var(--accent); border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 6px 24px rgba(201,168,76,0.35); transition: transform .12s, box-shadow .12s, background .12s; }
+    .hero-cta:hover { background: var(--accent-light); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(201,168,76,0.45); }
+
+    /* SECTIONS */
+    .section { padding: 64px 24px; }
+    .section-inner { max-width: 1040px; margin: 0 auto; }
+    .section-tag { font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+    .section-title { font-size: clamp(24px, 4vw, 36px); font-weight: 800; color: var(--primary); line-height: 1.2; margin-bottom: 14px; letter-spacing: -0.5px; }
+    .section-lead { font-size: 16px; color: #4a5568; max-width: 600px; margin-bottom: 40px; line-height: 1.7; }
+
+    /* ABOUT CARDS */
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 700px) { .about-grid { grid-template-columns: 1fr; } }
+    .about-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 28px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .about-card .icon { width: 44px; height: 44px; background: rgba(10,22,40,0.06); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; color: var(--primary); }
+    .about-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: var(--primary); }
+    .about-card p { font-size: 14px; color: #4a5568; line-height: 1.65; }
+
+    /* EVENT INFO STRIP */
+    .event-strip { background: var(--primary); color: var(--white); padding: 32px 24px; }
+    .event-strip-inner { max-width: 1040px; margin: 0 auto; display: flex; gap: 32px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+    .event-strip-item { display: flex; align-items: center; gap: 10px; }
+    .event-strip-item .ei { width: 3px; height: 36px; background: var(--accent); border-radius: 2px; flex-shrink: 0; }
+    .event-strip-item .ev { font-size: 14px; color: var(--text-muted); }
+    .event-strip-item .ev strong { display: block; color: var(--white); font-size: 16px; }
+
+    /* PORTAL LOGIN */
+    .portal-wrap { min-height: 480px; display: flex; align-items: center; justify-content: center; padding: 60px 24px; }
+    .login-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 40px 36px; max-width: 440px; width: 100%; text-align: center; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+    .login-card .portal-icon { width: 60px; height: 60px; background: rgba(10,22,40,0.06); border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: var(--primary); }
+    .login-card h2 { font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+    .login-card .sub { font-size: 14px; color: #718096; margin-bottom: 28px; line-height: 1.6; }
+    .login-card input { width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 16px; text-align: center; letter-spacing: 1.5px; color: var(--primary); background: var(--surface); font-family: inherit; transition: border-color .15s; }
+    .login-card input:focus { outline: none; border-color: var(--accent); }
+    .login-card .hint-text { font-size: 12px; color: #a0aec0; margin-top: 8px; }
+    .btn-login { width: 100%; padding: 14px; margin-top: 16px; background: var(--primary); color: var(--white); border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .15s; letter-spacing: 0.2px; }
+    .btn-login:hover { background: #1a3a6e; }
+    .btn-login:disabled { opacity: .6; cursor: default; }
+    .error-msg { color: var(--red); font-size: 14px; margin-top: 12px; min-height: 20px; font-weight: 500; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.35); border-top-color: var(--white); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* PORTAL CONTENT */
+    .portal-content { max-width: 800px; margin: 0 auto; padding: 40px 24px 60px; }
+    .portal-header { background: var(--primary); border-radius: 16px; padding: 28px; color: var(--white); margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .portal-header .greeting h2 { font-size: 22px; font-weight: 800; }
+    .portal-header .greeting .meta { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    .portal-header .portal-badge { background: rgba(201,168,76,0.15); color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(201,168,76,0.3); }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+    @media (max-width: 600px) { .info-grid { grid-template-columns: 1fr; } }
+    .info-cell { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+    .info-cell .lbl { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #a0aec0; margin-bottom: 3px; }
+    .info-cell .val { font-size: 15px; color: var(--primary); font-weight: 500; }
+    .info-cell .val.empty { color: #cbd5e0; font-style: italic; font-weight: 400; }
+    .docs-section h3 { font-size: 17px; font-weight: 700; color: var(--primary); margin-bottom: 14px; }
+    .doc-group-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin: 20px 0 8px; }
+    .doc-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; }
+    .doc-item .doc-name { font-size: 14px; font-weight: 500; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    .doc-item a { background: var(--primary); color: var(--white); font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 6px; white-space: nowrap; }
+    .doc-item a:hover { background: #1a3a6e; }
+    .doc-item .no-link { font-size: 12px; color: #a0aec0; }
+    .no-docs { text-align: center; padding: 32px; color: #a0aec0; font-size: 14px; background: var(--card-bg); border: 1px dashed var(--border); border-radius: 12px; }
+    .btn-signout { background: transparent; border: 1px solid var(--border); color: #718096; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 24px; }
+    .btn-signout:hover { border-color: #cbd5e0; color: var(--primary); }
+
+    /* FAQ */
+    .faq-list { max-width: 720px; }
+    .faq-item { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; background: var(--card-bg); overflow: hidden; }
+    .faq-q { display: flex; justify-content: space-between; align-items: center; padding: 18px 22px; cursor: pointer; font-weight: 600; font-size: 15px; color: var(--primary); user-select: none; gap: 12px; }
+    .faq-q:hover { background: rgba(10,22,40,0.02); }
+    .faq-chevron { flex-shrink: 0; width: 22px; height: 22px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: transform .25s; color: var(--white); font-size: 13px; }
+    .faq-item.open .faq-chevron { transform: rotate(180deg); }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease; font-size: 14px; color: #4a5568; line-height: 1.7; padding: 0 22px; }
+    .faq-item.open .faq-a { max-height: 300px; padding: 0 22px 18px; }
+
+    /* FOOTER */
+    .footer { background: var(--primary); color: var(--text-muted); text-align: center; padding: 32px 24px; font-size: 13px; }
+    .footer strong { color: var(--accent); }
+    .footer .flinks { margin-top: 10px; display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+    .footer .flinks button { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 13px; font-family: inherit; padding: 0; }
+    .footer .flinks button:hover { color: var(--white); }
+
+    /* REGISTRATION */
+    .reg-panel { display: block; }
+    /* reg-tabs-nav removed — layout is now two-column hub */
+    .reg-section-hdr { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 10px; margin: 28px 0 18px; }
+    .reg-section-hdr:first-child { margin-top: 0; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+    .form-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .form-field label { font-size: 13px; font-weight: 600; color: var(--primary); }
+    .form-field .req { color: var(--red); margin-left: 2px; }
+    .form-field input, .form-field select, .form-field textarea { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--primary); background: var(--surface); font-family: inherit; transition: border-color .15s; }
+    .form-field input:focus, .form-field select:focus, .form-field textarea:focus { outline: none; border-color: var(--accent); background: var(--white); }
+    .form-field textarea { min-height: 88px; resize: vertical; line-height: 1.6; }
+    .form-hint { font-size: 12px; color: #a0aec0; line-height: 1.5; }
+    .sec-contact-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin: 4px 0 14px; }
+    .sec-contact-label { font-size: 12px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #a0aec0; margin-bottom: 14px; }
+    .radio-group { display: flex; flex-direction: column; gap: 8px; }
+    .radio-label { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--primary); cursor: pointer; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--surface); transition: border-color .15s, background .15s; user-select: none; }
+    .radio-label:hover { border-color: var(--accent); background: rgba(201,168,76,0.04); }
+    .radio-label input[type="radio"] { accent-color: var(--accent); width: 16px; height: 16px; flex-shrink: 0; cursor: pointer; }
+    .radio-label.checked { border-color: var(--accent); background: rgba(201,168,76,0.06); }
+    .btn-reg-submit { width: 100%; padding: 14px; margin-top: 20px; background: var(--primary); color: var(--white); border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .15s; letter-spacing: 0.2px; }
+    .btn-reg-submit:hover { background: #1a3a6e; }
+    .btn-reg-submit:disabled { opacity: .6; cursor: default; }
+    .reg-notice { background: #ebf8ff; border: 1px solid #90cdf4; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #2b6cb0; line-height: 1.55; }
+
+    /* ── REGISTRATION STEP FLOW ── */
+    /* Hub selection screen */
+    #regHubScreen { max-width: 680px; margin: 0 auto; padding: 52px 24px 60px; text-align: center; }
+    .reg-hub-header { margin-bottom: 36px; }
+    .reg-hub-header h2 { font-size: 26px; font-weight: 800; color: var(--primary); margin: 0 0 8px; letter-spacing: -0.4px; }
+    .reg-hub-header p { font-size: 15px; color: #718096; margin: 0; }
+    .reg-hub-cards { display: flex; flex-direction: column; gap: 14px; }
+    .reg-hub-card { display: flex; align-items: center; gap: 18px; width: 100%; padding: 22px 24px; background: var(--card-bg); border: 1.5px solid var(--border); border-radius: 14px; cursor: pointer; text-align: left; font-family: inherit; transition: border-color .15s, box-shadow .15s; }
+    .reg-hub-card:hover { border-color: var(--accent); }
+    .reg-hub-card-icon { width: 52px; height: 52px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--accent); }
+    .reg-hub-card-icon svg { stroke: var(--accent); }
+    .reg-hub-card-title { font-size: 17px; font-weight: 700; color: var(--primary); margin-bottom: 3px; }
+    .reg-hub-card-sub { font-size: 13px; color: #718096; }
+    .reg-hub-card-arrow { margin-left: auto; font-size: 20px; color: #a0aec0; flex-shrink: 0; transition: color .15s; }
+    .reg-hub-card:hover .reg-hub-card-arrow { color: var(--accent); }
+    /* Form screens */
+    .reg-screen-wrap { max-width: 760px; margin: 0 auto; padding: 32px 24px 60px; }
+    .reg-back-link { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; padding: 0; margin-bottom: 28px; transition: opacity .15s; }
+    .reg-back-link:hover { opacity: 0.7; }
+    @media (max-width: 600px) {
+      .reg-hub-card { padding: 16px 16px; gap: 14px; }
+      .reg-hub-card-icon { width: 44px; height: 44px; }
+    }
+    #attendeeFormWrap textarea { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-family: inherit; color: var(--primary); resize: vertical; box-sizing: border-box; }
+    #attendeeFormWrap textarea:focus { outline: none; border-color: var(--accent); }
+    .reg-success { text-align: center; padding: 48px 24px; }
+    .success-icon { width: 56px; height: 56px; background: rgba(39,103,73,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; color: var(--green); }
+    .reg-success h3 { font-size: 22px; font-weight: 800; color: var(--primary); margin-bottom: 10px; }
+    .reg-success p { font-size: 15px; color: #4a5568; max-width: 500px; margin: 0 auto 8px; line-height: 1.7; }
+    .paperwork-note { background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.3); border-radius: 10px; padding: 16px 20px; margin-top: 20px; text-align: left; font-size: 14px; color: var(--primary); line-height: 1.65; max-width: 500px; margin-left: auto; margin-right: auto; }
+    .status-result { margin-top: 16px; }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+    .status-badge.pending { background: rgba(201,168,76,0.12); color: #7a5c00; border: 1px solid rgba(201,168,76,0.3); }
+    .status-badge.active, .status-badge.approved { background: rgba(39,103,73,0.1); color: var(--green); border: 1px solid rgba(39,103,73,0.25); }
+
+    /* PORTAL LOGIN TABS */
+    .portal-login-tabs { display: flex; gap: 4px; background: rgba(10,22,40,0.06); border-radius: 10px; padding: 4px; margin-bottom: 24px; }
+    .pltab { flex: 1; padding: 9px 12px; border: none; background: none; border-radius: 7px; font-size: 13px; font-weight: 500; color: #718096; cursor: pointer; font-family: inherit; transition: all .15s; }
+    .pltab:hover { background: rgba(10,22,40,0.04); color: var(--primary); }
+    .pltab.active { background: var(--white); color: var(--primary); font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+    /* ALLERGY DISCLOSURE */
+    .allergy-section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-top: 24px; }
+    .allergy-section-title { font-size: 16px; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
+    .allergy-section-sub { font-size: 13px; color: #718096; margin-bottom: 20px; line-height: 1.6; }
+    .allergy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    @media (max-width: 540px) { .allergy-grid { grid-template-columns: 1fr; } }
+    .allergen-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--surface); cursor: pointer; user-select: none; transition: border-color .15s, background .15s; }
+    .allergen-item:hover { border-color: var(--accent); background: rgba(201,168,76,0.04); }
+    .allergen-item input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; flex-shrink: 0; cursor: pointer; }
+    .allergen-item.checked { border-color: var(--accent); background: rgba(201,168,76,0.07); }
+    .allergen-label { font-size: 14px; font-weight: 500; color: var(--primary); }
+    .allergy-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+    .dietary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 540px) { .dietary-grid { grid-template-columns: 1fr; } }
+    .allergy-disclaimer { font-size: 12px; color: #a0aec0; margin-top: 14px; line-height: 1.5; }
+    .btn-allergy-save { padding: 12px 28px; background: var(--primary); color: var(--white); border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .15s; margin-top: 18px; }
+    .btn-allergy-save:hover { background: #1a3a6e; }
+    .btn-allergy-save:disabled { opacity: .6; cursor: default; }
+    .allergy-save-msg { font-size: 13px; font-weight: 600; margin-top: 10px; min-height: 18px; }
+    .allergy-save-msg.ok { color: var(--green); }
+    .allergy-save-msg.err { color: var(--red); }
+    .allergy-hdr-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; background: rgba(201,168,76,0.1); color: #7a5c00; border: 1px solid rgba(201,168,76,0.3); border-radius: 999px; padding: 3px 10px; margin-bottom: 12px; }
+
+    /* PORTAL HUB */
+    #view-portal .reg-hub-header { margin-bottom: 36px; }
+    .portal-hub-cards { display: flex; flex-direction: column; gap: 14px; }
+    .reg-hub-already { text-align: center; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 14px; color: #718096; }
+    .reg-hub-already button { background: none; border: none; color: var(--accent); font-weight: 700; cursor: pointer; font-size: 14px; font-family: inherit; padding: 0; text-decoration: underline; }
+    .reg-hub-already button:hover { opacity: 0.8; }
+    .portal-back-wrap { padding: 20px 24px 0; max-width: 800px; margin: 0 auto; }
+    .portal-back-link { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; padding: 0; transition: opacity .15s; }
+    .portal-back-link:hover { opacity: 0.7; }
+
+    /* DOCUMENT UPLOAD */
+    .upload-section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-top: 24px; }
+    .upload-section-title { font-size: 16px; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
+    .upload-section-sub { font-size: 13px; color: #718096; margin-bottom: 20px; line-height: 1.6; }
+    .upload-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+    .upload-row input[type="file"] { flex: 1; min-width: 0; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--surface); color: var(--primary); font-family: inherit; cursor: pointer; }
+    .upload-row input[type="file"]:focus { outline: none; border-color: var(--accent); }
+    .btn-upload { padding: 10px 20px; background: var(--primary); color: var(--white); border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .15s; white-space: nowrap; }
+    .btn-upload:hover { background: #1a3a6e; }
+    .btn-upload:disabled { opacity: .6; cursor: default; }
+    .upload-note { font-size: 12px; color: #a0aec0; margin-bottom: 16px; line-height: 1.5; }
+    .upload-msg { font-size: 13px; font-weight: 600; min-height: 18px; margin-bottom: 10px; }
+    .upload-msg.ok  { color: var(--green); }
+    .upload-msg.err { color: var(--red); }
+    .uploaded-files-hdr { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+    .uploaded-file-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
+    .uploaded-file-name { color: var(--primary); font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .uploaded-file-date { color: #a0aec0; font-size: 11px; white-space: nowrap; }
+    .uploaded-file-link { color: var(--accent); font-weight: 600; font-size: 12px; white-space: nowrap; text-decoration: underline; }
+    .uploaded-file-link:hover { opacity: 0.8; }
+    .no-uploads { font-size: 13px; color: #a0aec0; font-style: italic; }
+    .portal-not-registered { text-align: center; padding: 8px 0 4px; }
+    .portal-not-registered p { font-size: 14px; color: #718096; margin-bottom: 14px; line-height: 1.6; }
+    .portal-not-registered .btn-reg-link { display: inline-block; padding: 11px 24px; background: var(--primary); color: var(--white); border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .15s; }
+    .portal-not-registered .btn-reg-link:hover { background: #1a3a6e; }
+
+    /* CHECKLIST PORTAL */
+    .checklist-content { max-width: 760px; margin: 0 auto; padding: 40px 24px 60px; }
+    .checklist-header { background: var(--primary); border-radius: 16px; padding: 28px; color: var(--white); margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .checklist-header .greeting h2 { font-size: 22px; font-weight: 800; }
+    .checklist-header .greeting .meta { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    .checklist-section-hdr { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin: 24px 0 14px; }
+    .checklist-list { display: flex; flex-direction: column; gap: 10px; }
+    .checklist-item { display: flex; align-items: center; gap: 16px; padding: 16px 18px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; }
+    .checklist-item.complete { border-left: 4px solid var(--green); }
+    .checklist-item.pending { border-left: 4px solid var(--accent); }
+    .cl-icon { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .cl-icon.complete { background: rgba(39,103,73,0.1); color: var(--green); }
+    .cl-icon.pending { background: rgba(201,168,76,0.1); color: #7a5c00; }
+    .cl-text { flex: 1; }
+    .cl-name { font-size: 15px; font-weight: 600; color: var(--primary); }
+    .cl-note { font-size: 12px; color: #a0aec0; margin-top: 2px; }
+    .cl-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+    .cl-badge.complete { background: rgba(39,103,73,0.1); color: var(--green); border: 1px solid rgba(39,103,73,0.25); }
+    .cl-badge.pending { background: rgba(201,168,76,0.1); color: #7a5c00; border: 1px solid rgba(201,168,76,0.3); }
+    .checklist-empty { text-align: center; padding: 32px; color: #a0aec0; font-size: 14px; background: var(--card-bg); border: 1px dashed var(--border); border-radius: 12px; }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-brand" onclick="showView('home', null)">
+      <div class="badge" id="navBadge">MS</div>
+      <div>
+        <div class="title" id="navTitle">Middle School Showcase</div>
+        <div class="subtitle" id="navSub">Dallas ISD · Career &amp; Technical Education</div>
+      </div>
+    </div>
+    <button class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+    <ul class="nav-links" id="navLinks">
+      <li><button class="active" onclick="showView('home', this)">Home</button></li>
+      <li><button onclick="showView('registration', this)" id="navRegistration">Registration</button></li>
+      <li><button onclick="showView('portal', this)" id="navPortal">Login Portal</button></li>
+      <li><button onclick="showView('faq', this)">FAQ</button></li>
+    </ul>
+  </nav>
+
+  <div class="page-body">
+
+    <!-- HOME VIEW -->
+    <section id="view-home" class="view active">
+      <div class="hero">
+        <div class="hero-bg" id="heroBg"></div>
+        <div class="hero-scrim"></div>
+        <div class="hero-content">
+          <h1 id="heroTitle">Middle School <span>Showcase</span></h1>
+          <p id="heroIntro">Connecting students, educators, and vendors to celebrate innovation and explore career pathways across Dallas ISD.</p>
+          <p id="heroAbout" class="hero-about" style="display:none"></p>
+          <button id="heroRegisterBtn" class="hero-cta" onclick="showView('registration', null)">Register Now</button>
+        </div>
+        <button id="heroMuteBtn" class="hero-mute-btn" style="display:none" onclick="toggleHeroMute()" title="Toggle sound"></button>
+      </div>
+    </section>
+
+    <!-- VENDOR VIEW -->
+    <section id="view-vendor" class="view">
+      <div id="vendorLogin">
+        <div class="portal-back-wrap">
+          <button class="portal-back-link" onclick="showView('portal', null)">&#8592; Back to Login Portal</button>
+        </div>
+        <div class="portal-wrap" style="padding-top:24px">
+          <div class="login-card">
+            <div class="portal-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="14" x2="14" y2="14"/></svg></div>
+            <h2>Vendor Portal</h2>
+            <div class="sub">Enter your assigned Vendor ID to access booth details, documents, allergy disclosures, and required paperwork.</div>
+            <input id="vendorIdInput" placeholder="Enter Vendor ID" onkeydown="if(event.key==='Enter') loginVendor()">
+            <div class="hint-text">Your Vendor ID was provided in your confirmation email. You must complete exhibitor registration before accessing this portal.</div>
+            <button class="btn-login" id="vendorLoginBtn" onclick="loginVendor()">Access Portal</button>
+            <div class="error-msg" id="vendorErr"></div>
+          </div>
+        </div>
+      </div>
+      <div id="vendorDash" style="display:none">
+        <div class="portal-content" id="vendorDashContent"></div>
+      </div>
+    </section>
+
+    <!-- TEACHER VIEW -->
+    <section id="view-teacher" class="view">
+      <div id="teacherLogin">
+        <div class="portal-back-wrap">
+          <button class="portal-back-link" onclick="showView('portal', null)">&#8592; Back to Login Portal</button>
+        </div>
+        <div class="portal-wrap" style="padding-top:24px">
+          <div class="login-card">
+            <div class="portal-login-tabs">
+              <button class="pltab active" id="pltabPortal" onclick="switchAttendeeTab('portal',this)">Staff Portal</button>
+              <button class="pltab" id="pltabChecklist" onclick="switchAttendeeTab('checklist',this)">Campus Checklist</button>
+            </div>
+            <!-- Staff Portal — org number -->
+            <div id="portalLoginPane">
+              <div class="portal-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6"/></svg></div>
+              <h2>Attendee Portal</h2>
+              <div class="sub">Enter your campus org number to access schedules, procedures, documents, and required paperwork.</div>
+              <input id="portalOrgInput" placeholder="Enter Campus Org Number" onkeydown="if(event.key==='Enter') loginByOrgNumber('portal')">
+              <div class="hint-text">Your org number was provided in your registration confirmation email. Your campus must be registered before accessing this portal.</div>
+              <button class="btn-login" id="portalOrgBtn" onclick="loginByOrgNumber('portal')">Access Portal</button>
+              <div class="error-msg" id="portalOrgErr"></div>
+            </div>
+            <!-- Campus Checklist — org number -->
+            <div id="checklistLoginPane" style="display:none">
+              <div class="portal-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></div>
+              <h2>Campus Checklist</h2>
+              <div class="sub">Enter your campus org number to view your pre-event checklist and submission status.</div>
+              <input id="checklistOrgInput" placeholder="Enter Campus Org Number" onkeydown="if(event.key==='Enter') loginByOrgNumber('checklist')">
+              <div class="hint-text">Your org number was provided in your registration confirmation email.</div>
+              <button class="btn-login" id="checklistOrgBtn" onclick="loginByOrgNumber('checklist')">View Checklist</button>
+              <div class="error-msg" id="checklistOrgErr"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="teacherDash" style="display:none">
+        <div class="portal-content" id="teacherDashContent"></div>
+      </div>
+      <div id="teacherOrgDash" style="display:none">
+        <div class="checklist-content" id="teacherOrgDashContent"></div>
+      </div>
+    </section>
+
+    <!-- PORTAL HUB VIEW -->
+    <section id="view-portal" class="view">
+      <div id="portalHubScreen" style="max-width:680px;margin:0 auto;padding:52px 24px 60px;text-align:center">
+        <div class="reg-hub-header">
+          <h2>Login Portal</h2>
+          <p>Select your login type below. You must have completed registration before accessing your portal.</p>
+        </div>
+        <div class="portal-hub-cards">
+          <button class="reg-hub-card" onclick="showView('vendor', null)">
+            <div class="reg-hub-card-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+            </div>
+            <div>
+              <div class="reg-hub-card-title">Vendor Portal</div>
+              <div class="reg-hub-card-sub">Access booth details, documents, allergy disclosures, and upload required paperwork</div>
+            </div>
+            <div class="reg-hub-card-arrow">&#8594;</div>
+          </button>
+          <button class="reg-hub-card" onclick="showView('teacher', null)">
+            <div class="reg-hub-card-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+              <div class="reg-hub-card-title">Campus / Attendee Portal</div>
+              <div class="reg-hub-card-sub">Access event documents, campus checklist, and upload required trip paperwork</div>
+            </div>
+            <div class="reg-hub-card-arrow">&#8594;</div>
+          </button>
+        </div>
+        <div class="reg-hub-already">
+          Need to register first? <button onclick="showView('registration', null)">Go to Registration</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ VIEW -->
+    <section id="view-faq" class="view">
+      <div class="section">
+        <div class="section-inner">
+          <div class="section-tag">Frequently Asked Questions</div>
+          <h2 class="section-title">Common Questions</h2>
+          <p class="section-lead">Answers to the most common questions from vendors, teachers, and attendees.</p>
+          <div class="faq-list" id="faqList">
+            <div style="color:#a0aec0;font-size:14px;padding:20px 0">Loading FAQs&hellip;</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REGISTRATION VIEW -->
+    <section id="view-registration" class="view">
+      <!-- Registration Content — shown immediately, no shared upfront gate -->
+      <div id="regContent">
+
+        <!-- ══ SCREEN 1: HUB SELECTION ══ -->
+        <div id="regHubScreen">
+          <div class="reg-hub-header">
+            <h2>How would you like to register?</h2>
+            <p>Select your registration type below.</p>
+          </div>
+          <div class="reg-hub-cards">
+            <button class="reg-hub-card" onclick="showRegScreen('exGate')">
+              <div class="reg-hub-card-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+              </div>
+              <div class="reg-hub-card-title">Exhibitor</div>
+              <div class="reg-hub-card-sub">Register your organization as a Showcase exhibitor</div>
+              <div class="reg-hub-card-arrow">&#8594;</div>
+            </button>
+            <button class="reg-hub-card" onclick="showRegScreen('atGate')">
+              <div class="reg-hub-card-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div class="reg-hub-card-title">Attendees / Campus</div>
+              <div class="reg-hub-card-sub">Register your campus to attend the Showcase</div>
+              <div class="reg-hub-card-arrow">&#8594;</div>
+            </button>
+            <button class="reg-hub-card" onclick="showRegScreen('status')">
+              <div class="reg-hub-card-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </div>
+              <div class="reg-hub-card-title">Check Status</div>
+              <div class="reg-hub-card-sub">Look up an existing registration by email</div>
+              <div class="reg-hub-card-arrow">&#8594;</div>
+            </button>
+          </div>
+          <div class="reg-hub-already">
+            Already registered? <button onclick="showView('portal', null)">Access Login Portal</button>
+          </div>
+        </div>
+
+        <!-- ══ SCREEN 1B: EXHIBITOR GATE ══ -->
+        <div id="regGateExhibitor" style="display:none">
+          <div class="reg-screen-wrap" style="max-width:480px">
+            <button class="reg-back-link" onclick="showRegScreen('hub')">&#8592; Back to Registration</button>
+            <div class="portal-wrap" style="padding:0">
+              <div class="login-card">
+                <div class="portal-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+                <h2>Exhibitor Access</h2>
+                <div class="sub">Enter the registration code provided in your event invitation to continue.</div>
+                <input id="exCodeInput" placeholder="Enter registration code" onkeydown="if(event.key==='Enter') verifyExhibitorCode()">
+                <div class="hint-text">Don't have a code? Contact the Dallas ISD CTE department.</div>
+                <button class="btn-login" id="exCodeBtn" onclick="verifyExhibitorCode()">Continue</button>
+                <div class="error-msg" id="exCodeErr"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ SCREEN 1C: ATTENDEE / CAMPUS GATE ══ -->
+        <div id="regGateAttendee" style="display:none">
+          <div class="reg-screen-wrap" style="max-width:480px">
+            <button class="reg-back-link" onclick="showRegScreen('hub')">&#8592; Back to Registration</button>
+            <div class="portal-wrap" style="padding:0">
+              <div class="login-card">
+                <div class="portal-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+                <h2>Campus Access</h2>
+                <div class="sub">Enter your campus org number to verify your campus and continue to registration.</div>
+                <input id="atGateOrgInput" placeholder="Campus org number (e.g. 057)" onkeydown="if(event.key==='Enter') verifyAttendeeOrg()">
+                <div class="hint-text">If your org number is two digits, add a leading zero (e.g. 057).</div>
+                <button class="btn-login" id="atGateBtn" onclick="verifyAttendeeOrg()">Continue</button>
+                <div class="error-msg" id="atGateErr"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ SCREEN 2: EXHIBITOR FORM ══ -->
+        <div id="regFormExhibitor" style="display:none">
+          <div class="reg-screen-wrap">
+            <button class="reg-back-link" onclick="showRegScreen('hub')">&#8592; Back to Registration</button>
+            <div id="exhibitorFormWrap">
+              <div class="reg-section-hdr">Section 1 — Exhibitor Information</div>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="ex_fullName">Full Name — Point of Contact<span class="req">*</span></label>
+                  <input type="text" id="ex_fullName" placeholder="First and last name">
+                </div>
+                <div class="form-field">
+                  <label for="ex_email">Email<span class="req">*</span></label>
+                  <input type="email" id="ex_email" placeholder="your@email.com">
+                </div>
+              </div>
+              <div class="form-field" style="max-width:320px">
+                <label for="ex_cellPhone">Cell Phone<span class="req">*</span></label>
+                <input type="tel" id="ex_cellPhone" placeholder="(555) 555-5555">
+              </div>
+              <div class="sec-contact-wrap">
+                <div class="sec-contact-label">Secondary Point of Contact <span style="font-weight:400">(Optional)</span></div>
+                <div class="form-grid">
+                  <div class="form-field">
+                    <label for="ex_secName">Full Name</label>
+                    <input type="text" id="ex_secName" placeholder="First and last name">
+                  </div>
+                  <div class="form-field">
+                    <label for="ex_secEmail">Email</label>
+                    <input type="email" id="ex_secEmail" placeholder="secondary@email.com">
+                  </div>
+                </div>
+                <div class="form-field" style="max-width:320px;margin-bottom:0">
+                  <label for="ex_secPhone">Cell Phone</label>
+                  <input type="tel" id="ex_secPhone" placeholder="(555) 555-5555">
+                </div>
+              </div>
+              <div class="form-field">
+                <label for="ex_campusCompany">Campus / Company<span class="req">*</span></label>
+                <input type="text" id="ex_campusCompany" placeholder="Organization or company name">
+              </div>
+              <div class="form-field">
+                <label>Are you a returning Exhibitor?<span class="req">*</span></label>
+                <div class="radio-group">
+                  <label class="radio-label"><input type="radio" name="ex_returning" value="Yes" onchange="updateRadioStyle('ex_returning')"> Yes</label>
+                  <label class="radio-label"><input type="radio" name="ex_returning" value="No" onchange="updateRadioStyle('ex_returning')"> No</label>
+                </div>
+              </div>
+              <div class="form-field">
+                <label for="ex_boothStaff">Names of Others Working the Booth<span class="req">*</span></label>
+                <textarea id="ex_boothStaff" placeholder="List all names, or paste a link to a document with the full list (ensure view access is enabled)"></textarea>
+              </div>
+              <div class="form-field">
+                <label>Will you have student ambassadors presenting in your booth?<span class="req">*</span></label>
+                <div class="radio-group">
+                  <label class="radio-label"><input type="radio" name="ex_ambassadors" value="Yes" onchange="updateRadioStyle('ex_ambassadors')"> Yes</label>
+                  <label class="radio-label"><input type="radio" name="ex_ambassadors" value="No" onchange="updateRadioStyle('ex_ambassadors')"> No</label>
+                  <label class="radio-label"><input type="radio" name="ex_ambassadors" value="Maybe" onchange="updateRadioStyle('ex_ambassadors')"> Maybe</label>
+                </div>
+              </div>
+
+              <div class="reg-section-hdr">Section 2 — Activity Information</div>
+              <div class="form-field">
+                <label for="ex_careerCluster">Career Cluster<span class="req">*</span></label>
+                <select id="ex_careerCluster">
+                  <option value="">Select a career cluster...</option>
+                  <option>Agriculture, Food and Natural Resources</option>
+                  <option>Architecture and Construction</option>
+                  <option>Arts, Audio/Video Technology, and Communications</option>
+                  <option>Business, Marketing, and Finance</option>
+                  <option>Education and Training</option>
+                  <option>Engineering</option>
+                  <option>Health Science</option>
+                  <option>Hospitality and Tourism</option>
+                  <option>Human Services</option>
+                  <option>Information Technology</option>
+                  <option>Law, Public Safety, Corrections, and Security</option>
+                  <option>Manufacturing</option>
+                  <option>Transportation, Distribution, and Logistics</option>
+                  <option>Unsure</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label for="ex_activityDesc">5–7 Minute Hands-On Activity Description<span class="req">*</span></label>
+                <textarea id="ex_activityDesc" placeholder="Describe the hands-on activity students (in groups of 10) will complete at your booth..."></textarea>
+                <div class="form-hint">If unsure, let us know — planning meetings prior to the event will be available to assist with brainstorming.</div>
+              </div>
+              <div class="form-field">
+                <label>Will you need access to electricity?<span class="req">*</span></label>
+                <div class="radio-group">
+                  <label class="radio-label"><input type="radio" name="ex_electricity" value="Yes" onchange="updateRadioStyle('ex_electricity');toggleElectricity('Yes')"> Yes</label>
+                  <label class="radio-label"><input type="radio" name="ex_electricity" value="No" onchange="updateRadioStyle('ex_electricity');toggleElectricity('No')"> No</label>
+                </div>
+              </div>
+              <div class="form-field" id="electricityTypeWrap" style="display:none">
+                <label for="ex_electricityType">Electricity Requirements</label>
+                <input type="text" id="ex_electricityType" placeholder="Amps required, number of plugs needed, etc.">
+              </div>
+              <div class="form-field">
+                <label>Do you need WiFi?<span class="req">*</span></label>
+                <div class="radio-group">
+                  <label class="radio-label"><input type="radio" name="ex_wifi" value="Yes" onchange="updateRadioStyle('ex_wifi')"> Yes</label>
+                  <label class="radio-label"><input type="radio" name="ex_wifi" value="No" onchange="updateRadioStyle('ex_wifi')"> No</label>
+                  <label class="radio-label"><input type="radio" name="ex_wifi" value="Maybe" onchange="updateRadioStyle('ex_wifi')"> Maybe</label>
+                </div>
+              </div>
+              <div class="form-field" style="max-width:360px">
+                <label for="ex_tablesChairs">Tables and Chairs Needed<span class="req">*</span></label>
+                <input type="text" id="ex_tablesChairs" placeholder="e.g. 2 tables, 4 chairs">
+                <div class="form-hint">Note: 1 table and 2 chairs are provided automatically.</div>
+              </div>
+              <div class="form-field">
+                <label for="ex_specialAccom">Special Accommodations<span class="req">*</span></label>
+                <textarea id="ex_specialAccom" placeholder="Any special requirements for your booth or activity (e.g. trailer requiring fire marshall inspection, mounted unit needing outdoor space, drone requiring a larger area, etc.)"></textarea>
+              </div>
+              <div class="form-field">
+                <label for="ex_giveaways">Items Given to Students<span class="req">*</span></label>
+                <textarea id="ex_giveaways" placeholder="List any items you plan to distribute (e.g. candy or food may require a trash can at your booth)"></textarea>
+              </div>
+              <div class="form-field">
+                <label for="ex_meetingTime">Availability for Pre-Event Virtual Meeting<span class="req">*</span></label>
+                <textarea id="ex_meetingTime" placeholder="Best days of the week and times of day for a virtual informational/training meeting prior to the event"></textarea>
+              </div>
+              <div class="error-msg" id="exhibitorErr" style="text-align:left;margin-top:4px;min-height:0"></div>
+              <button class="btn-reg-submit" id="exhibitorSubmitBtn" onclick="submitExhibitorForm()">Submit Registration</button>
+            </div>
+            <div id="exhibitorSuccess" style="display:none">
+              <div class="reg-success">
+                <div class="success-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+                <h3>Registration Received</h3>
+                <p>Thank you for registering as a 2026–2027 Showcase Exhibitor. Your submission is under review and a confirmation has been sent to your email address.</p>
+              </div>
+            </div>
+          </div><!-- /reg-screen-wrap -->
+        </div><!-- /regFormExhibitor -->
+
+        <!-- ══ SCREEN 3: ATTENDEE / CAMPUS FORM ══ -->
+        <div id="regFormAttendee" style="display:none">
+          <div class="reg-screen-wrap">
+            <button class="reg-back-link" onclick="showRegScreen('hub')">&#8592; Back to Registration</button>
+            <div id="attendeeFormWrap">
+              <div class="reg-section-hdr">Section 1 — Campus Information</div>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="at_orgNumber">Campus Org Number<span class="req">*</span></label>
+                  <input type="text" id="at_orgNumber" placeholder="e.g. 057" onblur="lookupCampusByOrg()" oninput="clearCampusLookup()">
+                  <div class="form-hint">If your org number is two digits, add a leading zero (e.g. 057).</div>
+                  <div id="at_campusStatus" style="font-size:12px;margin-top:4px;min-height:16px"></div>
+                </div>
+                <div class="form-field">
+                  <label for="at_teacherName">Teacher Name — First and Last<span class="req">*</span></label>
+                  <input type="text" id="at_teacherName" placeholder="First and last name">
+                </div>
+              </div>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="at_cellPhone">Cell Phone — Day of Event<span class="req">*</span></label>
+                  <input type="tel" id="at_cellPhone" placeholder="(555) 555-5555">
+                </div>
+                <div class="form-field">
+                  <label for="at_email">Email<span class="req">*</span></label>
+                  <input type="email" id="at_email" placeholder="your@dallasisd.org">
+                </div>
+              </div>
+              <div class="form-field">
+                <label for="at_campus">Campus<span class="req">*</span></label>
+                <input type="text" id="at_campus" readonly placeholder="Auto-filled from your org number above" style="background:var(--input-locked,#f7fafc);cursor:default;color:#4a5568;">
+                <div class="form-hint">Your campus name is automatically confirmed when you enter your org number.</div>
+              </div>
+              <div class="form-field">
+                <label>Do you need a wheelchair accessible bus?<span class="req">*</span></label>
+                <div class="form-hint" style="margin-bottom:8px">Requests cannot be modified after September 25, 2026.</div>
+                <div class="radio-group">
+                  <label class="radio-label"><input type="radio" name="at_wheelchair" value="Yes" onchange="updateRadioStyle('at_wheelchair')"> Yes</label>
+                  <label class="radio-label"><input type="radio" name="at_wheelchair" value="No" onchange="updateRadioStyle('at_wheelchair')"> No</label>
+                  <label class="radio-label"><input type="radio" name="at_wheelchair" value="Maybe" onchange="updateRadioStyle('at_wheelchair')"> Maybe</label>
+                </div>
+              </div>
+                <div class="form-field">
+                <label>Preferred Event Date<span class="req">*</span></label>
+                <div class="radio-group">
+                  <label class="radio-label"><input type="radio" name="at_eventDate" value="October 6, 2026" onchange="updateRadioStyle('at_eventDate');handleEventDateChange()"> October 6, 2026</label>
+                  <label class="radio-label"><input type="radio" name="at_eventDate" value="October 7, 2026" onchange="updateRadioStyle('at_eventDate');handleEventDateChange()"> October 7, 2026</label>
+                  <label class="radio-label"><input type="radio" name="at_eventDate" value="Split between both dates" onchange="updateRadioStyle('at_eventDate');handleEventDateChange()"> Split between both dates <span style="font-size:12px;color:#a0aec0;margin-left:6px">(subject to approval — a planning meeting will be required)</span></label>
+                </div>
+              </div>
+
+              <div id="splitDaysSection" style="display:none;margin-top:4px">
+                <div class="reg-notice" style="margin-bottom:14px">
+                  <strong>A Note About Splitting Your Visit</strong><br>
+                  Splitting your visit across both days requires advance approval and a brief planning conversation with our team. To make sure your request is received and processed as quickly as possible, please reach out to us directly at <strong id="splitDaysAdminEmail">the CTE department</strong> to get the conversation started. We look forward to working with you!
+                </div>
+                <div class="form-field">
+                  <label for="at_splitReason">Please share why you need to split your visit across both days<span class="req">*</span></label>
+                  <textarea id="at_splitReason" rows="3" placeholder="Briefly describe your reason for splitting days (e.g., two separate grade levels, scheduling conflict, etc.)"></textarea>
+                </div>
+              </div>
+
+              <div class="reg-section-hdr">Section 2 — Day-of Details</div>
+              <div class="form-field" style="max-width:200px">
+                <label for="at_studentCount">Number of Students<span class="req">*</span></label>
+                <input type="number" id="at_studentCount" placeholder="0" min="1">
+              </div>
+              <div class="form-field">
+                <label>Will you be the main day-of contact?<span class="req">*</span></label>
+                <div class="radio-group">
+                  <label class="radio-label"><input type="radio" name="at_mainContact" value="Yes" onchange="updateRadioStyle('at_mainContact')"> Yes</label>
+                  <label class="radio-label"><input type="radio" name="at_mainContact" value="No" onchange="updateRadioStyle('at_mainContact')"> No</label>
+                </div>
+              </div>
+              <div class="form-field">
+                <label for="at_altContact">If no, who will be the campus main point of contact?</label>
+                <input type="text" id="at_altContact" placeholder="Name of alternate day-of contact">
+              </div>
+              <div class="error-msg" id="attendeeErr" style="text-align:left;margin-top:4px;min-height:0"></div>
+              <button class="btn-reg-submit" id="attendeeSubmitBtn" onclick="submitAttendeeForm()">Submit Registration</button>
+            </div>
+            <div id="attendeeSuccess" style="display:none">
+              <div class="reg-success">
+                <div class="success-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+                <h3>Registration Received</h3>
+                <p>Thank you for registering your campus for the 2026–2027 CTE Showcase. Your submission is pending review and a confirmation has been sent to your email.</p>
+                <div class="paperwork-note">
+                  <strong>Action Required — Trip Paperwork</strong><br>
+                  Please submit your signed Field Trip Paperwork Packet (with Principal signature) as soon as possible. Email it to the address provided in your confirmation email.
+                </div>
+              </div>
+            </div>
+          </div><!-- /reg-screen-wrap -->
+        </div><!-- /regFormAttendee -->
+
+        <!-- ══ SCREEN 4: CHECK STATUS ══ -->
+        <div id="regFormStatus" style="display:none">
+          <div class="reg-screen-wrap">
+            <button class="reg-back-link" onclick="showRegScreen('hub')">&#8592; Back to Registration</button>
+            <div class="portal-header" style="margin-bottom:24px">
+              <div class="greeting"><h2>Check Registration Status</h2><div class="meta">Look up your registration by the email address used during submission.</div></div>
+              <div class="portal-badge">Status</div>
+            </div>
+            <div style="max-width:480px">
+              <p style="font-size:14px;color:#718096;margin-bottom:20px">Enter the email address you used when registering. Results will show any matching Exhibitor or Campus registrations.</p>
+              <div class="form-field">
+                <label for="statusEmail">Email Address</label>
+                <input type="email" id="statusEmail" placeholder="Enter the email used during registration" onkeydown="if(event.key==='Enter') checkAllStatus()">
+              </div>
+              <div class="error-msg" id="statusErr" style="text-align:left;min-height:0;margin-top:4px"></div>
+              <button class="btn-reg-submit" id="statusBtn" onclick="checkAllStatus()" style="margin-top:12px">Check Status</button>
+              <div id="statusResult" class="status-result"></div>
+            </div>
+          </div><!-- /reg-screen-wrap -->
+        </div><!-- /regFormStatus -->
+
+      </div><!-- /regContent -->
+    </section>
+
+  </div>
+
+  <footer class="footer">
+    <div><strong>Middle School Showcase</strong> &nbsp;·&nbsp; Dallas ISD Career &amp; Technical Education</div>
+    <div class="flinks">
+      <button onclick="showView('home',null)">Home</button>
+      <button onclick="showView('registration',null)">Registration</button>
+      <button onclick="showView('portal',null)">Login Portal</button>
+      <button onclick="showView('faq',null)">FAQ</button>
+    </div>
+  </footer>
+
+  <script>
+    var INITIAL_PAGE = '<?= initialPage ?>';
+    var EVENT_INFO   = {};
+
+    // ── HELPERS ──────────────────────────────────────────────────
+    function server(fn) {
+      var args = Array.prototype.slice.call(arguments, 1);
+      return new Promise(function (resolve, reject) {
+        var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
+        r[fn].apply(r, args);
+      });
+    }
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function isOn(v) { return String(v == null ? 'yes' : v).trim().toLowerCase() !== 'no'; }
+
+    // ── NAVIGATION ────────────────────────────────────────────────
+    function showView(name, btn) {
+      document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+      var t = document.getElementById('view-'+name);
+      if (t) t.classList.add('active');
+      document.querySelectorAll('.nav-links button').forEach(function(b){b.classList.remove('active');});
+      if (btn) btn.classList.add('active');
+      else document.querySelectorAll('.nav-links button').forEach(function(b){
+        if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'"+name+"'")>=0) b.classList.add('active');
+      });
+      // Registration view always starts at the hub selection screen
+      if (name === 'registration') showRegScreen('hub');
+      window.scrollTo(0,0);
+      document.getElementById('navLinks').classList.remove('open');
+    }
+    function toggleMenu(){ document.getElementById('navLinks').classList.toggle('open'); }
+    function toggleFaq(q){ q.parentElement.classList.toggle('open'); }
+
+    // Extracts a YouTube video id from a variety of URL formats.
+    function parseYouTubeId(url) {
+      if (!url) return '';
+      url = String(url).trim();
+      var patterns = [
+        /[?&]v=([A-Za-z0-9_-]{11})/,      // watch?v= or &v= anywhere in query
+        /youtu\.be\/([A-Za-z0-9_-]{11})/,  // short link youtu.be/ID
+        /embed\/([A-Za-z0-9_-]{11})/,      // embed URL
+        /shorts\/([A-Za-z0-9_-]{11})/,     // Shorts URL
+        /\/v\/([A-Za-z0-9_-]{11})/,        // /v/ URL
+      ];
+      for (var i = 0; i < patterns.length; i++) {
+        var m = url.match(patterns[i]);
+        if (m) return m[1];
+      }
+      return '';
+    }
+
+    var _heroMuted = true;
+
+    var ICON_MUTED = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> Sound Off';
+    var ICON_UNMUTED = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg> Sound On';
+
+    function toggleHeroMute() {
+      var iframe = document.getElementById('heroBgIframe');
+      if (!iframe) return;
+      var cmd = _heroMuted ? 'unMute' : 'mute';
+      iframe.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: cmd, args: [] }),
+        'https://www.youtube.com'
+      );
+      _heroMuted = !_heroMuted;
+      var btn = document.getElementById('heroMuteBtn');
+      if (btn) btn.innerHTML = _heroMuted ? ICON_MUTED : ICON_UNMUTED;
+    }
+
+    function applyHeroMedia(s) {
+      var bg = document.getElementById('heroBg');
+      if (!bg) return;
+      var muteBtn = document.getElementById('heroMuteBtn');
+      var videoId = parseYouTubeId(s.heroVideoUrl);
+      if (videoId) {
+        bg.style.backgroundImage = '';
+        var src = 'https://www.youtube.com/embed/' + videoId +
+          '?autoplay=1&mute=1&loop=1&playlist=' + videoId +
+          '&controls=0&showinfo=0&modestbranding=1&playsinline=1&rel=0&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1';
+        bg.innerHTML = '<iframe id="heroBgIframe" src="' + src + '" allow="autoplay; encrypted-media" frameborder="0"></iframe>';
+        _heroMuted = true;
+        if (muteBtn) { muteBtn.innerHTML = ICON_MUTED; muteBtn.style.display = 'flex'; }
+      } else {
+        if (muteBtn) muteBtn.style.display = 'none';
+        if (s.heroBackgroundImageUrl) {
+          bg.innerHTML = '';
+          bg.style.backgroundImage = "url('" + s.heroBackgroundImageUrl + "')";
+        } else {
+          bg.innerHTML = '';
+          bg.style.backgroundImage = '';
+        }
+      }
+    }
+
+    // ── BOOT ─────────────────────────────────────────────────────
+    function boot() {
+      // Load site content (titles etc.)
+      server('getSiteContent').then(function(res){
+        var s = (res && res.data) || {};
+        var title = s.siteTitle || s.navTitle || 'Middle School Showcase';
+        var navTitleEl = document.getElementById('navTitle');
+        if (navTitleEl) navTitleEl.textContent = title;
+        var heroTitleEl = document.getElementById('heroTitle');
+        if (heroTitleEl) heroTitleEl.textContent = title;
+        if (s.orgLine)  document.getElementById('navSub').textContent = s.orgLine;
+        if (s.introText) document.getElementById('heroIntro').textContent = s.introText;
+
+        // About block (hidden when empty)
+        var aboutEl = document.getElementById('heroAbout');
+        if (aboutEl) {
+          if (s.aboutText && String(s.aboutText).trim()) {
+            aboutEl.textContent = s.aboutText;
+            aboutEl.style.display = '';
+          } else {
+            aboutEl.style.display = 'none';
+          }
+        }
+
+        // Background media (video or image)
+        applyHeroMedia(s);
+
+        // Logo in the nav badge
+        if (s.logoUrl) {
+          var badge = document.getElementById('navBadge');
+          if (badge) {
+            badge.classList.add('has-logo');
+            badge.innerHTML = '<img src="' + s.logoUrl + '" alt="Logo">';
+          }
+        }
+
+        // Registration visibility controls both the nav item and the hero CTA
+        var regOn = isOn(s.showRegistrationPortal);
+        if (!regOn) {
+          var nr = document.getElementById('navRegistration'); if (nr) nr.style.display = 'none';
+          var rb = document.getElementById('heroRegisterBtn'); if (rb) rb.style.display = 'none';
+        }
+
+        // Populate admin email in split days notice
+        if (s.adminEmail) {
+          var sdEmail = document.getElementById('splitDaysAdminEmail');
+          if (sdEmail) sdEmail.textContent = s.adminEmail;
+        }
+      }).catch(function(){});
+
+      // Load event info (used by registration flow; home strip/schedule removed)
+      server('getEventInfo').then(function(res){
+        EVENT_INFO = (res && res.data) || {};
+        renderEventStrip();
+        renderSchedule();
+      }).catch(function(){});
+
+      // Load FAQs dynamically from the sheet
+      loadFaqs();
+    }
+
+    function escHtml(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function loadFaqs() {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          var list = document.getElementById('faqList');
+          if (!list) return;
+          if (!res || !res.data || !res.data.length) {
+            list.innerHTML = '<p style="color:#718096;font-size:14px">No FAQs available yet.</p>';
+            return;
+          }
+          list.innerHTML = res.data.map(function(f) {
+            return '<div class="faq-item">' +
+              '<div class="faq-q" onclick="toggleFaq(this)">' + escHtml(f.question) +
+              '<div class="faq-chevron">&#8964;</div></div>' +
+              '<div class="faq-a">' + escHtml(f.answer) + '</div>' +
+              '</div>';
+          }).join('');
+        })
+        .withFailureHandler(function() {
+          var list = document.getElementById('faqList');
+          if (list) list.innerHTML = '<p style="color:#718096;font-size:14px">Could not load FAQs.</p>';
+        })
+        .getFaqs();
+    }
+
+    function renderEventStrip() {
+      var inner = document.getElementById('eventStripInner');
+      var strip = document.getElementById('eventStrip');
+      if (!inner || !strip) return;
+      var i = EVENT_INFO;
+      if (!i.date && !i.location) return;
+      var html = '';
+      if (i.eventName) html += '<div class="event-strip-item"><div class="ei"></div><div class="ev"><strong>'+esc(i.eventName)+'</strong>Annual CTE Showcase</div></div>';
+      if (i.date)     html += '<div class="event-strip-item"><div class="ei"></div><div class="ev"><strong>'+esc(i.date)+'</strong>'+(i.time?esc(i.time):'')+'</div></div>';
+      if (i.location) html += '<div class="event-strip-item"><div class="ei"></div><div class="ev"><strong>'+esc(i.location)+'</strong>'+(i.address?esc(i.address):'')+'</div></div>';
+      inner.innerHTML = html;
+      strip.style.display = 'block';
+    }
+
+    function renderSchedule() {
+      var list = document.getElementById('scheduleList');
+      var section = document.getElementById('scheduleSection');
+      if (!list || !section) return;
+      var sched = EVENT_INFO.schedule;
+      if (!sched || !sched.length) return;
+      var html = '';
+      sched.forEach(function(s){
+        html += '<div style="display:flex;gap:16px;padding:12px 0;border-bottom:1px solid var(--border)">'
+              + '<div style="width:90px;font-weight:600;color:var(--accent);flex-shrink:0">'+esc(s.time)+'</div>'
+              + '<div>'+esc(s.item)+'</div></div>';
+      });
+      list.innerHTML = html;
+      section.style.display = 'block';
+    }
+
+    // ── VENDOR LOGIN ──────────────────────────────────────────────
+    function loginVendor() {
+      var id  = document.getElementById('vendorIdInput').value.trim();
+      var btn = document.getElementById('vendorLoginBtn');
+      var err = document.getElementById('vendorErr');
+      err.innerHTML = '';
+      if (!id) { err.textContent = 'Please enter your Vendor ID.'; return; }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Verifying\u2026';
+      server('checkPortalAccess', 'vendor', id)
+        .then(function(access) {
+          if (!access.success) {
+            btn.disabled = false; btn.textContent = 'Access Portal';
+            if (access.notRegistered) {
+              err.innerHTML = access.message + ' <button class="portal-not-reg-link" onclick="showView(\'registration\',null)" style="background:none;border:none;color:var(--accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;text-decoration:underline;padding:0;margin-left:4px">Register Now</button>';
+            } else {
+              err.textContent = access.message;
+            }
+            return Promise.reject('blocked');
+          }
+          return server('verifyVendor', id);
+        })
+        .then(function(res){
+          btn.disabled = false; btn.textContent = 'Access Portal';
+          if (!res || !res.success) { err.textContent = (res && res.message) || 'Vendor not found.'; return; }
+          server('getPortalUploads', 'vendor', id).then(function(upl){
+            renderVendorDash(res.vendor, res.documents, upl && upl.uploads ? upl.uploads : []);
+          }).catch(function(){ renderVendorDash(res.vendor, res.documents, []); });
+        })
+        .catch(function(e){
+          if (e === 'blocked') return;
+          btn.disabled = false; btn.textContent = 'Access Portal';
+          err.textContent = 'Connection error. Please try again.';
+        });
+    }
+
+    var _activeVendorId = '';
+
+    function allergenChk(fieldId, label, checked) {
+      return '<label class="allergen-item'+(checked?' checked':'')+'" onclick="updateAllergenStyle(this)">' +
+        '<input type="checkbox" id="allergy_'+fieldId+'"'+(checked?' checked':'')+' onchange="updateAllergenStyle(this.closest(\'.allergen-item\'))">' +
+        '<span class="allergen-label">'+esc(label)+'</span></label>';
+    }
+    function updateAllergenStyle(el) {
+      var cb = el.querySelector('input[type="checkbox"]');
+      if (cb) el.classList.toggle('checked', cb.checked);
+    }
+
+    function renderVendorDash(v, docs, uploads) {
+      _activeVendorId = v.vendorId || '';
+      document.getElementById('vendorLogin').style.display = 'none';
+
+      function isYes(val) { return String(val||'').trim().toLowerCase() === 'yes'; }
+
+      var allergyHtml =
+        '<div class="allergy-section">' +
+          '<div class="allergy-hdr-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Allergen &amp; Dietary Disclosure</div>' +
+          '<div class="allergy-section-title">Food Allergy &amp; Dietary Disclosure</div>' +
+          '<div class="allergy-section-sub">Indicate whether your booth, giveaways, or activities involve any of the following allergens (FDA Big 9). Your disclosure helps us keep attendees safe and communicate any precautions to families.</div>' +
+          '<div class="allergy-grid">' +
+            allergenChk('milk',      'Milk',          isYes(v.allergyMilk)) +
+            allergenChk('eggs',      'Eggs',          isYes(v.allergyEggs)) +
+            allergenChk('fish',      'Fish',          isYes(v.allergyFish)) +
+            allergenChk('shellfish', 'Shellfish',     isYes(v.allergyShellfish)) +
+            allergenChk('treeNuts',  'Tree Nuts',     isYes(v.allergyTreeNuts)) +
+            allergenChk('peanuts',   'Peanuts',       isYes(v.allergyPeanuts)) +
+            allergenChk('wheat',     'Wheat',         isYes(v.allergyWheat)) +
+            allergenChk('soy',       'Soybeans',      isYes(v.allergySoy)) +
+            allergenChk('sesame',    'Sesame',        isYes(v.allergySesame)) +
+          '</div>' +
+          '<hr class="allergy-divider">' +
+          '<div class="dietary-grid">' +
+            allergenChk('vegetarian', 'Vegetarian-Friendly', isYes(v.isVegetarian)) +
+            allergenChk('vegan',      'Vegan-Friendly',      isYes(v.isVegan)) +
+          '</div>' +
+          '<p class="allergy-disclaimer">Check all that apply. Leave unchecked if not applicable to your booth. You may update this disclosure at any time by logging back in.</p>' +
+          '<button class="btn-allergy-save" onclick="submitAllergyDisclosure()">Save Disclosure</button>' +
+          '<div class="allergy-save-msg" id="allergySaveMsg"></div>' +
+        '</div>';
+
+      var html =
+        '<div class="portal-header">' +
+          '<div class="greeting"><h2>Welcome, '+esc(v.companyName)+'</h2><div class="meta">Vendor ID: '+esc(v.vendorId)+' &nbsp;·&nbsp; Status: '+esc(v.status)+'</div></div>' +
+          '<div class="portal-badge">Vendor</div>' +
+        '</div>' +
+        '<div class="info-grid">' +
+          infoCell('Contact', v.contact) +
+          infoCell('Email', v.email) +
+          infoCell('Booth / Notes', v.notes) +
+        '</div>' +
+        docList(docs) +
+        allergyHtml +
+        renderUploadSection('vendor', v.vendorId, uploads || []) +
+        '<button class="btn-signout" onclick="signoutVendor()">&#8592; Sign Out</button>';
+      document.getElementById('vendorDashContent').innerHTML = html;
+      document.getElementById('vendorDash').style.display = 'block';
+    }
+    function signoutVendor(){
+      _activeVendorId = '';
+      document.getElementById('vendorDash').style.display = 'none';
+      document.getElementById('vendorLogin').style.display = 'block';
+      document.getElementById('vendorIdInput').value = '';
+    }
+
+    // ── DOCUMENT UPLOAD SECTION ──────────────────────────────────
+    function renderUploadSection(type, id, uploads) {
+      var uploadedHtml = '';
+      if (!uploads || !uploads.length) {
+        uploadedHtml = '<div class="no-uploads">No documents have been uploaded yet.</div>';
+      } else {
+        uploads.forEach(function(u) {
+          uploadedHtml +=
+            '<div class="uploaded-file-item">' +
+              '<span class="uploaded-file-name" title="'+esc(u.fileName)+'">'+esc(u.fileName)+'</span>' +
+              '<span class="uploaded-file-date">'+esc(u.timestamp)+'</span>' +
+              '<a class="uploaded-file-link" href="'+esc(u.driveLink)+'" target="_blank">Open &#8594;</a>' +
+            '</div>';
+        });
+      }
+      return '<div class="upload-section">' +
+        '<div class="upload-section-title">Required Documents &amp; Paperwork</div>' +
+        '<div class="upload-section-sub">Upload any required forms or documents here. Accepted files: PDF, Word, Excel, images (max 5 MB each). Your files will be reviewed by the CTE team.</div>' +
+        '<div class="upload-note">Supported file types: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG. Maximum file size: 5 MB.</div>' +
+        '<div class="upload-row">' +
+          '<input type="file" id="uploadFile_'+type+'" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">' +
+          '<button class="btn-upload" id="uploadBtn_'+type+'" onclick="uploadPortalFile(\''+type+'\',\''+esc(id)+'\')">Upload File</button>' +
+        '</div>' +
+        '<div class="upload-msg" id="uploadMsg_'+type+'"></div>' +
+        '<div class="uploaded-files-hdr">Uploaded Files</div>' +
+        '<div id="uploadedList_'+type+'">'+uploadedHtml+'</div>' +
+      '</div>';
+    }
+
+    function uploadPortalFile(type, id) {
+      var fileInput = document.getElementById('uploadFile_' + type);
+      var btn       = document.getElementById('uploadBtn_' + type);
+      var msgEl     = document.getElementById('uploadMsg_' + type);
+      msgEl.className = 'upload-msg';
+      msgEl.textContent = '';
+      if (!fileInput || !fileInput.files || !fileInput.files.length) {
+        msgEl.textContent = 'Please select a file first.';
+        msgEl.className = 'upload-msg err';
+        return;
+      }
+      var file = fileInput.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        msgEl.textContent = 'File is too large. Please upload a file under 5 MB.';
+        msgEl.className = 'upload-msg err';
+        return;
+      }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Uploading\u2026';
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var base64 = e.target.result.split(',')[1];
+        var payload = { type: type, id: id, fileName: file.name, mimeType: file.type || 'application/octet-stream', base64: base64 };
+        server('uploadPortalDocument', payload)
+          .then(function(res) {
+            btn.disabled = false; btn.textContent = 'Upload File';
+            fileInput.value = '';
+            if (!res.success) {
+              msgEl.textContent = res.message || 'Upload failed. Please try again.';
+              msgEl.className = 'upload-msg err';
+              return;
+            }
+            msgEl.textContent = 'File uploaded successfully.';
+            msgEl.className = 'upload-msg ok';
+            // Refresh uploads list
+            server('getPortalUploads', type, id).then(function(upl) {
+              var listEl = document.getElementById('uploadedList_' + type);
+              if (!listEl) return;
+              var uploads = upl && upl.uploads ? upl.uploads : [];
+              if (!uploads.length) { listEl.innerHTML = '<div class="no-uploads">No documents have been uploaded yet.</div>'; return; }
+              var html = '';
+              uploads.forEach(function(u) {
+                html += '<div class="uploaded-file-item">' +
+                  '<span class="uploaded-file-name" title="'+esc(u.fileName)+'">'+esc(u.fileName)+'</span>' +
+                  '<span class="uploaded-file-date">'+esc(u.timestamp)+'</span>' +
+                  '<a class="uploaded-file-link" href="'+esc(u.driveLink)+'" target="_blank">Open &#8594;</a>' +
+                  '</div>';
+              });
+              listEl.innerHTML = html;
+            }).catch(function(){});
+          })
+          .catch(function() {
+            btn.disabled = false; btn.textContent = 'Upload File';
+            msgEl.textContent = 'Connection error. Please try again.';
+            msgEl.className = 'upload-msg err';
+          });
+      };
+      reader.onerror = function() {
+        btn.disabled = false; btn.textContent = 'Upload File';
+        msgEl.textContent = 'Could not read file. Please try again.';
+        msgEl.className = 'upload-msg err';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function submitAllergyDisclosure() {
+      var msgEl = document.getElementById('allergySaveMsg');
+      var btn = document.querySelector('.btn-allergy-save');
+      if (!_activeVendorId) { msgEl.textContent = 'Session expired. Please sign in again.'; msgEl.className = 'allergy-save-msg err'; return; }
+      msgEl.textContent = '';
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Saving…';
+      var data = {
+        milk:       document.getElementById('allergy_milk')      ? document.getElementById('allergy_milk').checked      ? 'Yes' : 'No' : 'No',
+        eggs:       document.getElementById('allergy_eggs')      ? document.getElementById('allergy_eggs').checked      ? 'Yes' : 'No' : 'No',
+        fish:       document.getElementById('allergy_fish')      ? document.getElementById('allergy_fish').checked      ? 'Yes' : 'No' : 'No',
+        shellfish:  document.getElementById('allergy_shellfish') ? document.getElementById('allergy_shellfish').checked ? 'Yes' : 'No' : 'No',
+        treeNuts:   document.getElementById('allergy_treeNuts')  ? document.getElementById('allergy_treeNuts').checked  ? 'Yes' : 'No' : 'No',
+        peanuts:    document.getElementById('allergy_peanuts')   ? document.getElementById('allergy_peanuts').checked   ? 'Yes' : 'No' : 'No',
+        wheat:      document.getElementById('allergy_wheat')     ? document.getElementById('allergy_wheat').checked     ? 'Yes' : 'No' : 'No',
+        soy:        document.getElementById('allergy_soy')       ? document.getElementById('allergy_soy').checked       ? 'Yes' : 'No' : 'No',
+        sesame:     document.getElementById('allergy_sesame')    ? document.getElementById('allergy_sesame').checked    ? 'Yes' : 'No' : 'No',
+        vegetarian: document.getElementById('allergy_vegetarian')? document.getElementById('allergy_vegetarian').checked? 'Yes' : 'No' : 'No',
+        vegan:      document.getElementById('allergy_vegan')     ? document.getElementById('allergy_vegan').checked     ? 'Yes' : 'No' : 'No',
+      };
+      server('submitAllergyDisclosure', _activeVendorId, data)
+        .then(function(res) {
+          btn.disabled = false; btn.textContent = 'Save Disclosure';
+          if (res.success) {
+            msgEl.textContent = 'Disclosure saved successfully.';
+            msgEl.className = 'allergy-save-msg ok';
+          } else {
+            msgEl.textContent = res.message || 'An error occurred.';
+            msgEl.className = 'allergy-save-msg err';
+          }
+        })
+        .catch(function() {
+          btn.disabled = false; btn.textContent = 'Save Disclosure';
+          msgEl.textContent = 'Connection error. Please try again.';
+          msgEl.className = 'allergy-save-msg err';
+        });
+    }
+
+    // ── ATTENDEE PORTAL — TAB SWITCHER ────────────────────────────
+    function switchAttendeeTab(mode, btn) {
+      document.querySelectorAll('.pltab').forEach(function(b){ b.classList.remove('active'); });
+      if (btn) btn.classList.add('active');
+      document.getElementById('portalLoginPane').style.display    = (mode === 'portal')    ? 'block' : 'none';
+      document.getElementById('checklistLoginPane').style.display = (mode === 'checklist') ? 'block' : 'none';
+      document.getElementById('portalOrgErr').textContent    = '';
+      document.getElementById('checklistOrgErr').textContent = '';
+    }
+
+    // ── ORG NUMBER LOGIN (shared for both tabs) ────────────────────
+    function loginByOrgNumber(mode) {
+      var inputId  = (mode === 'portal') ? 'portalOrgInput'  : 'checklistOrgInput';
+      var btnId    = (mode === 'portal') ? 'portalOrgBtn'     : 'checklistOrgBtn';
+      var errId    = (mode === 'portal') ? 'portalOrgErr'     : 'checklistOrgErr';
+      var btnLabel = (mode === 'portal') ? 'Access Portal'    : 'View Checklist';
+
+      var num = document.getElementById(inputId).value.trim();
+      var btn = document.getElementById(btnId);
+      var err = document.getElementById(errId);
+      err.innerHTML = '';
+      if (!num) { err.textContent = 'Please enter your campus org number.'; return; }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Verifying\u2026';
+
+      // For the portal mode, run the registration fail-safe first
+      var accessCheck = (mode === 'portal')
+        ? server('checkPortalAccess', 'attendee', num)
+        : Promise.resolve({ success: true });
+
+      var _isWaitlisted = false;
+      accessCheck
+        .then(function(access) {
+          if (!access.success) {
+            btn.disabled = false; btn.textContent = btnLabel;
+            if (access.notRegistered) {
+              err.innerHTML = access.message + ' <button onclick="showView(\'registration\',null)" style="background:none;border:none;color:var(--accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;text-decoration:underline;padding:0;margin-left:4px">Register Now</button>';
+            } else {
+              err.textContent = access.message;
+            }
+            return Promise.reject('blocked');
+          }
+          _isWaitlisted = !!access.waitlisted;
+          return server('verifyAttendeeByOrgNumber', num);
+        })
+        .then(function(res) {
+          btn.disabled = false; btn.textContent = btnLabel;
+          if (!res || !res.success) { err.textContent = (res && res.message) || 'Org number not found.'; return; }
+          if (mode === 'portal') {
+            server('getPortalUploads', 'attendee', num).then(function(upl){
+              renderAttendeePortalDash(res.attendee, res.documents || [], upl && upl.uploads ? upl.uploads : [], _isWaitlisted);
+            }).catch(function(){ renderAttendeePortalDash(res.attendee, res.documents || [], [], _isWaitlisted); });
+          } else {
+            renderChecklistDash(res.attendee, res.checklist || []);
+          }
+        })
+        .catch(function(e) {
+          if (e === 'blocked') return;
+          btn.disabled = false; btn.textContent = btnLabel;
+          err.textContent = 'Connection error. Please try again.';
+        });
+    }
+
+    // ── STAFF PORTAL DASHBOARD ─────────────────────────────────────
+    function renderAttendeePortalDash(a, docs, uploads, waitlisted) {
+      document.getElementById('teacherLogin').style.display = 'none';
+      var waitlistBanner = waitlisted
+        ? '<div style="background:#fffbeb;border:1px solid #f6e05e;border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#744210;line-height:1.5">' +
+          '<strong>Your campus is currently on the waitlist.</strong> A meeting is required before your visit can be fully confirmed — however, you are welcome to complete your required paperwork below in the meantime. Our team will be in touch to schedule a conversation.' +
+          '</div>'
+        : '';
+      var html =
+        '<div class="portal-header">' +
+          '<div class="greeting"><h2>Welcome, '+esc(a.teacherName)+'</h2><div class="meta">Org #'+esc(a.orgNumber)+' &nbsp;·&nbsp; '+esc(a.campus)+'</div></div>' +
+          '<div class="portal-badge">Attendee</div>' +
+        '</div>' +
+        waitlistBanner +
+        '<div class="info-grid">' +
+          infoCell('Campus', a.campus) +
+          infoCell('Status', a.status) +
+        '</div>' +
+        docList(docs) +
+        renderUploadSection('attendee', a.orgNumber, uploads || []) +
+        '<button class="btn-signout" onclick="signoutAttendee()">&#8592; Sign Out</button>';
+      document.getElementById('teacherDashContent').innerHTML = html;
+      document.getElementById('teacherDash').style.display = 'block';
+    }
+
+    // ── CHECKLIST DASHBOARD ────────────────────────────────────────
+    function renderChecklistDash(a, items) {
+      document.getElementById('teacherLogin').style.display = 'none';
+      var completeCount = items.filter(function(i){ return String(i.status||'').toLowerCase()==='complete'; }).length;
+      var total = items.length;
+
+      var listHtml = '';
+      if (!items.length) {
+        listHtml = '<div class="checklist-empty">No checklist items found for this org number. If you recently registered, please allow a few minutes and check back.</div>';
+      } else {
+        items.forEach(function(item) {
+          var isComplete = String(item.status||'').toLowerCase() === 'complete';
+          var statusCls  = isComplete ? 'complete' : 'pending';
+          var iconSvg    = isComplete
+            ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+            : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+          listHtml +=
+            '<div class="checklist-item '+statusCls+'">' +
+              '<div class="cl-icon '+statusCls+'">'+iconSvg+'</div>' +
+              '<div class="cl-text">' +
+                '<div class="cl-name">'+esc(item.itemName)+'</div>' +
+                (item.notes ? '<div class="cl-note">'+esc(item.notes)+'</div>' : '') +
+              '</div>' +
+              '<span class="cl-badge '+statusCls+'">'+esc(item.status||'Pending')+'</span>' +
+            '</div>';
+        });
+      }
+
+      var html =
+        '<div class="checklist-header">' +
+          '<div class="greeting">' +
+            '<h2>'+esc(a.teacherName)+'</h2>' +
+            '<div class="meta">'+esc(a.campus)+' &nbsp;·&nbsp; Org #'+esc(a.orgNumber)+'</div>' +
+          '</div>' +
+          '<div class="portal-badge">Campus Checklist</div>' +
+        '</div>' +
+        '<div class="checklist-section-hdr">Pre-Event Checklist &nbsp;—&nbsp; '+completeCount+' of '+total+' Complete</div>' +
+        '<div class="checklist-list">'+listHtml+'</div>' +
+        '<button class="btn-signout" onclick="signoutAttendee()" style="margin-top:28px">← Sign Out</button>';
+
+      document.getElementById('teacherOrgDashContent').innerHTML = html;
+      document.getElementById('teacherOrgDash').style.display = 'block';
+    }
+
+    // ── SHARED SIGN OUT ────────────────────────────────────────────
+    function signoutAttendee() {
+      document.getElementById('teacherDash').style.display    = 'none';
+      document.getElementById('teacherOrgDash').style.display = 'none';
+      document.getElementById('teacherLogin').style.display   = 'block';
+      document.getElementById('portalOrgInput').value    = '';
+      document.getElementById('checklistOrgInput').value = '';
+      switchAttendeeTab('portal', document.getElementById('pltabPortal'));
+    }
+
+    // ── SHARED RENDER HELPERS ─────────────────────────────────────
+    function infoCell(label, val) {
+      var empty = (!val || String(val).trim() === '');
+      return '<div class="info-cell"><div class="lbl">'+esc(label)+'</div><div class="val'+(empty?' empty':'')+'">'+esc(empty ? 'Not provided' : val)+'</div></div>';
+    }
+
+    function docList(docs) {
+      if (!docs || !docs.length) {
+        return '<div class="no-docs">No documents have been assigned yet. Check back closer to the event.</div>';
+      }
+      var groups = {};
+      docs.forEach(function(d){ var c=d.category||'General'; (groups[c]=groups[c]||[]).push(d); });
+      var html = '<div class="docs-section"><h3>Your Documents</h3>';
+      Object.keys(groups).forEach(function(cat){
+        html += '<div class="doc-group-label">'+esc(cat)+'</div>';
+        groups[cat].forEach(function(d){
+          var hasUrl = d.url && d.url.trim() !== '' && d.url !== '#';
+          html += '<div class="doc-item">' +
+            '<div class="doc-name">'+esc(d.docName)+'</div>' +
+            (hasUrl ? '<a href="'+esc(d.url)+'" target="_blank">Open →</a>' : '<span class="no-link">Link coming soon</span>') +
+            '</div>';
+        });
+      });
+      html += '</div>';
+      return html;
+    }
+
+    // ── REGISTRATION ─────────────────────────────────────────────
+    function showRegScreen(name) {
+      var ids = {
+        hub:      'regHubScreen',
+        exGate:   'regGateExhibitor',
+        atGate:   'regGateAttendee',
+        exhibitor:'regFormExhibitor',
+        attendee: 'regFormAttendee',
+        status:   'regFormStatus',
+      };
+      Object.keys(ids).forEach(function(s) {
+        var el = document.getElementById(ids[s]);
+        if (el) el.style.display = (s === name) ? 'block' : 'none';
+      });
+      window.scrollTo(0, 0);
+    }
+
+    // ── EXHIBITOR GATE ───────────────────────────────────────────
+    function verifyExhibitorCode() {
+      var code = document.getElementById('exCodeInput').value.trim();
+      var btn  = document.getElementById('exCodeBtn');
+      var err  = document.getElementById('exCodeErr');
+      err.textContent = '';
+      if (!code) { err.textContent = 'Please enter the registration code.'; return; }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Verifying\u2026';
+      server('verifyRegistrationCode', code)
+        .then(function(res) {
+          btn.disabled = false; btn.textContent = 'Continue';
+          if (!res.success) { err.textContent = res.message; return; }
+          document.getElementById('exCodeInput').value = '';
+          showRegScreen('exhibitor');
+        })
+        .catch(function() {
+          btn.disabled = false; btn.textContent = 'Continue';
+          err.textContent = 'Connection error. Please try again.';
+        });
+    }
+
+    // ── ATTENDEE / CAMPUS GATE ───────────────────────────────────
+    function verifyAttendeeOrg() {
+      var orgRaw = document.getElementById('atGateOrgInput').value.trim();
+      var btn    = document.getElementById('atGateBtn');
+      var err    = document.getElementById('atGateErr');
+      err.textContent = '';
+      if (!orgRaw) { err.textContent = 'Please enter your campus org number.'; return; }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Verifying\u2026';
+
+      function doLookup(list) {
+        var org = orgRaw.toLowerCase();
+        var match = list.find(function(c) {
+          return String(c.orgNumber || '').trim().toLowerCase() === org;
+        });
+        btn.disabled = false; btn.textContent = 'Continue';
+        if (!match) {
+          err.textContent = 'Org number not recognized \u2014 please verify and try again. If your campus was recently added, contact the CTE department.';
+          return;
+        }
+        // Pre-fill org number and campus name in the attendee form
+        var orgEl = document.getElementById('at_orgNumber');
+        var campusEl = document.getElementById('at_campus');
+        var statusEl = document.getElementById('at_campusStatus');
+        if (orgEl) orgEl.value = match.orgNumber;
+        if (campusEl) campusEl.value = match.campusName;
+        if (statusEl) statusEl.innerHTML = '<span style="color:#38a169;font-weight:600">&#10003; Campus confirmed: ' + match.campusName + '</span>';
+        // Cache for subsequent onblur lookups
+        if (!_campusList) _campusList = list;
+        document.getElementById('atGateOrgInput').value = '';
+        showRegScreen('attendee');
+      }
+
+      if (_campusList) {
+        doLookup(_campusList);
+      } else {
+        server('getCampusList')
+          .then(function(list) {
+            _campusList = list || [];
+            doLookup(_campusList);
+          })
+          .catch(function() {
+            btn.disabled = false; btn.textContent = 'Continue';
+            err.textContent = 'Could not reach campus roster. Please try again.';
+          });
+      }
+    }
+
+    // Legacy — no longer used as an entry point but kept to avoid JS errors
+    function verifyRegCode() { showRegScreen('hub'); }
+
+    function checkAllStatus() {
+      _runStatusCheck('statusEmail', 'statusBtn', 'statusErr', 'statusResult', null);
+    }
+
+    // showRegTab no longer used — layout is step-flow
+
+    function updateRadioStyle(name) {
+      document.querySelectorAll('[name="' + name + '"]').forEach(function(r) {
+        var lbl = r.closest('.radio-label');
+        if (lbl) lbl.classList.toggle('checked', r.checked);
+      });
+    }
+
+    function toggleElectricity(val) {
+      var wrap = document.getElementById('electricityTypeWrap');
+      if (wrap) wrap.style.display = (val === 'Yes') ? 'block' : 'none';
+    }
+
+    function getVal(id) {
+      var el = document.getElementById(id);
+      return el ? el.value.trim() : '';
+    }
+    function getRadio(name) {
+      var r = document.querySelector('[name="' + name + '"]:checked');
+      return r ? r.value : '';
+    }
+
+    function submitExhibitorForm() {
+      var btn = document.getElementById('exhibitorSubmitBtn');
+      var err = document.getElementById('exhibitorErr');
+      err.textContent = '';
+      var data = {
+        fullName:             getVal('ex_fullName'),
+        email:                getVal('ex_email'),
+        cellPhone:            getVal('ex_cellPhone'),
+        secondaryName:        getVal('ex_secName'),
+        secondaryEmail:       getVal('ex_secEmail'),
+        secondaryPhone:       getVal('ex_secPhone'),
+        campusCompany:        getVal('ex_campusCompany'),
+        returningExhibitor:   getRadio('ex_returning'),
+        boothStaff:           getVal('ex_boothStaff'),
+        studentAmbassadors:   getRadio('ex_ambassadors'),
+        careerCluster:        getVal('ex_careerCluster'),
+        activityDescription:  getVal('ex_activityDesc'),
+        electricityNeeded:    getRadio('ex_electricity'),
+        electricityType:      getVal('ex_electricityType'),
+        wifiNeeded:           getRadio('ex_wifi'),
+        tablesChairs:         getVal('ex_tablesChairs'),
+        specialAccommodations:getVal('ex_specialAccom'),
+        studentGiveaways:     getVal('ex_giveaways'),
+        meetingAvailability:  getVal('ex_meetingTime'),
+      };
+      var missing = [];
+      if (!data.fullName)              missing.push('Full Name');
+      if (!data.email)                 missing.push('Email');
+      if (!data.cellPhone)             missing.push('Cell Phone');
+      if (!data.campusCompany)         missing.push('Campus / Company');
+      if (!data.returningExhibitor)    missing.push('Returning Exhibitor');
+      if (!data.boothStaff)            missing.push('Booth Staff Names');
+      if (!data.studentAmbassadors)    missing.push('Student Ambassadors');
+      if (!data.careerCluster)         missing.push('Career Cluster');
+      if (!data.activityDescription)   missing.push('Activity Description');
+      if (!data.electricityNeeded)     missing.push('Electricity Needed');
+      if (!data.wifiNeeded)            missing.push('WiFi Needed');
+      if (!data.tablesChairs)          missing.push('Tables and Chairs');
+      if (!data.specialAccommodations) missing.push('Special Accommodations');
+      if (!data.studentGiveaways)      missing.push('Items Given to Students');
+      if (!data.meetingAvailability)   missing.push('Meeting Availability');
+      if (missing.length) { err.textContent = 'Please complete: ' + missing.join(', ') + '.'; return; }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Submitting\u2026';
+      server('submitExhibitorRegistration', data)
+        .then(function(res) {
+          btn.disabled = false; btn.textContent = 'Submit Registration';
+          if (!res.success) { err.textContent = res.message; return; }
+          document.getElementById('exhibitorFormWrap').style.display = 'none';
+          document.getElementById('exhibitorSuccess').style.display  = 'block';
+        })
+        .catch(function() {
+          btn.disabled = false; btn.textContent = 'Submit Registration';
+          err.textContent = 'Connection error. Please try again.';
+        });
+    }
+
+    // ── CAMPUS ORG LOOKUP ────────────────────────────────────────
+    var _campusList = null; // cached after first load
+
+    function clearCampusLookup() {
+      var campusInput  = document.getElementById('at_campus');
+      var statusEl     = document.getElementById('at_campusStatus');
+      if (campusInput) campusInput.value = '';
+      if (statusEl)    statusEl.innerHTML = '';
+    }
+
+    function lookupCampusByOrg() {
+      var orgRaw   = (document.getElementById('at_orgNumber').value || '').trim();
+      var statusEl = document.getElementById('at_campusStatus');
+      var campusEl = document.getElementById('at_campus');
+      if (!orgRaw) {
+        campusEl.value  = '';
+        statusEl.innerHTML = '';
+        return;
+      }
+      statusEl.innerHTML = '<span style="color:#a0aec0">Looking up campus\u2026</span>';
+
+      function matchOrg(list) {
+        var org = orgRaw.toLowerCase();
+        return list.find(function(c) {
+          return String(c.orgNumber || '').trim().toLowerCase() === org;
+        }) || null;
+      }
+
+      function applyResult(match) {
+        if (match) {
+          campusEl.value     = match.campusName;
+          statusEl.innerHTML = '<span style="color:#38a169;font-weight:600">&#10003; Campus confirmed: ' + match.campusName + '</span>';
+        } else {
+          campusEl.value     = '';
+          statusEl.innerHTML = '<span style="color:#e53e3e;font-weight:600">Org number not recognized \u2014 please verify and try again.</span>';
+        }
+      }
+
+      if (_campusList) {
+        applyResult(matchOrg(_campusList));
+      } else {
+        server('getCampusList')
+          .then(function(list) {
+            _campusList = list || [];
+            applyResult(matchOrg(_campusList));
+          })
+          .catch(function() {
+            statusEl.innerHTML = '<span style="color:#e53e3e">Could not reach campus roster. Please try again.</span>';
+          });
+      }
+    }
+
+    // ── SPLIT DAYS TOGGLE ────────────────────────────────────────
+    function handleEventDateChange() {
+      var splitSection = document.getElementById('splitDaysSection');
+      var isSplit = getRadio('at_eventDate') === 'Split between both dates';
+      if (splitSection) {
+        splitSection.style.display = isSplit ? 'block' : 'none';
+        if (!isSplit) {
+          var ta = document.getElementById('at_splitReason');
+          if (ta) ta.value = '';
+        }
+      }
+    }
+
+    function submitAttendeeForm() {
+      var btn = document.getElementById('attendeeSubmitBtn');
+      var err = document.getElementById('attendeeErr');
+      err.textContent = '';
+      var eventDate  = getRadio('at_eventDate');
+      var splitReason = (document.getElementById('at_splitReason') ? document.getElementById('at_splitReason').value.trim() : '');
+      var data = {
+        campusOrgNumber: getVal('at_orgNumber'),
+        teacherName:     getVal('at_teacherName'),
+        cellPhone:       getVal('at_cellPhone'),
+        email:           getVal('at_email'),
+        campus:          getVal('at_campus'),
+        wheelchairBus:   getRadio('at_wheelchair'),
+        eventDate:       eventDate,
+        studentCount:    getVal('at_studentCount'),
+        mainContact:     getRadio('at_mainContact'),
+        altContactName:  getVal('at_altContact'),
+        splitReason:     splitReason,
+      };
+      var missing = [];
+      if (!data.campusOrgNumber) missing.push('Campus Org Number');
+      if (!data.campus)          missing.push('Campus (enter your org number to confirm)');
+      if (!data.teacherName)     missing.push('Teacher Name');
+      if (!data.cellPhone)       missing.push('Cell Phone');
+      if (!data.email)           missing.push('Email');
+      if (!data.wheelchairBus)   missing.push('Wheelchair Accessible Bus');
+      if (!data.eventDate)       missing.push('Preferred Event Date');
+      if (!data.studentCount)    missing.push('Number of Students');
+      if (!data.mainContact)     missing.push('Main Day-of Contact');
+      if (data.eventDate === 'Split between both dates' && !splitReason) {
+        err.textContent = 'Please share a brief reason for splitting your visit so we can best support your request.';
+        return;
+      }
+      if (missing.length) { err.textContent = 'Please complete: ' + missing.join(', ') + '.'; return; }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Submitting\u2026';
+      server('submitAttendeeRegistration', data)
+        .then(function(res) {
+          btn.disabled = false; btn.textContent = 'Submit Registration';
+          if (!res.success) { err.textContent = res.message; return; }
+          document.getElementById('attendeeFormWrap').style.display = 'none';
+          document.getElementById('attendeeSuccess').style.display  = 'block';
+        })
+        .catch(function() {
+          btn.disabled = false; btn.textContent = 'Submit Registration';
+          err.textContent = 'Connection error. Please try again.';
+        });
+    }
+
+    function _runStatusCheck(emailId, btnId, errId, resultId, filterType) {
+      var email  = document.getElementById(emailId).value.trim();
+      var btn    = document.getElementById(btnId);
+      var err    = document.getElementById(errId);
+      var result = document.getElementById(resultId);
+      err.textContent = ''; result.innerHTML = '';
+      if (!email) { err.textContent = 'Please enter your email address.'; return; }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Looking up\u2026';
+      server('checkRegistrationStatus', email)
+        .then(function(res) {
+          btn.disabled = false; btn.textContent = 'Check Status';
+          if (!res.success) { err.textContent = res.message; return; }
+          var filtered = filterType
+            ? res.results.filter(function(r) { return r.type === filterType; })
+            : res.results;
+          if (!filtered.length) { err.textContent = 'No ' + (filterType || '') + ' registration found for this email address.'; return; }
+          var html = '';
+          filtered.forEach(function(r) {
+            var badge = (r.status || 'pending').toLowerCase();
+            html += '<div class="info-cell" style="margin-bottom:10px">' +
+              '<div class="lbl">' + esc(r.type) + ' Registration</div>' +
+              '<div class="val" style="margin-top:6px"><strong>' + esc(r.name) + '</strong> &mdash; ' + esc(r.organization) + '</div>' +
+              '<div style="margin-top:8px"><span class="status-badge ' + badge + '">' + esc(r.status) + '</span></div>' +
+              '<div style="margin-top:6px;font-size:12px;color:#a0aec0">Submitted: ' + esc(r.timestamp) + '</div>' +
+              '</div>';
+          });
+          result.innerHTML = html;
+        })
+        .catch(function() {
+          btn.disabled = false; btn.textContent = 'Check Status';
+          err.textContent = 'Connection error. Please try again.';
+        });
+    }
+
+    function checkExhibitorStatus() {
+      _runStatusCheck('exStatusEmail', 'exStatusBtn', 'exStatusErr', 'exStatusResult', 'Exhibitor');
+    }
+
+    function checkAttendeeStatus() {
+      _runStatusCheck('atStatusEmail', 'atStatusBtn', 'atStatusErr', 'atStatusResult', 'Attendee');
+    }
+
+    // Legacy alias — kept in case anything references it
+    function checkStatus() { checkExhibitorStatus(); }
+
+    // ── INIT ──────────────────────────────────────────────────────
+    boot();
+    var initViews = ['home','registration','portal','faq'];
+    showView(initViews.indexOf(INITIAL_PAGE) >= 0 ? INITIAL_PAGE : 'home', null);
+  </script>
+</body>
+</html>

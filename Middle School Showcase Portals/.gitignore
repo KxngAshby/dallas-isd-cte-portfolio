@@ -1,0 +1,14 @@
+# clasp local config (contains absolute paths specific to this machine)
+backend/.clasp.json
+
+# Excel workbook (may contain sensitive event data)
+*.xlsx
+*.xls
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS files
+.DS_Store
+Thumbs.db

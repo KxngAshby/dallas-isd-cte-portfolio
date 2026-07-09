@@ -1,0 +1,727 @@
+<script>
+const input = document.getElementById('scanInput');
+const message = document.getElementById('message');
+const subMessage = document.getElementById('subMessage');
+const stationLabel = document.getElementById('stationLabel');
+const panel = document.getElementById('panel');
+const statusIcon = document.getElementById('statusIcon');
+const listeningIndicator = document.getElementById('listeningIndicator');
+const themeToggle = document.getElementById('themeToggle');
+const toastContainer = document.getElementById('toastContainer');
+
+const adminButton = document.getElementById('adminButton');
+const adminModal = document.getElementById('adminModal');
+const pinInput = document.getElementById('pinInput');
+const loadStationsButton = document.getElementById('loadStationsButton');
+const stationSelect = document.getElementById('stationSelect');
+const adminMessage = document.getElementById('adminMessage');
+const applyStationButton = document.getElementById('applyStationButton');
+const closeAdminButton = document.getElementById('closeAdminButton');
+const kioskModeCheckbox = document.getElementById('kioskModeCheckbox');
+const kioskBadge = document.getElementById('kioskBadge');
+
+const diagnosticModal = document.getElementById('diagnosticModal');
+const diagnosticStatus = document.getElementById('diagnosticStatus');
+const diagnosticDetails = document.getElementById('diagnosticDetails');
+const closeDiagnosticButton = document.getElementById('closeDiagnosticButton');
+
+let lastScanTime = 0;
+let isSubmitting = false;
+
+const RESET_MS = 2200;
+const TOAST_MS = 3500;
+const THEME_KEY = 'pd-scanner-theme';
+const STATION_KEY = 'pd-station';
+const ENTRY_MODE_KEY = 'pd-entry-mode';
+const KIOSK_MODE_KEY = 'pd-kiosk-mode';
+const STANDALONE_BANNER_KEY = 'pd-standalone-banner-dismissed';
+const CLIENT_LOG_KEY = 'pd-scan-client-log-queue';
+
+let kioskMode = false;
+let wakeLockSentinel = null;
+let kioskFocusTimer = null;
+
+const ICONS = {
+  idle:    '<circle cx="12" cy="12" r="9"></circle><path d="M9 12h6"></path>',
+  pending: '<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>',
+  success: '<path d="M5 13l4 4L19 7"></path>',
+  error:   '<circle cx="12" cy="12" r="9"></circle><path d="M9 9l6 6M15 9l-6 6"></path>',
+  warning: '<path d="M12 3l10 18H2L12 3z"></path><path d="M12 10v5"></path><circle cx="12" cy="18" r="0.6" fill="currentColor"></circle>'
+};
+
+const TOAST_ICONS = {
+  success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>',
+  warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5"/><circle cx="12" cy="18" r="0.7" fill="currentColor"/></svg>',
+  error:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>'
+};
+
+const STATION_API = '';
+const stationName = (typeof STATION === 'string' && STATION.trim()) ? STATION.trim() : 'Unknown';
+let currentStation = localStorage.getItem(STATION_KEY) || stationName;
+let entryMode = 'scan';
+
+const sessionEntryPanel = document.getElementById('sessionEntryPanel');
+const sessionStationEyebrow = document.getElementById('sessionStationEyebrow');
+const sessionStaffIdInput = document.getElementById('sessionStaffId');
+const sessionCheckInButton = document.getElementById('sessionCheckInButton');
+const lunchReturnPanel = document.getElementById('lunchReturnPanel');
+const lunchReturnStaffIdInput = document.getElementById('lunchReturnStaffId');
+const lunchReturnButton = document.getElementById('lunchReturnButton');
+const scanHint = document.getElementById('scanHint');
+
+const MAIN_CHECK_IN_STATION = 'Main Check In';
+const SCAN_SOURCE_LUNCH_ID = 'lunch-id';
+
+function isMainCheckInStation_(name) {
+  return String(name || '').trim().toLowerCase() === MAIN_CHECK_IN_STATION.toLowerCase();
+}
+
+function formatStationDisplay_(name) {
+  return String(name || '').trim().replace(/\s+-\s+/g, ' · ');
+}
+
+function updateStationDisplay_() {
+  stationLabel.textContent = `Station: ${currentStation}`;
+  if (sessionStationEyebrow) {
+    sessionStationEyebrow.textContent = formatStationDisplay_(currentStation);
+  }
+}
+
+updateStationDisplay_();
+
+initTheme_();
+initEntryMode_();
+initKiosk_();
+initStandaloneApp_();
+flushClientLogQueue_();
+
+function isKioskMode_() {
+  return kioskMode === true;
+}
+
+function initKiosk_() {
+  const stored = localStorage.getItem(KIOSK_MODE_KEY);
+  kioskMode = stored === 'true';
+  applyKioskUi_();
+}
+
+function setKioskMode_(enabled) {
+  kioskMode = !!enabled;
+  localStorage.setItem(KIOSK_MODE_KEY, kioskMode ? 'true' : 'false');
+  applyKioskUi_();
+}
+
+function applyKioskUi_() {
+  document.body.setAttribute('data-kiosk', kioskMode ? 'true' : 'false');
+  if (kioskBadge) kioskBadge.hidden = !kioskMode;
+  if (kioskMode) {
+    requestWakeLock_();
+    startKioskFocusLoop_();
+  } else {
+    releaseWakeLock_();
+    stopKioskFocusLoop_();
+  }
+  updateStandaloneBanner_();
+  const setupBanner = document.getElementById('standaloneSetupBanner');
+  if (!setupBanner || setupBanner.hidden) focusActiveInput_();
+}
+
+function isStandalone_() {
+  return window.navigator.standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches;
+}
+
+function isLikelyIpad_() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function ensureAppleTouchIcon_() {
+  if (document.querySelector('link[rel="apple-touch-icon"]')) return;
+  const logo = document.getElementById('brandLogo');
+  if (!logo || !logo.src) return;
+  const link = document.createElement('link');
+  link.rel = 'apple-touch-icon';
+  link.sizes = '180x180';
+  link.href = logo.src;
+  document.head.appendChild(link);
+}
+
+function dismissStandaloneBanner_() {
+  localStorage.setItem(STANDALONE_BANNER_KEY, 'true');
+  const banner = document.getElementById('standaloneSetupBanner');
+  if (banner) banner.hidden = true;
+  updateStandaloneBanner_();
+}
+
+function updateStandaloneBanner_() {
+  const banner = document.getElementById('standaloneSetupBanner');
+  if (!banner) return;
+  const show = isKioskMode_() &&
+    !isStandalone_() &&
+    isLikelyIpad_() &&
+    localStorage.getItem(STANDALONE_BANNER_KEY) !== 'true';
+  banner.hidden = !show;
+  document.body.setAttribute('data-standalone', isStandalone_() ? 'true' : 'false');
+}
+
+function initStandaloneApp_() {
+  ensureAppleTouchIcon_();
+  const dismissBtn = document.getElementById('dismissStandaloneBanner');
+  if (dismissBtn) {
+    dismissBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dismissStandaloneBanner_();
+    });
+  }
+  updateStandaloneBanner_();
+}
+
+async function requestWakeLock_() {
+  if (!navigator.wakeLock || wakeLockSentinel) return;
+  try {
+    wakeLockSentinel = await navigator.wakeLock.request('screen');
+    wakeLockSentinel.addEventListener('release', function () {
+      wakeLockSentinel = null;
+    });
+  } catch (_) { /* unsupported or denied */ }
+}
+
+function releaseWakeLock_() {
+  if (!wakeLockSentinel) return;
+  try {
+    wakeLockSentinel.release();
+  } catch (_) { /* ignore */ }
+  wakeLockSentinel = null;
+}
+
+function startKioskFocusLoop_() {
+  stopKioskFocusLoop_();
+  kioskFocusTimer = setInterval(function () {
+    if (!isKioskMode_() || isSubmitting) return;
+    if (adminModal && !adminModal.classList.contains('hidden')) return;
+    if (diagnosticModal && !diagnosticModal.classList.contains('hidden')) return;
+    const banner = document.getElementById('standaloneSetupBanner');
+    if (banner && !banner.hidden) return;
+    const active = document.activeElement;
+    if (active === document.body || active === null) {
+      focusActiveInput_();
+    }
+  }, 2500);
+}
+
+function stopKioskFocusLoop_() {
+  if (kioskFocusTimer) {
+    clearInterval(kioskFocusTimer);
+    kioskFocusTimer = null;
+  }
+}
+
+function focusActiveInput_() {
+  if (isManualEntryMode_()) {
+    if (sessionStaffIdInput) sessionStaffIdInput.focus();
+  } else {
+    input.focus();
+  }
+}
+
+function isManualEntryMode_() {
+  return entryMode === 'id';
+}
+
+async function initEntryMode_() {
+  const urlParam = (typeof ENTRY_MODE_PARAM === 'string' && ENTRY_MODE_PARAM.trim())
+    ? ENTRY_MODE_PARAM.trim().toLowerCase()
+    : '';
+  let mode = '';
+  if (urlParam === 'id' || urlParam === 'scan') {
+    mode = urlParam;
+  }
+  if (!mode) {
+    const cached = localStorage.getItem(ENTRY_MODE_KEY + ':' + currentStation);
+    if (cached === 'id' || cached === 'scan') mode = cached;
+  }
+  if (!mode) {
+    try {
+      const data = await runServerFunction_('getStationEntryModeFromClient', {
+        station: currentStation,
+        entry: urlParam,
+        requestId: createRequestId_()
+      });
+      if (data?.success && data.data?.entryMode) {
+        mode = String(data.data.entryMode).toLowerCase() === 'id' ? 'id' : 'scan';
+      }
+    } catch (_) { /* default scan */ }
+  }
+  entryMode = mode === 'id' ? 'id' : 'scan';
+  localStorage.setItem(ENTRY_MODE_KEY + ':' + currentStation, entryMode);
+  applyEntryModeUi_();
+}
+
+function applyEntryModeUi_() {
+  document.body.setAttribute('data-entry-mode', entryMode);
+  const manual = isManualEntryMode_();
+  const showLunchReturn = !manual && isMainCheckInStation_(currentStation);
+  document.body.setAttribute('data-show-lunch-return', showLunchReturn ? 'true' : 'false');
+  if (lunchReturnPanel) lunchReturnPanel.hidden = !showLunchReturn;
+
+  if (scanHint) {
+    if (manual && isMainCheckInStation_(currentStation)) {
+      scanHint.textContent = 'Check in / out: teachers type their Staff ID number from their badge.';
+    } else if (manual) {
+      scanHint.textContent = 'Session check-in: teachers type their Staff ID number from their badge.';
+    } else if (showLunchReturn) {
+      scanHint.textContent = 'Scan badges with the USB scanner, or type a Staff ID below to check in / out.';
+    } else {
+      scanHint.textContent = 'Front desk: scan badges with a USB barcode scanner.';
+    }
+  }
+
+  if (manual) {
+    if (sessionEntryPanel) sessionEntryPanel.hidden = false;
+    if (sessionStationEyebrow) sessionStationEyebrow.hidden = false;
+    updateStationDisplay_();
+    setUiState('idle', 'Enter Staff ID', 'Type the number printed under the barcode on the badge.');
+    if (sessionStaffIdInput) {
+      sessionStaffIdInput.value = '';
+      sessionStaffIdInput.focus();
+    }
+  } else {
+    if (sessionEntryPanel) sessionEntryPanel.hidden = true;
+    if (sessionStationEyebrow) sessionStationEyebrow.hidden = true;
+    setUiState('idle', 'Ready to Scan', 'Scan a teacher barcode to record attendance');
+    input.focus();
+  }
+}
+
+async function submitSessionStaffId_() {
+  if (isSubmitting) return;
+  const id = String(sessionStaffIdInput?.value || '').trim().replace(/\D/g, '');
+  if (!id) {
+    showToast('warning', 'Enter Staff ID', 'Type the number printed under the barcode on the badge.');
+    if (sessionStaffIdInput) sessionStaffIdInput.focus();
+    return;
+  }
+  if (sessionStaffIdInput) sessionStaffIdInput.value = '';
+  await processScan_(id, 'manual');
+  if (isManualEntryMode_() && sessionStaffIdInput) {
+    setTimeout(function () { sessionStaffIdInput.focus(); }, RESET_MS + 100);
+  }
+}
+
+if (sessionCheckInButton) {
+  sessionCheckInButton.addEventListener('click', function () { submitSessionStaffId_(); });
+}
+if (sessionStaffIdInput) {
+  sessionStaffIdInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitSessionStaffId_();
+    }
+  });
+}
+
+async function submitLunchReturnStaffId_() {
+  if (isSubmitting) return;
+  const id = String(lunchReturnStaffIdInput?.value || '').trim().replace(/\D/g, '');
+  if (!id) {
+    showToast('warning', 'Enter Staff ID', 'Type the number under the barcode on your badge.');
+    if (lunchReturnStaffIdInput) lunchReturnStaffIdInput.focus();
+    return;
+  }
+  if (lunchReturnStaffIdInput) lunchReturnStaffIdInput.value = '';
+  await processScan_(id, 'manual');
+  if (lunchReturnStaffIdInput && document.body.getAttribute('data-show-lunch-return') === 'true') {
+    setTimeout(function () { input.focus(); }, RESET_MS + 100);
+  }
+}
+
+if (lunchReturnButton) {
+  lunchReturnButton.addEventListener('click', function () { submitLunchReturnStaffId_(); });
+}
+if (lunchReturnStaffIdInput) {
+  lunchReturnStaffIdInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitLunchReturnStaffId_();
+    }
+  });
+}
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('button, input, select, label, [role="button"], .modal-card, .toast')) return;
+  if (e.target.closest('#lunchReturnPanel')) return;
+  focusActiveInput_();
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  if (isKioskMode_()) requestWakeLock_();
+  focusActiveInput_();
+});
+
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
+    if (isKioskMode_()) return;
+    e.preventDefault();
+    openDiagnosticModal_();
+    return;
+  }
+  if (e.key === 'Escape') {
+    if (!adminModal.classList.contains('hidden')) closeAdminModal_();
+    if (!diagnosticModal.classList.contains('hidden')) closeDiagnosticModal_();
+  }
+});
+
+input.addEventListener('keydown', async (e) => {
+  if (e.key !== 'Enter' || isSubmitting) return;
+  await processScan_(input.value, 'usb');
+  input.value = '';
+});
+
+async function processScan_(rawValue, source) {
+  if (isSubmitting) return;
+
+  const now = Date.now();
+  if (now - lastScanTime < 300) return;
+
+  const id = String(rawValue || '').trim().replace(/[^a-zA-Z0-9\-]/g, '');
+  if (!id) return;
+
+  const requestId = createRequestId_();
+
+  lastScanTime = now;
+  isSubmitting = true;
+  setListeningState_('busy');
+  setUiState('pending', 'Processing...', `Scanning ID ending in ${id.slice(-4)}`);
+  logDiagnostic_('Scan started', {
+    requestId, id, station: currentStation, source: source || 'usb', browserOnline: navigator.onLine
+  });
+
+  try {
+    const data = await runServerFunction_('scanFromClient', {
+      id,
+      station: currentStation,
+      scanSource: source || 'usb',
+      requestId,
+      userAgent: navigator.userAgent,
+      pageUrl: window.location.href
+    });
+
+    logDiagnostic_('Server responded', {
+      requestId: data?.data?.requestId || requestId,
+      success: data?.success,
+      status: data?.status,
+      message: data?.message
+    });
+
+    if (data && data.success) {
+      const staffName = data.data?.staff?.displayName || `ID ${id}`;
+      const campus = data.data?.staff?.campus ? ` \u2022 ${data.data.staff.campus}` : '';
+      const timing = data.data?.timing || null;
+      const ui = getStatusUi_(data.status, timing);
+      setUiState(ui.className, ui.title, `${staffName}${campus}`);
+
+      if (timing && timing.severity === 'warning') {
+        showToast('warning', `${staffName} \u2014 ${ui.title}`, timing.message || 'Recorded with timing note.');
+      } else {
+        showToast('success', `${staffName} \u2014 ${ui.title}`, 'Recorded successfully.');
+      }
+    } else {
+      const reason = (data && data.message) ? data.message : 'Unable to process scan';
+      setUiState('error', 'Scan Rejected', reason);
+      showToast('error', 'Scan rejected', reason);
+    }
+
+  } catch (err) {
+    const errorMsg = err && err.message ? err.message : String(err);
+    setUiState('error', 'Server Call Error', errorMsg);
+    showToast('error', 'Could not reach server', errorMsg);
+    logDiagnostic_('google.script.run failed', {
+      requestId, id, station: currentStation, source: source || 'usb',
+      error: errorMsg, browserOnline: navigator.onLine
+    });
+    queueClientLog_({
+      requestId,
+      id,
+      station: currentStation,
+      stage: 'google_script_run_scan',
+      outcome: 'server_call_error',
+      message: errorMsg,
+      details: JSON.stringify({ name: err?.name || '', online: navigator.onLine, source: source || 'usb' })
+    });
+  }
+
+  isSubmitting = false;
+  setListeningState_('listening');
+  setTimeout(resetUi, RESET_MS);
+}
+
+function setPanelState_(state) {
+  const safe = ['idle', 'pending', 'success', 'error', 'warning'].indexOf(state) >= 0 ? state : 'idle';
+  panel.setAttribute('data-state', safe);
+  if (statusIcon) statusIcon.innerHTML = ICONS[safe] || ICONS.idle;
+}
+
+function setUiState(stateClass, title, subtitle) {
+  setPanelState_(stateClass || 'idle');
+  message.textContent = title;
+  subMessage.textContent = subtitle;
+}
+
+function resetUi() {
+  if (isManualEntryMode_()) {
+    setUiState('idle', 'Enter Staff ID', 'Type the number under the barcode on the badge.');
+    if (sessionStaffIdInput) sessionStaffIdInput.focus();
+  } else if (isMainCheckInStation_(currentStation)) {
+    setUiState('idle', 'Ready to Scan', 'Scan a badge, or use Staff ID below if you lost your badge after lunch.');
+    focusActiveInput_();
+  } else {
+    setUiState('idle', 'Ready to Scan', 'Scan a teacher barcode to record attendance');
+    focusActiveInput_();
+  }
+}
+
+function setListeningState_(state) {
+  if (!listeningIndicator) return;
+  if (state === 'busy') {
+    listeningIndicator.setAttribute('data-state', 'busy');
+    listeningIndicator.querySelector('.listening-text').textContent = 'Working...';
+  } else {
+    listeningIndicator.removeAttribute('data-state');
+    listeningIndicator.querySelector('.listening-text').textContent = 'Listening';
+  }
+}
+
+function getStatusUi_(status, timing) {
+  const titles = {
+    'IN': 'Checked In',
+    'LUNCH OUT': 'Lunch Out',
+    'LUNCH IN': 'Back From Lunch',
+    'OUT': 'Checked Out'
+  };
+  let title = titles[status] || status || 'Scan Recorded';
+  if (status === 'OUT' && timing && timing.skipLunch) {
+    title = 'Checked Out (no lunch)';
+  }
+  if (timing && timing.severity === 'warning') {
+    return { className: 'warning', title: title + ' \u2014 Timing Note' };
+  }
+  return { className: 'success', title: title };
+}
+
+function showToast(level, title, msg) {
+  if (!toastContainer) return;
+  const validLevel = ['success', 'warning', 'error'].indexOf(level) >= 0 ? level : 'success';
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${validLevel}`;
+  toast.setAttribute('role', validLevel === 'error' ? 'alert' : 'status');
+  toast.innerHTML = `
+    <div class="toast-icon">${TOAST_ICONS[validLevel] || ''}</div>
+    <div class="toast-body">
+      <div class="toast-title"></div>
+      <div class="toast-message"></div>
+    </div>
+  `;
+  toast.querySelector('.toast-title').textContent = title || '';
+  toast.querySelector('.toast-message').textContent = msg || '';
+  toastContainer.appendChild(toast);
+  while (toastContainer.children.length > 4) toastContainer.removeChild(toastContainer.firstChild);
+
+  setTimeout(() => {
+    toast.classList.add('toast-out');
+    toast.addEventListener('animationend', () => toast.remove(), { once: true });
+  }, TOAST_MS);
+}
+
+function timeStamp_() { return new Date().toLocaleTimeString(); }
+
+function logDiagnostic_(title, details) {
+  const stamp = `${title} at ${timeStamp_()}`;
+  if (diagnosticStatus) diagnosticStatus.textContent = stamp;
+  if (diagnosticDetails) diagnosticDetails.textContent = JSON.stringify(details || {}, null, 2);
+  try {
+    if (window.console && console.debug) console.debug('[PD]', stamp, details);
+  } catch (e) { /* ignore */ }
+}
+
+function openDiagnosticModal_() {
+  if (!diagnosticModal) return;
+  diagnosticModal.classList.remove('hidden');
+}
+function closeDiagnosticModal_() {
+  if (!diagnosticModal) return;
+  diagnosticModal.classList.add('hidden');
+  input.focus();
+}
+
+if (closeDiagnosticButton) closeDiagnosticButton.addEventListener('click', closeDiagnosticModal_);
+if (diagnosticModal) diagnosticModal.addEventListener('click', (e) => {
+  if (e.target === diagnosticModal) closeDiagnosticModal_();
+});
+
+/* ---- Theme ---- */
+function initTheme_() {
+  const stored = localStorage.getItem(THEME_KEY);
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const theme = stored || (prefersDark ? 'dark' : 'light');
+  applyTheme_(theme);
+}
+function applyTheme_(theme) {
+  const safe = theme === 'dark' ? 'dark' : 'light';
+  document.body.setAttribute('data-theme', safe);
+  localStorage.setItem(THEME_KEY, safe);
+  const themeIcon = document.getElementById('themeIcon');
+  if (themeIcon) {
+    if (safe === 'dark') {
+      themeIcon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+    } else {
+      themeIcon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
+    }
+  }
+}
+if (themeToggle) themeToggle.addEventListener('click', () => {
+  const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme_(next);
+});
+
+/* ---- Admin ---- */
+adminButton.addEventListener('click', () => {
+  adminModal.classList.remove('hidden');
+  adminMessage.textContent = '';
+  if (kioskModeCheckbox) kioskModeCheckbox.checked = isKioskMode_();
+  pinInput.focus();
+});
+closeAdminButton.addEventListener('click', closeAdminModal_);
+adminModal.addEventListener('click', (e) => { if (e.target === adminModal) closeAdminModal_(); });
+
+loadStationsButton.addEventListener('click', async () => {
+  const pin = pinInput.value.trim();
+  if (!pin) { adminMessage.textContent = 'Enter PIN first.'; return; }
+  adminMessage.textContent = 'Loading stations...';
+  try {
+    const data = await runServerFunction_('getStationsFromClient', {
+      pin,
+      station: currentStation,
+      requestId: createRequestId_(),
+      userAgent: navigator.userAgent
+    });
+    if (!data.success) { adminMessage.textContent = data.message || 'Unable to load stations.'; return; }
+    const stations = Array.isArray(data.data?.stations) ? data.data.stations : [];
+    stationSelect.innerHTML = '';
+    stations.forEach((s) => {
+      const name = typeof s === 'string' ? s : (s?.name || '');
+      if (!name) return;
+      const mode = typeof s === 'object' && s.entryMode ? s.entryMode : 'scan';
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = name + (mode === 'id' ? ' (ID entry)' : '');
+      option.dataset.entryMode = mode;
+      if (name === currentStation) option.selected = true;
+      stationSelect.appendChild(option);
+    });
+    adminMessage.textContent = stations.length ? 'Select station and apply.' : 'No stations found.';
+  } catch (err) {
+    adminMessage.textContent = `Error loading stations: ${err.message || err}`;
+  }
+});
+
+applyStationButton.addEventListener('click', async () => {
+  const pin = pinInput.value.trim();
+  if (!pin) {
+    adminMessage.textContent = 'Enter PIN first.';
+    return;
+  }
+  const selected = stationSelect.value;
+  if (!selected) {
+    adminMessage.textContent = 'Select a station.';
+    return;
+  }
+
+  adminMessage.textContent = 'Applying...';
+  try {
+    const data = await runServerFunction_('getStationsFromClient', {
+      pin,
+      station: currentStation,
+      requestId: createRequestId_(),
+      userAgent: navigator.userAgent
+    });
+    if (!data.success) {
+      adminMessage.textContent = data.message || 'Invalid admin PIN.';
+      return;
+    }
+
+    currentStation = selected;
+    localStorage.setItem(STATION_KEY, currentStation);
+    updateStationDisplay_();
+    const selectedOpt = stationSelect.selectedOptions[0];
+    entryMode = selectedOpt?.dataset?.entryMode === 'id' ? 'id' : 'scan';
+    localStorage.setItem(ENTRY_MODE_KEY + ':' + currentStation, entryMode);
+    applyEntryModeUi_();
+
+    const kioskOn = kioskModeCheckbox ? kioskModeCheckbox.checked : false;
+    setKioskMode_(kioskOn);
+
+    closeAdminModal_();
+  } catch (err) {
+    adminMessage.textContent = `Error: ${err.message || err}`;
+  }
+});
+
+function closeAdminModal_() {
+  adminModal.classList.add('hidden');
+  focusActiveInput_();
+}
+
+/* ---- Server bridge ---- */
+async function flushClientLogQueue_() {
+  const queued = getClientLogQueue_();
+  if (!queued.length) return;
+  const remaining = [];
+  for (const entry of queued) {
+    try {
+      await runServerFunction_('clientLogFromClient', {
+        requestId: entry.requestId,
+        id: entry.id,
+        station: entry.station,
+        stage: entry.stage,
+        outcome: entry.outcome,
+        message: entry.message,
+        details: entry.details,
+        userAgent: navigator.userAgent
+      });
+    } catch { remaining.push(entry); }
+  }
+  localStorage.setItem(CLIENT_LOG_KEY, JSON.stringify(remaining.slice(-25)));
+}
+
+function queueClientLog_(entry) {
+  const queued = getClientLogQueue_();
+  queued.push({ ...entry, recordedAt: new Date().toISOString() });
+  localStorage.setItem(CLIENT_LOG_KEY, JSON.stringify(queued.slice(-25)));
+}
+
+function getClientLogQueue_() {
+  try {
+    const value = localStorage.getItem(CLIENT_LOG_KEY);
+    return value ? JSON.parse(value) : [];
+  } catch { return []; }
+}
+
+function runServerFunction_(functionName, payload) {
+  return new Promise((resolve, reject) => {
+    if (!window.google?.script?.run) {
+      reject(new Error('google.script.run is not available. Open the deployed Apps Script web app URL.'));
+      return;
+    }
+    google.script.run
+      .withSuccessHandler(resolve)
+      .withFailureHandler(reject)[functionName](payload);
+  });
+}
+
+function createRequestId_() {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+</script>

@@ -1,0 +1,43 @@
+# ============================================================
+# PD System .gitignore
+# ============================================================
+
+# --- Node / build tooling ---
+node_modules/
+package-lock.json
+
+# --- Sensitive config (script ID, OAuth tokens) ---
+.clasp.json
+.clasprc.json
+.credentials/
+
+# --- Staff / Teacher data (CONFIDENTIAL) ---
+# Contains real teacher names, IDs, badge PDFs, spreadsheet data
+Data/
+
+# --- All spreadsheet and PDF files ---
+*.xlsx
+*.xls
+*.pdf
+
+# --- Base64 embedded asset files (large, generated) ---
+assets/logos/*.b64.txt
+
+# --- Preview build artifacts ---
+preview/
+
+# --- Generated HTML artifacts ---
+file-flow-map.html
+
+# --- Screenshot/image build artifacts ---
+Data/preview-page1.png
+
+# --- Summer PD Plan spreadsheet (staff data) ---
+Summer PD Plan.xlsx
+
+# --- OS / editor files ---
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
+*.swo

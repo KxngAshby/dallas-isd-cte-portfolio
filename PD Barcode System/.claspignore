@@ -1,0 +1,29 @@
+# Push only Apps Script source + project manifest.
+# Everything else lives locally (build tools, assets, generated artifacts).
+
+**/**
+
+!appsscript.json
+!*.gs
+!*.html
+
+# Keep these local-only
+package.json
+package-lock.json
+node_modules/**
+scripts/**
+assets/**
+Data/**
+_remote_snapshot/**
+.git/**
+.gitignore
+.claspignore
+.clasp.json
+README*
+*.md
+*.xlsx
+*.pdf
+*.png
+*.jpg
+*.svg
+*.zip

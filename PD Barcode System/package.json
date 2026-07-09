@@ -1,0 +1,27 @@
+{
+  "name": "pd-system-apps-script",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Project-local clasp workflow for PD System",
+  "scripts": {
+    "clasp:version": "clasp --version",
+    "clasp:login": "clasp login",
+    "clasp:push": "clasp push",
+    "clasp:pull": "clasp pull",
+    "clasp:status": "clasp status",
+    "badges:letter": "node scripts/generate-badge-pdf.js",
+    "badges:sc700": "node scripts/generate-badge-pdf-sc700.js",
+    "badges:avery74461": "node scripts/generate-badge-pdf-avery74461.js",
+    "badges:avery74461:supplement": "node scripts/generate-badge-pdf-avery74461-supplement.js",
+    "badges:avery5390": "node scripts/generate-badge-pdf-avery74461.js",
+    "sync:day2": "node scripts/apply-option-a.js",
+    "preview:day2": "node scripts/preview-room-config-sync.js"
+  },
+  "devDependencies": {
+    "@google/clasp": "latest",
+    "bwip-js": "^4.10.1",
+    "pdfkit": "^0.18.0",
+    "sharp": "^0.34.5",
+    "xlsx": "^0.18.5"
+  }
+}
