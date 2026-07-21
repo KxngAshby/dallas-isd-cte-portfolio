@@ -1,0 +1,50 @@
+# ── Dependencies ──
+node_modules/
+package-lock.json.bak
+
+# ── clasp / Google credentials (NEVER commit) ──
+.clasprc.json
+*.clasprc.json
+.clasp.local.json
+
+# ── Secrets / tokens / keys ──
+.env
+.env.*
+!.env.example
+!**/.env.example
+*.env
+credentials.json
+client_secret*.json
+service-account*.json
+token.json
+*token*.json
+*.pem
+*.key
+*.p12
+
+# ── Build outputs (keep ReactApp.html for GAS; ignore client dist) ──
+client/dist/
+server/dist/
+
+# ── District / spreadsheet data exports (may contain student or staff data) ──
+*.xlsx
+*.xls
+*.csv
+
+# ── Binary archives & reference docs (keep the code repo lean) ──
+# Logos are tracked in extracted form under cte-logos/; the source zip is redundant.
+*.zip
+# District reference PDFs (e.g. region maps) are kept out of the code repo.
+*.pdf
+
+# ── Logs ──
+*.log
+logs/
+
+# ── OS / editor cruft ──
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.idea/
+.vscode/

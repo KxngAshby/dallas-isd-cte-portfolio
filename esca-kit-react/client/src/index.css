@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+:root {
+  --blue: #003366;
+  --navy: #003366;
+  --navy-deep: #001a33;
+  --blue-mid: #0056b3;
+  --bg: #eef3f8;
+  --text: #0f172a;
+  --muted: #5b6b7c;
+  --border: #c5d0dc;
+  --sidebar: #0a192f;
+  --green: #15803d;
+  --green-bg: #dcfce7;
+  --amber: #a16207;
+  --amber-bg: #fef3c7;
+  --red: #b91c1c;
+  --red-bg: #fee2e2;
+  --font: "DM Sans", system-ui, sans-serif;
+  --display: "Fraunces", Georgia, serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.font-display {
+  font-family: var(--display);
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes softPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 86, 179, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(0, 86, 179, 0);
+  }
+}

@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESCA Kit Barcode System — Executive Guide</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<style>
+  :root {
+    --blue:      #003366;
+    --blue-mid:  #0056b3;
+    --blue-lt:   #e8f0fb;
+    --teal:      #0d6e6e;
+    --teal-lt:   #e6f4f4;
+    --green:     #15803d;
+    --green-lt:  #dcfce7;
+    --amber:     #92400e;
+    --amber-lt:  #fef3c7;
+    --slate:     #475569;
+    --border:    #cbd5e1;
+    --bg:        #f8fafc;
+    --white:     #ffffff;
+    --text:      #1e293b;
+    --muted:     #64748b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 10.5pt;
+    line-height: 1.55;
+  }
+
+  /* ── PAGE SHELL ── */
+  .page {
+    max-width: 850px;
+    margin: 0 auto;
+    background: var(--white);
+    padding: 48px 52px 52px;
+  }
+
+  /* ── HEADER ── */
+  .doc-header {
+    border-bottom: 3px solid var(--blue);
+    padding-bottom: 18px;
+    margin-bottom: 28px;
+  }
+  .org-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .org-chip {
+    background: var(--blue);
+    color: #fff;
+    font-size: 8.5pt;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 3px;
+  }
+  .org-name {
+    font-size: 8.5pt;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .doc-title {
+    font-size: 22pt;
+    font-weight: 700;
+    color: var(--blue);
+    line-height: 1.15;
+    margin-bottom: 6px;
+  }
+  .doc-sub {
+    font-size: 10pt;
+    color: var(--muted);
+  }
+
+  /* ── SECTIONS ── */
+  .section { margin-bottom: 28px; }
+  .section-title {
+    font-size: 12.5pt;
+    font-weight: 700;
+    color: var(--blue);
+    border-left: 4px solid var(--blue);
+    padding-left: 10px;
+    margin-bottom: 12px;
+  }
+  .section-sub {
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: var(--slate);
+    margin: 14px 0 8px;
+  }
+
+  /* ── STATS ROW ── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .stat-box {
+    background: var(--blue-lt);
+    border: 1px solid #c3d8f5;
+    border-radius: 6px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 22pt;
+    font-weight: 700;
+    color: var(--blue);
+    line-height: 1;
+  }
+  .stat-lbl {
+    font-size: 8.5pt;
+    color: var(--muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  /* ── TABLE ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+    margin: 10px 0;
+  }
+  th {
+    background: var(--blue);
+    color: #fff;
+    padding: 8px 11px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 9pt;
+    letter-spacing: .03em;
+  }
+  td {
+    padding: 8px 11px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: var(--bg); }
+  td strong { color: var(--blue); }
+
+  /* ── CALLOUT BOXES ── */
+  .callout-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .callout {
+    border-radius: 6px;
+    padding: 13px 15px;
+    font-size: 9.5pt;
+  }
+  .callout-title {
+    font-weight: 700;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .callout-info  { background: var(--blue-lt);  border: 1px solid #bdd4f0; }
+  .callout-info  .callout-title { color: var(--blue); }
+  .callout-green { background: var(--green-lt); border: 1px solid #86efac; }
+  .callout-green .callout-title { color: var(--green); }
+  .callout-amber { background: var(--amber-lt); border: 1px solid #fcd34d; }
+  .callout-amber .callout-title { color: var(--amber); }
+  .callout-teal  { background: var(--teal-lt);  border: 1px solid #5eead4; }
+  .callout-teal  .callout-title { color: var(--teal); }
+  .callout-full  { grid-column: 1 / -1; }
+
+  /* ── WORKFLOW GRID ── */
+  .step-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 10px 0;
+  }
+  .step-grid.cols3 { grid-template-columns: repeat(3, 1fr); }
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--white);
+  }
+  .step-num {
+    background: var(--blue);
+    color: #fff;
+    font-size: 9pt;
+    font-weight: 700;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-label { font-weight: 600; font-size: 9.5pt; color: var(--text); margin-bottom: 3px; }
+  .step-detail { font-size: 8.5pt; color: var(--muted); line-height: 1.45; }
+
+  /* ── ROLE CARDS ── */
+  .role-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 10px 0;
+  }
+  .role-card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .role-header {
+    background: var(--blue);
+    color: #fff;
+    padding: 9px 12px;
+    font-size: 9.5pt;
+    font-weight: 700;
+  }
+  .role-sub {
+    font-size: 8pt;
+    font-weight: 400;
+    opacity: .8;
+    margin-top: 1px;
+  }
+  .role-body {
+    padding: 10px 12px;
+    background: var(--white);
+  }
+  .role-body li {
+    font-size: 8.5pt;
+    color: var(--muted);
+    margin-bottom: 5px;
+    padding-left: 12px;
+    position: relative;
+  }
+  .role-body li::before {
+    content: "–";
+    position: absolute;
+    left: 0;
+    color: var(--blue-mid);
+    font-weight: 700;
+  }
+
+  /* ── FAQ ── */
+  .faq-item {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .faq-q {
+    background: var(--bg);
+    padding: 10px 13px;
+    font-weight: 600;
+    font-size: 9.5pt;
+    color: var(--blue);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .faq-q i { font-size: 9pt; color: var(--blue-mid); }
+  .faq-a {
+    padding: 10px 13px;
+    font-size: 9.5pt;
+    color: var(--slate);
+    border-top: 1px solid var(--border);
+    background: var(--white);
+    line-height: 1.55;
+  }
+
+  /* ── DIVIDER ── */
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 20px 0;
+  }
+
+  /* ── FOOTER ── */
+  .doc-footer {
+    border-top: 2px solid var(--blue);
+    margin-top: 32px;
+    padding-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8pt;
+    color: var(--muted);
+  }
+  .confidential {
+    background: var(--amber-lt);
+    border: 1px solid #fcd34d;
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 8pt;
+    font-weight: 700;
+    color: var(--amber);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: #fff; font-size: 9.5pt; }
+    .page { padding: 0; max-width: 100%; }
+    .no-print { display: none !important; }
+    .step, .faq-item, .role-card { break-inside: avoid; }
+    .section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Print button (hidden in print) -->
+<div class="no-print" style="background:#003366;padding:10px 52px;display:flex;align-items:center;gap:14px">
+  <span style="color:#94a3b8;font-size:9pt">Open in Chrome and use <strong style="color:#fff">File → Print → Save as PDF</strong> to export a share-ready document.</span>
+  <button onclick="window.print()" style="margin-left:auto;background:#0056b3;color:#fff;border:none;border-radius:5px;padding:7px 18px;font-size:9pt;font-weight:600;cursor:pointer">
+    <i class="fa-solid fa-print" style="margin-right:6px"></i>Print / Save as PDF
+  </button>
+</div>
+
+<div class="page">
+
+  <!-- ── HEADER ── -->
+  <div class="doc-header">
+    <div class="org-badge">
+      <span class="org-chip">Dallas ISD</span>
+      <span class="org-name">Career &amp; Technical Education</span>
+    </div>
+    <div class="doc-title">ESCA Kit Barcode System</div>
+    <div class="doc-sub">Executive Overview &nbsp;·&nbsp; Barcode-driven inventory and checkout for CTE career kits</div>
+  </div>
+
+  <!-- ── PURPOSE ── -->
+  <div class="section">
+    <div class="section-title">What This System Does</div>
+    <p>
+      Dallas ISD CTE ESCA career kits are loaned to campus counselors to support career exploration programming.
+      This system tracks every kit — and every item inside it — from the moment a barcode label is printed
+      through checkout, return, and audit. All data writes automatically to a Google Sheet.
+      No manual entry is required after labels are applied.
+    </p>
+    <div class="stat-row" style="margin-top:14px;grid-template-columns:repeat(4,1fr)">
+      <div class="stat-box">
+        <div class="stat-num">2</div>
+        <div class="stat-lbl">Web apps<br>(Hub + Admin)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">2</div>
+        <div class="stat-lbl">Barcode layers<br>per kit</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">8</div>
+        <div class="stat-lbl">Director regions<br>tracked</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">3</div>
+        <div class="stat-lbl">Email templates<br>Auto-sent on every transaction</div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── TWO BARCODES ── -->
+  <div class="section">
+    <div class="section-title">Two Barcodes on Every Kit</div>
+    <p style="margin-bottom:10px;color:var(--muted);font-size:9.5pt">
+      Each kit uses the TipWeb asset tag that is already on the case as its ESCA scan barcode — no second sticker needed.
+      Item barcodes are added inside the kit only.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:20%">Barcode</th>
+          <th style="width:28%">What it is</th>
+          <th style="width:28%">Who uses it</th>
+          <th>How they link</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>TipWeb asset tag<br><span style="font-weight:400;font-size:8pt;color:var(--muted)">(= ESCA kit barcode)</span></strong></td>
+          <td>The district asset-management barcode already on the kit case — also entered as the ESCA scan code when the kit is created in Admin</td>
+          <td>Counselors scan this single sticker to check the kit out and back in; ESCA staff enter the same number in Admin to create the kit</td>
+          <td>One number serves both systems. Stored on the Kit record and every Loan for seamless cross-reference with TipWeb — no duplicate records, no second label</td>
+        </tr>
+        <tr>
+          <td><strong>Item barcodes</strong></td>
+          <td>Individual barcodes on every item inside the kit (cables, devices, tools, etc.)</td>
+          <td>Counselors scan items to report damage or flag missing pieces at check-in</td>
+          <td>Each item barcode permanently stores its parent kit ID — if items get mixed between kits, scanning any item shows which kit it belongs to and its TipWeb tag</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout callout-green" style="margin-top:10px">
+      <div class="callout-title"><i class="fa-solid fa-circle-check"></i> Streamlined standard workflow</div>
+      No second sticker is ever applied to the kit case. The TipWeb tag number is entered as the ESCA kit barcode when the kit is created in Admin. 
+      From that point on, one scan handles TipWeb cross-reference and ESCA checkout tracking simultaneously.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── CAMPUS & COUNSELOR MANAGEMENT ── -->
+  <div class="section">
+    <div class="section-title">Campus &amp; Counselor Management</div>
+
+    <div class="section-sub"><i class="fa-solid fa-building-columns" style="margin-right:6px;color:var(--blue)"></i>Campus Management</div>
+    <p style="margin-bottom:10px;font-size:9.5pt;color:var(--slate)">
+      Campuses are identified by their district org number (e.g. "456"), which serves as the <code>campus_id</code> throughout the system.
+      Campuses can be added one at a time via the Admin form or bulk-imported from a CSV export of the district's campus spreadsheet.
+      The CSV import wizard handles any column layout — admin maps the source columns to the expected fields
+      (Org Number, Campus Name, Region, Principal Name, Principal Email) in a 3-step process: upload, map columns, preview and confirm.
+      Importing is safe to re-run when the campus list updates — existing records are updated, new campuses are added, nothing is deleted.
+    </p>
+
+    <div class="section-sub"><i class="fa-solid fa-address-book" style="margin-right:6px;color:var(--blue)"></i>Counselor Registry</div>
+    <p style="font-size:9.5pt;color:var(--slate)">
+      There is no need to pre-load a counselor list. The system maintains a self-building Counselors registry in the Google Sheet.
+      Every time a counselor signs into the Hub for the first time, their EID, name, email, and campus are automatically written to the registry.
+      Subsequent sign-ins update their last-seen date and campus. The Admin portal shows the full registry under the Counselors tab,
+      with a manual form for one-off corrections.
+    </p>
+  </div>
+
+  <hr>
+
+  <!-- ── TIPWEB ── -->
+  <div class="section">
+    <div class="section-title">TipWeb + ESCA — How They Work Together</div>
+    <div class="callout-row">
+      <div class="callout callout-info">
+        <div class="callout-title"><i class="fa-solid fa-database"></i> TipWeb owns district asset inventory</div>
+        TipWeb tracks that the kit physically exists and belongs to Dallas ISD.
+        ESCA does not create duplicate TipWeb records — the TipWeb tag number <em>is</em> the ESCA barcode,
+        so both systems stay in sync automatically with zero extra work.
+      </div>
+      <div class="callout callout-green">
+        <div class="callout-title"><i class="fa-solid fa-circle-check"></i> ESCA owns the checkout workflow</div>
+        ESCA tracks who has the kit, from which campus, in which region, when it went out, when it came back,
+        and the condition of every item inside. This data surfaces in the Admin dashboard for leadership.
+      </div>
+      <div class="callout callout-teal callout-full">
+        <div class="callout-title"><i class="fa-solid fa-link"></i> One scan, two systems — no duplication</div>
+        Because the TipWeb tag number is entered as the ESCA kit barcode at setup, a counselor's single scan
+        at checkout simultaneously records the ESCA loan <em>and</em> provides a direct TipWeb cross-reference.
+        No second sticker. No manual reconciliation. No confusion.
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── WORKFLOW ── -->
+  <div class="section">
+    <div class="section-title">End-to-End Workflow</div>
+
+    <div class="section-sub"><i class="fa-solid fa-laptop" style="margin-right:6px;color:var(--blue)"></i>Admin Setup — ESCA Staff (one time per kit)</div>
+    <div class="step-grid">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-label">Create career template</div>
+          <div class="step-detail">Define what belongs inside a kit type — e.g. EMT kit: stethoscope, BP cuff, gloves, penlight. Set reorder thresholds per item.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-label">Create physical kit</div>
+          <div class="step-detail">Enter kit name, link to career template, and type in the TipWeb asset tag number as the ESCA scan barcode — this is the one number that drives both systems.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-label">Generate item barcodes</div>
+          <div class="step-detail">Admin generates unique barcodes for every item inside the kit. Each barcode is permanently linked to the kit's TipWeb tag.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-label">Print and apply item labels</div>
+          <div class="step-detail">Print the item barcode sheet and apply stickers to each item inside the case. No second sticker on the outside — the TipWeb tag is already there. Kit is ready for checkout.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-sub"><i class="fa-solid fa-id-badge" style="margin-right:6px;color:var(--blue)"></i>Sign-In — Counselor (before first scan)</div>
+    <div class="step-grid cols3">
+      <div class="step">
+        <div class="step-num">0a</div>
+        <div>
+          <div class="step-label">Enter Employee ID (EID)</div>
+          <div class="step-detail">Counselor types their EID. If they have signed in before, their name, email, and campus auto-fill instantly.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">0b</div>
+        <div>
+          <div class="step-label">Confirm identity</div>
+          <div class="step-detail">First name, last name, email, and campus are confirmed. Email is required. On first visit, the counselor fills these in manually.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">0c</div>
+        <div>
+          <div class="step-label">Session begins</div>
+          <div class="step-detail">Identity is saved for the session. A "Not you?" link appears in the corner to reset if someone else needs to use the kiosk.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-sub"><i class="fa-solid fa-qrcode" style="margin-right:6px;color:var(--blue)"></i>Checkout — Counselor (at pickup)</div>
+    <div class="step-grid cols3">
+      <div class="step">
+        <div class="step-num">5</div>
+        <div>
+          <div class="step-label">Scan kit barcode</div>
+          <div class="step-detail">Counselor opens the Counselor Hub on any device and scans the ESCA barcode on the kit case.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div>
+          <div class="step-label">Verify item checklist</div>
+          <div class="step-detail">System displays every item that should be in the kit with its status. Counselor acknowledges the list.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">7</div>
+        <div>
+          <div class="step-label">Confirm and complete checkout</div>
+          <div class="step-detail">Campus is already known from sign-in. Counselor confirms the item checklist and completes checkout. Loan record — including counselor EID, email, campus, and due date — is written to the Sheet instantly.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-sub"><i class="fa-solid fa-rotate-left" style="margin-right:6px;color:var(--blue)"></i>Check-In — Counselor (at return)</div>
+    <div class="step-grid cols3">
+      <div class="step">
+        <div class="step-num">8</div>
+        <div>
+          <div class="step-label">Scan kit barcode</div>
+          <div class="step-detail">Same barcode, same Hub. System recognizes the kit is checked out and opens the return flow automatically.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">9</div>
+        <div>
+          <div class="step-label">Clean return</div>
+          <div class="step-detail">Counselor confirms non-consumable items are present. Consumables (batteries, gloves, etc.) are noted but not required.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">10</div>
+        <div>
+          <div class="step-label">Problem report</div>
+          <div class="step-detail">If anything is missing or damaged, counselor flags the item, selects the issue type, and adds notes. Sheet is updated automatically.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-sub"><i class="fa-solid fa-envelope" style="margin-right:6px;color:var(--blue)"></i>Email Notifications — Automatic &amp; Manual</div>
+    <div class="step-grid cols3">
+      <div class="step">
+        <div class="step-num"><i class="fa-solid fa-paper-plane" style="font-size:9pt"></i></div>
+        <div>
+          <div class="step-label">Checkout confirmation</div>
+          <div class="step-detail">Sent automatically to the counselor (and CC'd to the campus principal) the moment a kit is checked out. Includes kit name, career type, campus, and scheduled return date.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"><i class="fa-solid fa-paper-plane" style="font-size:9pt"></i></div>
+        <div>
+          <div class="step-label">Check-in confirmation</div>
+          <div class="step-detail">Sent automatically when the kit is returned. Confirms receipt for the counselor's records.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"><i class="fa-solid fa-bell" style="font-size:9pt"></i></div>
+        <div>
+          <div class="step-label">Return reminder</div>
+          <div class="step-detail">Admin manually triggers from the Email Center. Sent to all counselors with open loans. Admin sets a return deadline date before sending.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"><i class="fa-solid fa-triangle-exclamation" style="font-size:9pt"></i></div>
+        <div>
+          <div class="step-label">Overdue notice</div>
+          <div class="step-detail">Admin manually triggers for any loan past the configured overdue threshold. Formal notice sent to counselor and principal.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── ROLES ── -->
+  <div class="section">
+    <div class="section-title">Who Uses What</div>
+    <div class="role-grid">
+      <div class="role-card">
+        <div class="role-header">
+          <i class="fa-solid fa-user-tie" style="margin-right:6px"></i>ESCA Staff
+          <div class="role-sub">Admin Portal</div>
+        </div>
+        <div class="role-body">
+          <ul style="list-style:none">
+            <li>Build career templates and physical kits</li>
+            <li>Generate and print barcode labels</li>
+            <li>Import campuses from CSV (org number as campus ID)</li>
+            <li>Manage the self-building counselor registry</li>
+            <li>View regional checkout dashboard for leadership</li>
+            <li>Run kit audits — verify all items accounted for</li>
+            <li>Send return reminders and overdue notices from the Email Center</li>
+            <li>Edit email templates and configure CC/BCC recipients</li>
+            <li>Manage system settings and app links</li>
+          </ul>
+        </div>
+      </div>
+      <div class="role-card">
+        <div class="role-header">
+          <i class="fa-solid fa-person-chalkboard" style="margin-right:6px"></i>Campus Counselors
+          <div class="role-sub">Counselor Hub</div>
+        </div>
+        <div class="role-body">
+          <ul style="list-style:none">
+            <li>Sign in with Employee ID (EID) at the kiosk — auto-fills returning counselors</li>
+            <li>Scan kit barcode to check kits out</li>
+            <li>Acknowledge item checklist at pickup</li>
+            <li>Campus is auto-applied from sign-in (no manual selection needed)</li>
+            <li>Receive automatic checkout confirmation email</li>
+            <li>Scan kit barcode to return the kit</li>
+            <li>Report missing or damaged items at check-in</li>
+            <li>Receive automatic check-in confirmation email</li>
+          </ul>
+        </div>
+      </div>
+      <div class="role-card">
+        <div class="role-header">
+          <i class="fa-solid fa-chart-line" style="margin-right:6px"></i>Executive Leadership
+          <div class="role-sub">Admin Dashboard</div>
+        </div>
+        <div class="role-body">
+          <ul style="list-style:none">
+            <li>View regional checkout participation by Director Region</li>
+            <li>See which regions are active and which need a push</li>
+            <li>Track total kits out vs. available at a glance</li>
+            <li>Monitor reorder alerts for items running low</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ── FAQ ── -->
+  <div class="section">
+    <div class="section-title">Frequently Asked Questions</div>
+
+    <div class="faq-item">
+      <div class="faq-q"><i class="fa-solid fa-circle-question"></i> Do we need to change anything in TipWeb?</div>
+      <div class="faq-a">
+        No. TipWeb continues to work exactly as it does today. The TipWeb asset tag number that is already on every kit case
+        is entered as the ESCA kit barcode at setup. From that point forward, the same number identifies the kit in both systems.
+        ESCA does not create, modify, or delete any TipWeb records — the two systems remain fully independent and always in sync.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q"><i class="fa-solid fa-circle-question"></i> What if items from different kits get mixed up during a reset?</div>
+      <div class="faq-a">
+        Each item barcode permanently stores the kit ID it was created for — which is the kit's TipWeb tag number.
+        Scanning a misplaced item in the Counselor Hub immediately tells the counselor which kit it belongs to
+        and shows the TipWeb tag so it can be physically located. During Admin audits, unexpected items are flagged automatically.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q"><i class="fa-solid fa-circle-question"></i> Can counselors use this on their phones?</div>
+      <div class="faq-a">
+        Yes. The Counselor Hub is a web app that runs in any Chromium browser, including Chrome on a phone or tablet.
+        A USB or Bluetooth barcode scanner also works — it inputs the barcode exactly like a keyboard.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q"><i class="fa-solid fa-circle-question"></i> What if two counselors share the same kiosk computer?</div>
+      <div class="faq-a">
+        The Counselor Hub starts with a sign-in screen requiring each counselor to enter their Employee ID.
+        A "Not you?" link in the top corner resets the session so the next counselor can sign in fresh.
+        Each loan record is individually attributed to the counselor who signed in at checkout —
+        shared computers never mix up who checked out what.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q"><i class="fa-solid fa-circle-question"></i> What is the Counselors tab in the Admin portal?</div>
+      <div class="faq-a">
+        It is a live, self-building registry that populates automatically as counselors use the Hub. No pre-loading is required.
+        On first sign-in, a counselor's EID, name, email, and campus are written to the registry.
+        Subsequent sign-ins update their last-seen date and campus if it changed.
+        Admin staff can also add or correct records manually from the Counselors tab in the Admin portal.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q"><i class="fa-solid fa-circle-question"></i> Where does all the data go?</div>
+      <div class="faq-a">
+        Every scan and sign-in writes directly to a Google Sheet. Tabs include: Kits, KitItems, Loans, CheckoutItems,
+        CheckinIssues, Campuses, Counselors, EmailTemplates, AuditLog, and Settings.
+        No external database required. ESCA staff can open the Sheet directly for custom reports at any time.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q"><i class="fa-solid fa-circle-question"></i> How does the regional dashboard work?</div>
+      <div class="faq-a">
+        When a counselor signs into the Hub, they confirm their campus. That campus — and its Director Region —
+        are automatically stamped on every loan record they create.
+        Each campus is assigned to one of the eight Dallas ISD Director Regions.
+        The Admin Dashboard aggregates checkout data by region — showing total checkouts, open loans,
+        and campuses served — with a bar chart for leadership review.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q"><i class="fa-solid fa-circle-question"></i> How do email notifications work?</div>
+      <div class="faq-a">
+        Email notifications are live and fully automatic. A checkout confirmation is sent to the counselor (with the campus principal CC'd)
+        the moment a kit is checked out — personalized with kit name, career type, campus, and scheduled return date.
+        A check-in confirmation fires when the kit is returned. ESCA staff can also send bulk return reminders and overdue notices
+        from the Email Center in the Admin portal, selecting which counselors to notify and setting a return deadline.
+        All three email templates are editable in Admin under Email Notifications at any time — no code changes needed.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── FOOTER ── -->
+  <div class="doc-footer">
+    <div>
+      <strong style="color:var(--blue)">Dallas ISD</strong> &nbsp;Career &amp; Technical Education &nbsp;·&nbsp; ESCA Kit Barcode System
+      &nbsp;·&nbsp; Last updated: June 2026
+    </div>
+    <span class="confidential">Confidential — Internal Use Only</span>
+  </div>
+
+</div>
+</body>
+</html>

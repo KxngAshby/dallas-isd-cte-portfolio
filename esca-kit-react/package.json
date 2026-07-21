@@ -1,0 +1,14 @@
+{
+  "name": "esca-kit-react",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "ESCA Kit Hub — React + Express rebuild",
+  "scripts": {
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "kiosk": "node scripts/kiosk.js",
+    "build:client": "npm run build --prefix client",
+    "build:gas": "npm run build:gas --prefix client"
+  }
+}

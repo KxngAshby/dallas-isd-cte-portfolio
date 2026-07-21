@@ -96,7 +96,12 @@ Barcode-driven inventory, checkout, and return accountability for CTE career exp
 
 **Technology**
 
-Google Apps Script · Google Sheets (13 tabs) · Vanilla HTML/CSS/JS · `clasp` · `MailApp` for automated email · TipWeb asset tags reused as kit barcodes
+Google Apps Script · Google Sheets (13 tabs) · React + Vite (current Hub/Admin UI) · Classic vanilla HTML/CSS/JS retained as fallback · `clasp` · `MailApp` for automated email · TipWeb asset tags reused as kit barcodes
+
+**Portfolio folders**
+
+- `esca-kit-barcode-system/` — original Apps Script + vanilla Hub/Admin
+- `esca-kit-react/` — React rebuild that is now the default production UI (same Sheets backend)
 
 **Challenges**
 
@@ -105,6 +110,7 @@ Google Apps Script · Google Sheets (13 tabs) · Vanilla HTML/CSS/JS · `clasp` 
 - **Bootstrapping a blank sheet remotely.** Initial deployment required creating all tabs and headers before the first `runSetup()` — solved with API bootstrap scripts alongside clasp push.
 - **Consumable vs. durable items.** Some kit contents (batteries, handouts) needed different tracking rules than durable equipment.
 - **Regional reporting for leadership.** Checkout data needed to roll up by Director Region, not just by campus.
+- **React rebuild without abandoning GAS.** The production path still deploys through Apps Script (`ReactApp.html` + `google.script.run`); a local Express API mirrors the same sheet operations for development.
 
 **What worked**
 
@@ -116,8 +122,10 @@ Google Apps Script · Google Sheets (13 tabs) · Vanilla HTML/CSS/JS · `clasp` 
 - **Editable email templates** — checkout confirmation, return reminder, and overdue notice all editable in the Admin portal
 - **TipWeb tag reuse** — one barcode number serves both asset management and ESCA checkout
 - **Regional dashboard** — executive-ready participation view by Director Region
+- **React default route** — bare deployment URL serves the React Hub; `?view=admin` serves React Admin; classic HTML remains at `?view=classic` / `?view=classic-admin`
+- **Ops polish in the rebuild** — kit readiness gate before checkout, Dashboard overdue actions, and Hub “My kits” for the signed-in counselor
 
-This system became the **gold standard** for my later projects. When I say "build it like ESCA," I mean: schema-first sheets, Hub/Admin routing, clasp deployment, and admin-editable content.
+This system became the **gold standard** for my later projects. When I say "build it like ESCA," I mean: schema-first sheets, Hub/Admin routing, clasp deployment, and admin-editable content — now with a React UI layered on the same foundation.
 
 **What did not work**
 
@@ -127,7 +135,7 @@ This system became the **gold standard** for my later projects. When I say "buil
 
 **Key takeaway**
 
-ESCA codified the reusable architecture: `Code.gs` router, `Data.gs` schema, `Services.gs` business logic, `Hub.html` + `Admin.html`, clasp push, `runSetup()`. Middle School Showcase copied this layout directly.
+ESCA codified the reusable architecture: `Code.gs` router, `Data.gs` schema, `Services.gs` business logic, Hub/Admin surfaces, clasp push, `runSetup()`. Middle School Showcase copied this layout directly. The React rebuild kept that sheet/GAS core and modernized only the UI layer.
 
 ---
 
@@ -267,7 +275,7 @@ Every project started with questions about audience, constraints, and success cr
 | **Architecture** | Monolithic GAS + scanner UI | Hub + Admin + schema layers | Copied ESCA layout | Python pipeline + GAS host |
 | **Data store** | Single workbook, menu setup | 13-tab schema via `ensureSchema()` | Multi-tab with DEV/LIVE split | External xlsx + region CSV |
 | **Deployment** | `clasp push` | `clasp` + redeploy scripts | `clasp` + dev/live scripts | `update_dashboard.py` one command |
-| **UI approach** | Local scanner preview | Single Operations Hub URL | Public/Admin HTML split | Standalone bundled HTML |
+| **UI approach** | Local scanner preview | Vanilla Hub → React + Vite default | Public/Admin HTML split | Standalone bundled HTML |
 | **User auth** | Station URLs + admin PIN | EID sign-in + allowlist | Portal ID + private admin link | No auth (leadership internal tool) |
 | **Email** | Form Mule mail merge + templates | Auto-send via `MailApp` | Registration + principal CC | N/A |
 | **Content editing** | Settings sheet | Admin email templates | Site & Appearance tab | Manual resolution tracking |
@@ -278,14 +286,13 @@ Every project started with questions about audience, constraints, and success cr
 
 ## Repository Links
 
-Each project has its own git repository. Links below are placeholders — update with your GitHub URLs when repos are published.
-
-| Project | Local path | GitHub |
+| Project | Portfolio folder | GitHub |
 |---|---|---|
-| PD System Barcode | `Documents/Coding/PD System` | _add link_ |
-| ESCA Kit Barcode | `Documents/Coding/ESCA` | _add link_ |
-| CTE Survey Dashboard | `Documents/Coding/CTE Survey` | _add link_ |
-| Middle School Showcase | `Documents/Coding/Middle Shcool Showcase` | _add link_ |
+| PD System Barcode | `PD Barcode System/` | _add link_ |
+| ESCA Kit Barcode (classic) | `esca-kit-barcode-system/` | [KxngAshby/esca-kit-barcode-system](https://github.com/KxngAshby/esca-kit-barcode-system) |
+| ESCA Kit React rebuild | `esca-kit-react/` | [KxngAshby/esca-kit-react](https://github.com/KxngAshby/esca-kit-react) |
+| CTE Survey Dashboard | `Survey Dashboard/` | _add link_ |
+| Middle School Showcase | `Middle School Showcase Portals/` | _add link_ |
 
 ---
 
@@ -295,7 +302,7 @@ Each project has its own git repository. Links below are placeholders — update
 |---|---|---|
 | Application runtime | Google Apps Script | Runs inside district Google Workspace — no new vendors |
 | Database | Google Sheets | Auditable, exportable, editable by authorized staff |
-| Frontend (GAS projects) | HTML · CSS · Vanilla JavaScript | No build step, no npm on deploy, works in any browser |
+| Frontend (GAS projects) | HTML · CSS · Vanilla JavaScript · React + Vite (ESCA) | Classic pages stay zero-build; ESCA React ships as a single `ReactApp.html` into Apps Script |
 | Data processing | Python 3 + `openpyxl` | Heavy spreadsheet analysis where GAS would be too slow |
 | Version control | Git + GitHub | Source code history and collaboration |
 | Deployment CLI | `clasp` | Push local `.gs` and `.html` files to Apps Script projects |

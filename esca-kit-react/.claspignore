@@ -1,0 +1,6 @@
+# ignore everything except GAS source files
+**
+!*.gs
+!*.html
+!appsscript.json
+!ReactApp.html

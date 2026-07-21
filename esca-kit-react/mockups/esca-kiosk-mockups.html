@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ESCA Kiosk — Visual Mockups (DISD CTE)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #003366;
+      --navy-deep: #001a33;
+      --blue: #0056b3;
+      --sky: #e8f1fa;
+      --bg: #eef3f8;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #5b6b7c;
+      --border: #c5d0dc;
+      --green: #15803d;
+      --green-bg: #dcfce7;
+      --amber: #a16207;
+      --amber-bg: #fef3c7;
+      --red: #b91c1c;
+      --red-bg: #fee2e2;
+      --font: "DM Sans", system-ui, sans-serif;
+      --display: "Fraunces", Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: #0b1220;
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+    }
+    aside {
+      background: linear-gradient(180deg, #0a1628, #061018);
+      border-right: 1px solid rgba(255,255,255,.08);
+      padding: 20px 14px;
+      color: #cbd5e1;
+      overflow-y: auto;
+      max-height: 100vh;
+      position: sticky;
+      top: 0;
+    }
+    aside h1 {
+      font-family: var(--display);
+      font-size: 1.05rem;
+      color: #fff;
+      margin: 0 0 4px;
+      font-weight: 700;
+    }
+    aside .tag {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: #94a3b8;
+      margin-bottom: 18px;
+    }
+    aside .group {
+      font-size: .68rem;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: #64748b;
+      margin: 16px 8px 6px;
+    }
+    aside button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: 0;
+      color: #cbd5e1;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font: inherit;
+      font-size: .9rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 2px;
+    }
+    aside button:hover { background: rgba(255,255,255,.06); color: #fff; }
+    aside button.active {
+      background: rgba(0,86,179,.35);
+      color: #fff;
+      box-shadow: inset 0 0 0 1px rgba(125,180,255,.35);
+    }
+    aside .note {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.04);
+      font-size: .75rem;
+      line-height: 1.45;
+      color: #94a3b8;
+    }
+    main {
+      padding: 28px 32px 48px;
+      overflow: auto;
+    }
+    .stage-label {
+      color: #94a3b8;
+      font-size: .8rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .stage-title {
+      font-family: var(--display);
+      color: #fff;
+      font-size: 1.6rem;
+      margin: 0 0 6px;
+    }
+    .stage-desc {
+      color: #94a3b8;
+      margin: 0 0 22px;
+      max-width: 62ch;
+      line-height: 1.5;
+    }
+    .frame {
+      width: min(100%, 1100px);
+      aspect-ratio: 16 / 10;
+      max-height: min(78vh, 720px);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08);
+      background: var(--bg);
+      position: relative;
+    }
+    .screen { display: none; height: 100%; }
+    .screen.on { display: flex; flex-direction: column; }
+
+    /* Shared kiosk chrome */
+    .kiosk-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 22px;
+      background: linear-gradient(90deg, var(--navy-deep), var(--navy));
+      color: #fff;
+    }
+    .kiosk-top .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .kiosk-top img {
+      height: 34px;
+      width: auto;
+      mix-blend-mode: screen;
+    }
+    .kiosk-top .product {
+      font-size: .72rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+    .kiosk-top .product strong {
+      display: block;
+      font-family: var(--display);
+      font-size: 1.05rem;
+      letter-spacing: 0;
+      text-transform: none;
+      color: #fff;
+      font-weight: 700;
+    }
+    .ghost {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.25);
+      color: #e2e8f0;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font: inherit;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #cbd5e1;
+      font-size: .85rem;
+    }
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--blue);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      color: #fff;
+    }
+    .body {
+      flex: 1;
+      padding: 28px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background:
+        radial-gradient(900px 400px at 15% 0%, rgba(0,86,179,.12), transparent 55%),
+        radial-gradient(700px 360px at 90% 100%, rgba(0,51,102,.08), transparent 50%),
+        linear-gradient(180deg, #f4f7fb, #e8eef5);
+    }
+    .center { text-align: center; max-width: 520px; margin: 0 auto; width: 100%; }
+    .eyebrow {
+      font-size: .72rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    h2 {
+      font-family: var(--display);
+      font-size: 2.1rem;
+      margin: 0 0 8px;
+      color: var(--navy);
+      font-weight: 700;
+      line-height: 1.15;
+    }
+    .sub { color: var(--muted); margin: 0 0 22px; font-size: 1.05rem; line-height: 1.45; }
+    .field {
+      width: 100%;
+      font: inherit;
+      font-size: 1.45rem;
+      letter-spacing: .08em;
+      padding: 16px 18px;
+      border-radius: 14px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 0;
+      border-radius: 14px;
+      padding: 16px 22px;
+      font: inherit;
+      font-weight: 700;
+      font-size: 1.05rem;
+      cursor: pointer;
+      width: 100%;
+    }
+    .btn-primary { background: var(--navy); color: #fff; }
+    .btn-primary:hover { background: var(--blue); }
+    .btn-success { background: var(--green); color: #fff; }
+    .btn-ghost {
+      background: #fff;
+      color: var(--navy);
+      border: 1.5px solid var(--navy);
+      margin-top: 10px;
+    }
+    .btn-warn { background: var(--amber); color: #fff; }
+    .scan-orb {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      margin: 0 auto 18px;
+      display: grid;
+      place-items: center;
+      background: #fff;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px rgba(0,51,102,.08);
+      color: var(--navy);
+      font-size: 2rem;
+    }
+    .panel {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      max-width: 640px;
+      margin: 0 auto;
+      width: 100%;
+      box-shadow: 0 12px 40px rgba(15,23,42,.06);
+    }
+    .kit-meta { color: var(--muted); font-size: .95rem; margin-bottom: 16px; }
+    .checklist { list-style: none; padding: 0; margin: 0 0 18px; }
+    .checklist li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #eef2f6;
+      font-weight: 600;
+    }
+    .check {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: var(--green-bg);
+      color: var(--green);
+      display: grid;
+      place-items: center;
+      font-size: .85rem;
+      font-weight: 800;
+    }
+    .success-wrap {
+      text-align: center;
+    }
+    .success-badge {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      margin: 0 auto 18px;
+      background: var(--green-bg);
+      color: var(--green);
+      display: grid;
+      place-items: center;
+      font-size: 2.4rem;
+      font-weight: 800;
+    }
+    .id-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      text-align: left;
+      margin-bottom: 18px;
+    }
+    .id-card .name {
+      font-family: var(--display);
+      font-size: 1.7rem;
+      color: var(--navy);
+      margin: 0 0 4px;
+    }
+    .id-card .school { color: var(--muted); margin: 0; }
+
+    /* Sign-in hero */
+    .hero {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(160deg, rgba(0,26,51,.88), rgba(0,51,102,.75)),
+        radial-gradient(800px 500px at 20% 20%, rgba(0,86,179,.45), transparent 60%),
+        linear-gradient(180deg, #001a33, #003366);
+      color: #fff;
+      padding: 40px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -10% -30% 40%;
+      height: 70%;
+      background: radial-gradient(circle, rgba(255,255,255,.08), transparent 60%);
+      pointer-events: none;
+    }
+    .hero-card {
+      width: min(100%, 440px);
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+    .hero img.logo {
+      height: 48px;
+      width: auto;
+      margin: 0 auto 22px;
+      display: block;
+      mix-blend-mode: screen;
+    }
+    .hero h2 {
+      color: #fff;
+      font-size: 2.5rem;
+      margin-bottom: 8px;
+    }
+    .hero .sub { color: #cbd5e1; }
+    .hero .field {
+      background: rgba(255,255,255,.96);
+      border-color: transparent;
+    }
+    .hero .btn-primary {
+      background: #fff;
+      color: var(--navy);
+    }
+    .hero .foot {
+      margin-top: 22px;
+      font-size: .8rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+
+    /* Admin shell */
+    .admin {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      height: 100%;
+      background: #eef2f6;
+    }
+    .admin-nav {
+      background: linear-gradient(180deg, #0a192f, #061220);
+      color: #cbd5e1;
+      padding: 18px 12px;
+    }
+    .admin-nav img {
+      height: 28px;
+      width: auto;
+      margin: 0 8px 16px;
+      mix-blend-mode: screen;
+    }
+    .admin-nav a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: .88rem;
+      margin-bottom: 2px;
+    }
+    .admin-nav a.on { background: rgba(0,86,179,.35); color: #fff; }
+    .admin-main { display: flex; flex-direction: column; min-width: 0; }
+    .admin-header {
+      background: rgba(255,255,255,.92);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 22px;
+    }
+    .admin-header .eyebrow { margin: 0 0 4px; }
+    .admin-header h2 { font-size: 1.4rem; margin: 0; }
+    .admin-body { padding: 18px 22px; overflow: auto; }
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .stat {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .stat b {
+      display: block;
+      font-family: var(--display);
+      font-size: 1.7rem;
+      color: var(--navy);
+    }
+    .stat span { color: var(--muted); font-size: .8rem; }
+    table.mock {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      font-size: .88rem;
+    }
+    table.mock th {
+      text-align: left;
+      background: #f8fafc;
+      color: var(--muted);
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      padding: 10px 12px;
+    }
+    table.mock td {
+      padding: 11px 12px;
+      border-top: 1px solid #eef2f6;
+    }
+    .pill {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 700;
+    }
+    .pill-out { background: #dbeafe; color: var(--blue); }
+    .pill-due { background: var(--red-bg); color: var(--red); }
+    .pill-ok { background: var(--green-bg); color: var(--green); }
+
+    /* Status board */
+    .board {
+      height: 100%;
+      background: #061018;
+      color: #e2e8f0;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+    }
+    .board-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .board-head h2 { color: #fff; font-size: 1.8rem; margin: 0; }
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      flex: 1;
+    }
+    .board-card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .board-card .career {
+      font-size: .75rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+    .board-card .big {
+      font-family: var(--display);
+      font-size: 2.4rem;
+      color: #fff;
+      line-height: 1;
+    }
+    .board-card .meta { color: #94a3b8; margin-top: 8px; font-size: .85rem; }
+    .board-card.hot { border-color: rgba(185,28,28,.5); background: rgba(185,28,28,.12); }
+
+    .path-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .path-row .btn { min-height: 72px; }
+  </style>
+</head>
+<body>
+  <aside>
+    <h1>ESCA mockups</h1>
+    <div class="tag">DISD CTE · preview only</div>
+
+    <div class="group">Counselor kiosk</div>
+    <button class="active" data-screen="signin">1 · Sign in</button>
+    <button data-screen="confirm">2 · Confirm identity</button>
+    <button data-screen="ready">3 · Ready to scan</button>
+    <button data-screen="checkout">4 · Check out</button>
+    <button data-screen="checkin">5 · Check in</button>
+    <button data-screen="problem">6 · Report problem</button>
+    <button data-screen="success">7 · Success</button>
+
+    <div class="group">Admin</div>
+    <button data-screen="admin">Admin dashboard</button>
+    <button data-screen="history">Loan history</button>
+
+    <div class="group">Office displays</div>
+    <button data-screen="board">Status board (TV)</button>
+
+    <div class="note">
+      This is a <strong style="color:#e2e8f0">look &amp; feel preview</strong> — not the live app.
+      Click each screen, then tell me what to keep or change before we implement.
+    </div>
+  </aside>
+
+  <main>
+    <div class="stage-label" id="stageLabel">Counselor kiosk</div>
+    <h1 class="stage-title" id="stageTitle">Sign in</h1>
+    <p class="stage-desc" id="stageDesc">Walk-up kiosk. Brand-first navy hero. Counselors enter only their Employee ID.</p>
+
+    <div class="frame">
+      <!-- 1 Sign in -->
+      <section class="screen on" id="signin">
+        <div class="hero">
+          <div class="hero-card">
+            <img class="logo" src="cte-logo.jpg" alt="Dallas ISD CTE" />
+            <div class="eyebrow" style="color:#94a3b8">Dallas ISD · Career &amp; Technical Education</div>
+            <h2>ESCA Kit Hub</h2>
+            <p class="sub">Enter your Employee ID to check a career kit out or back in.</p>
+            <input class="field" value="E123456" readonly />
+            <button class="btn btn-primary">Continue</button>
+            <div class="foot">One ID · No paperwork</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 Confirm -->
+      <section class="screen" id="confirm">
+        <div class="kiosk-top">
+          <div class="brand">
+            <img src="cte-logo.jpg" alt="CTE" />
+            <div class="product"><strong>ESCA Kit Hub</strong>Counselor kiosk</div>
+          </div>
+          <button class="ghost">Not you?</button>
+        </div>
+        <div class="body">
+          <div class="center">
+            <div class="eyebrow">Signed in</div>
+            <h2>Is this you?</h2>
+            <p class="sub">Name and campus come from the counselor list — nothing to type.</p>
+            <div class="id-card">
+              <p class="name">Jordan Smith</p>
+              <p class="school">Lincoln High School · Org #214</p>
+              <p class="school" style="margin-top:6px">jordan.smith@dallasisd.org</p>
+            </div>
+            <button class="btn btn-primary">Continue to scan</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3 Ready -->
+      <section class="screen" id="ready">
+        <div class="kiosk-top">
+          <div class="brand">
+            <img src="cte-logo.jpg" alt="CTE" />
+            <div class="product"><strong>ESCA Kit Hub</strong>Ready</div>
+          </div>
+          <div class="user-pill">
+            <div class="avatar">J</div>
+            <div>Jordan Smith<br /><span style="color:#94a3b8;font-size:.75rem">Lincoln High</span></div>
+            <button class="ghost" style="margin-left:8px">Not you?</button>
+          </div>
+        </div>
+        <div class="body">
+          <div class="center">
+            <div class="scan-orb">▦</div>
+            <h2>Ready to scan</h2>
+            <p class="sub">Point the scanner at the TipWeb tag on the kit case.</p>
+            <input class="field" placeholder="Waiting for barcode…" readonly />
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 Checkout -->
+      <section class="screen" id="checkout">
+        <div class="kiosk-top">
+          <div class="brand">
+            <img src="cte-logo.jpg" alt="CTE" />
+            <div class="product"><strong>Check out</strong>Nursing Kit 001</div>
+          </div>
+          <div class="user-pill"><div class="avatar">J</div> Jordan</div>
+        </div>
+        <div class="body">
+          <div class="panel">
+            <div class="eyebrow">Available kit</div>
+            <h2 style="font-size:1.7rem">Nursing Kit 001</h2>
+            <p class="kit-meta">TipWeb 7845123 · Career: Nursing · Due in 14 days</p>
+            <ul class="checklist">
+              <li><span class="check">✓</span> HDMI Cable</li>
+              <li><span class="check">✓</span> Mobile Hotspot</li>
+              <li><span class="check">✓</span> Lesson Guide</li>
+              <li><span class="check">✓</span> Power Adapter</li>
+            </ul>
+            <button class="btn btn-primary">Confirm checkout</button>
+            <button class="btn btn-ghost">Cancel</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5 Check in -->
+      <section class="screen" id="checkin">
+        <div class="kiosk-top">
+          <div class="brand">
+            <img src="cte-logo.jpg" alt="CTE" />
+            <div class="product"><strong>Check in</strong>Nursing Kit 001</div>
+          </div>
+          <div class="user-pill"><div class="avatar">J</div> Jordan</div>
+        </div>
+        <div class="body">
+          <div class="panel">
+            <div class="eyebrow">Returning kit</div>
+            <h2 style="font-size:1.7rem">Nursing Kit 001</h2>
+            <p class="kit-meta">Checked out to Jordan Smith · Due May 15</p>
+            <div class="path-row">
+              <button class="btn btn-success">Everything looks good</button>
+              <button class="btn btn-warn">Report a problem</button>
+            </div>
+            <button class="btn btn-ghost">Cancel</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6 Problem -->
+      <section class="screen" id="problem">
+        <div class="kiosk-top">
+          <div class="brand">
+            <img src="cte-logo.jpg" alt="CTE" />
+            <div class="product"><strong>Report issue</strong>Nursing Kit 001</div>
+          </div>
+          <div class="user-pill"><div class="avatar">J</div> Jordan</div>
+        </div>
+        <div class="body">
+          <div class="panel">
+            <div class="eyebrow">Select items with problems</div>
+            <h2 style="font-size:1.5rem">What needs attention?</h2>
+            <ul class="checklist">
+              <li><span class="check" style="background:var(--amber-bg);color:var(--amber)">!</span> Hotspot — Needs batteries</li>
+              <li><span class="check" style="background:#fff;border:1.5px solid var(--border);color:transparent">.</span> HDMI Cable</li>
+              <li><span class="check" style="background:#fff;border:1.5px solid var(--border);color:transparent">.</span> Lesson Guide</li>
+            </ul>
+            <button class="btn btn-primary">Submit check-in</button>
+            <button class="btn btn-ghost">Back</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7 Success -->
+      <section class="screen" id="success">
+        <div class="kiosk-top">
+          <div class="brand">
+            <img src="cte-logo.jpg" alt="CTE" />
+            <div class="product"><strong>ESCA Kit Hub</strong>Done</div>
+          </div>
+          <div class="user-pill"><div class="avatar">J</div> Jordan</div>
+        </div>
+        <div class="body">
+          <div class="success-wrap center">
+            <div class="success-badge">✓</div>
+            <h2>Kit checked out</h2>
+            <p class="sub">A confirmation email is on the way. Returning you to the scanner…</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Admin -->
+      <section class="screen" id="admin">
+        <div class="admin">
+          <div class="admin-nav">
+            <img src="cte-logo.jpg" alt="CTE" />
+            <a class="on" href="#">Dashboard</a>
+            <a href="#">Kits</a>
+            <a href="#">Templates</a>
+            <a href="#">Labels</a>
+            <a href="#">Counselors</a>
+            <a href="#">Emails</a>
+            <a href="#">History</a>
+            <a href="#">Status board</a>
+          </div>
+          <div class="admin-main">
+            <div class="admin-header">
+              <div class="eyebrow">Dallas ISD · CTE</div>
+              <h2>ESCA Admin</h2>
+            </div>
+            <div class="admin-body">
+              <div class="stat-row">
+                <div class="stat"><b>12</b><span>Kits out</span></div>
+                <div class="stat"><b>3</b><span>Overdue</span></div>
+                <div class="stat"><b>28</b><span>Available</span></div>
+              </div>
+              <table class="mock">
+                <thead>
+                  <tr><th>Kit</th><th>Campus</th><th>Counselor</th><th>Due</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><strong>Nursing 001</strong></td><td>Lincoln High</td><td>J. Smith</td><td>May 15</td><td><span class="pill pill-out">Checked out</span></td></tr>
+                  <tr><td><strong>Welding 002</strong></td><td>Skyline</td><td>A. Nguyen</td><td>May 10</td><td><span class="pill pill-due">Overdue</span></td></tr>
+                  <tr><td><strong>IT 004</strong></td><td>Townview</td><td>M. Ortiz</td><td>May 18</td><td><span class="pill pill-out">Checked out</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- History -->
+      <section class="screen" id="history">
+        <div class="admin">
+          <div class="admin-nav">
+            <img src="cte-logo.jpg" alt="CTE" />
+            <a href="#">Dashboard</a>
+            <a class="on" href="#">History</a>
+            <a href="#">Counselors</a>
+          </div>
+          <div class="admin-main">
+            <div class="admin-header">
+              <div class="eyebrow">Search by EID, name, or campus</div>
+              <h2>Loan history</h2>
+            </div>
+            <div class="admin-body">
+              <input class="field" style="text-align:left;font-size:1rem;margin-bottom:14px" value="Jordan Smith" readonly />
+              <table class="mock">
+                <thead>
+                  <tr><th>When</th><th>Kit</th><th>Campus</th><th>Result</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Apr 28</td><td>Nursing 001</td><td>Lincoln High</td><td><span class="pill pill-ok">Returned clean</span></td></tr>
+                  <tr><td>Mar 12</td><td>IT 004</td><td>Lincoln High</td><td><span class="pill pill-ok">Returned clean</span></td></tr>
+                  <tr><td>Jan 20</td><td>Nursing 001</td><td>Lincoln High</td><td><span class="pill pill-due">Issue reported</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Board -->
+      <section class="screen" id="board">
+        <div class="board">
+          <div class="board-head">
+            <div>
+              <div class="eyebrow" style="color:#64748b">Dallas ISD · CTE · Live</div>
+              <h2>ESCA Kit Status</h2>
+            </div>
+            <div style="text-align:right;color:#94a3b8;font-size:.9rem">
+              Updated just now<br />3 overdue
+            </div>
+          </div>
+          <div class="board-grid">
+            <div class="board-card"><div class="career">Nursing</div><div class="big">4</div><div class="meta">2 out · 2 ready</div></div>
+            <div class="board-card"><div class="career">Welding</div><div class="big">3</div><div class="meta">1 out · 2 ready</div></div>
+            <div class="board-card hot"><div class="career">IT</div><div class="big">2</div><div class="meta">2 overdue</div></div>
+            <div class="board-card"><div class="career">Culinary</div><div class="big">5</div><div class="meta">All available</div></div>
+            <div class="board-card"><div class="career">Region I</div><div class="big">6</div><div class="meta">campuses active</div></div>
+            <div class="board-card"><div class="career">Region II</div><div class="big">4</div><div class="meta">campuses active</div></div>
+            <div class="board-card"><div class="career">Open loans</div><div class="big">12</div><div class="meta">across district</div></div>
+            <div class="board-card hot"><div class="career">Overdue</div><div class="big">3</div><div class="meta">needs follow-up</div></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const meta = {
+      signin: ['Counselor kiosk', 'Sign in', 'Walk-up kiosk. Brand-first navy hero with CTE logo. Counselors enter only their Employee ID.'],
+      confirm: ['Counselor kiosk', 'Confirm identity', 'Read-only name, email, and campus from the counselor CSV. One Continue — or Not you?'],
+      ready: ['Counselor kiosk', 'Ready to scan', 'Home screen after sign-in. Giant scan cue; barcode field always focused for the wedge scanner.'],
+      checkout: ['Counselor kiosk', 'Check out', 'Shows kit + expected items first, then one Confirm checkout CTA.'],
+      checkin: ['Counselor kiosk', 'Check in', 'Two clear paths: clean return or report a problem.'],
+      problem: ['Counselor kiosk', 'Report problem', 'Pick items and issue types, then submit check-in.'],
+      success: ['Counselor kiosk', 'Success', 'Brief confirmation, then auto-return to Ready to scan.'],
+      admin: ['Admin portal', 'Admin dashboard', 'Same DISD CTE branding. Open loans first — ops-focused, not a cluttered CRM.'],
+      history: ['Admin portal', 'Loan history', 'Search by counselor or campus. Full accountability trail.'],
+      board: ['Office display', 'Status board (TV)', 'Dark wallboard for the CTE office — careers, regions, overdue heat.'],
+    };
+    const buttons = document.querySelectorAll('aside button[data-screen]');
+    const screens = document.querySelectorAll('.screen');
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.screen;
+        buttons.forEach((b) => b.classList.toggle('active', b === btn));
+        screens.forEach((s) => s.classList.toggle('on', s.id === id));
+        const [label, title, desc] = meta[id];
+        stageLabel.textContent = label;
+        stageTitle.textContent = title;
+        stageDesc.textContent = desc;
+      });
+    });
+  </script>
+</body>
+</html>

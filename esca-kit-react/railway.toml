@@ -1,0 +1,13 @@
+[build]
+builder = "NIXPACKS"
+watchPatterns = ["server/**"]
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+
+[build.nixpacks]
+# Deploy the server/ subdirectory as the app root
+# In Railway dashboard: set Root Directory = server
