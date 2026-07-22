@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Briefcase, Plus, Trash2 } from 'lucide-react';
 import {
+  deleteTemplate,
   getItemTypes,
   getTemplates,
   saveTemplate,
@@ -58,6 +59,19 @@ export function TemplatesPage() {
     onSuccess: () => {
       toast('Career template saved.', 'ok');
       setForm(null);
+      void qc.invalidateQueries({ queryKey: ['templates'] });
+    },
+    onError: (e: Error) => toast(e.message, 'err'),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (templateId: string) => {
+      const r = (await deleteTemplate(templateId)) as { success: boolean; error?: string };
+      if (!r.success) throw new Error(r.error || 'Could not remove template.');
+      return r;
+    },
+    onSuccess: () => {
+      toast('Career template removed.', 'ok');
       void qc.invalidateQueries({ queryKey: ['templates'] });
     },
     onError: (e: Error) => toast(e.message, 'err'),
@@ -251,9 +265,15 @@ export function TemplatesPage() {
             {
               key: 'career',
               header: 'Career',
-              render: (r) => <strong>{r.career || r.name}</strong>,
+              render: (r) => (
+                <strong>{r.career || r.name || r.template_id || 'Unlabeled template'}</strong>
+              ),
             },
-            { key: 'name', header: 'Template Name', render: (r) => r.name },
+            {
+              key: 'name',
+              header: 'Template Name',
+              render: (r) => r.name || <span className="text-[var(--muted)]">Unlabeled</span>,
+            },
             { key: 'kits', header: 'Physical Kits', render: (r) => r.kit_count ?? 0 },
             {
               key: 'contents',
@@ -267,25 +287,43 @@ export function TemplatesPage() {
               key: 'actions',
               header: '',
               render: (r) => (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    setForm({
-                      template_id: r.template_id,
-                      career: r.career || '',
-                      name: r.name || '',
-                      notes: r.notes || '',
-                      lines: (r.contents || []).map((c: any) => ({
-                        type_id: c.type_id,
-                        qty: parseInt(String(c.qty), 10) || 1,
-                        reorder_threshold: String(c.reorder_threshold || ''),
-                      })),
-                    })
-                  }
-                >
-                  Edit
-                </Button>
+                <div className="flex gap-1 justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      setForm({
+                        template_id: r.template_id,
+                        career: r.career || '',
+                        name: r.name || '',
+                        notes: r.notes || '',
+                        lines: (r.contents || []).map((c: any) => ({
+                          type_id: c.type_id,
+                          qty: parseInt(String(c.qty), 10) || 1,
+                          reorder_threshold: String(c.reorder_threshold || ''),
+                        })),
+                      })
+                    }
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={remove.isPending}
+                    onClick={() => {
+                      const kitCount = r.kit_count ?? 0;
+                      const label = r.career || r.name || r.template_id || 'this unlabeled template';
+                      const msg =
+                        kitCount > 0
+                          ? `Remove "${label}"? ${kitCount} kit(s) will be unlinked (the kits are kept, not deleted).`
+                          : `Remove "${label}"? This cannot be undone.`;
+                      if (window.confirm(msg)) remove.mutate(r.template_id);
+                    }}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
               ),
             },
           ]}

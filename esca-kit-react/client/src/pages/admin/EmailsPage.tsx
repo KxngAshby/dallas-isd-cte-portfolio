@@ -23,6 +23,25 @@ function settingsMap(rows: any[] | undefined) {
   return map;
 }
 
+/** Convert MM/DD/YYYY (or Date-like) → YYYY-MM-DD for <input type="date">. */
+function toDateInputValue(raw: string): string {
+  if (!raw) return '';
+  const s = String(raw).trim();
+  const ymd = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (ymd) return `${ymd[1]}-${ymd[2]}-${ymd[3]}`;
+  const mdy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mdy) {
+    const mm = mdy[1].padStart(2, '0');
+    const dd = mdy[2].padStart(2, '0');
+    return `${mdy[3]}-${mm}-${dd}`;
+  }
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return '';
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
 export function EmailsPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -39,7 +58,7 @@ export function EmailsPage() {
   const [signature, setSignature] = useState('');
   const [replyTo, setReplyTo] = useState('');
   const [hours, setHours] = useState('');
-  const [threshold, setThreshold] = useState('90');
+  const [dueDate, setDueDate] = useState('');
   const [ccPrincipal, setCcPrincipal] = useState(true);
   const [extraCc, setExtraCc] = useState('');
   const [extraBcc, setExtraBcc] = useState('');
@@ -51,7 +70,7 @@ export function EmailsPage() {
     setSignature(map.dept_signature || 'CTE Department, Dallas ISD');
     setReplyTo(map.dept_reply_to || '');
     setHours(map.dept_hours || '8:00 AM – 4:30 PM, Monday–Friday');
-    setThreshold(map.overdue_threshold_days || '90');
+    setDueDate(toDateInputValue(map.default_due_date || ''));
     setCcPrincipal(map.cc_principal !== 'false');
     setExtraCc(map.extra_cc || '');
     setExtraBcc(map.extra_bcc || '');
@@ -73,12 +92,23 @@ export function EmailsPage() {
       await saveSetting('dept_signature', signature);
       await saveSetting('dept_reply_to', replyTo);
       await saveSetting('dept_hours', hours);
-      await saveSetting('overdue_threshold_days', threshold);
       await saveSetting('cc_principal', ccPrincipal ? 'true' : 'false');
       await saveSetting('extra_cc', extraCc);
       await saveSetting('extra_bcc', extraBcc);
-      toast('Email settings saved.', 'ok');
+      let updatedLoans: number | undefined;
+      if (dueDate) {
+        const saved: any = await saveSetting('default_due_date', dueDate);
+        if (typeof saved?.updated === 'number') updatedLoans = saved.updated;
+      }
+      toast(
+        typeof updatedLoans === 'number'
+          ? `Email settings saved. Updated due date on ${updatedLoans} open loan${updatedLoans === 1 ? '' : 's'}.`
+          : 'Email settings saved.',
+        'ok',
+      );
       void qc.invalidateQueries({ queryKey: ['settings'] });
+      void qc.invalidateQueries({ queryKey: ['open-loans'] });
+      void qc.invalidateQueries({ queryKey: ['overdue-loans'] });
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Save failed.', 'err');
     }
@@ -163,10 +193,11 @@ export function EmailsPage() {
             onChange={(e) => setHours(e.target.value)}
           />
           <TextInput
-            label="Overdue after (days)"
-            type="number"
-            value={threshold}
-            onChange={(e) => setThreshold(e.target.value)}
+            label="Semester return due date"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            hint="All checkouts use this date; saving updates open loans"
           />
           <TextInput
             label="Additional CC"
@@ -312,6 +343,7 @@ export function EmailsPage() {
                 <span className="font-medium">{l.teacher_name || l.counselor_name || '—'}</span>
                 <span className="text-[var(--muted)] truncate">
                   · {l.campus_name || l.campus_id || '—'} · {l.kit_name || l.kit_id}
+                  {l.due_date ? ` · due ${l.due_date}` : ''}
                 </span>
               </label>
             ))}

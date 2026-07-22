@@ -12,7 +12,7 @@ const HIGHLIGHT = new Set([
   'dept_signature',
   'dept_reply_to',
   'dept_hours',
-  'overdue_threshold_days',
+  'default_due_date',
   'cc_principal',
   'extra_cc',
   'extra_bcc',

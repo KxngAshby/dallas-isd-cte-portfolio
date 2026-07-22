@@ -24,18 +24,38 @@ function isGas(): boolean {
   return typeof window !== 'undefined' && !!window.google?.script?.run;
 }
 
+const GAS_TIMEOUT_MS = 45_000;
+
 function runGas<T>(fnName: string, ...args: unknown[]): Promise<T> {
   return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error(`Request timed out (${fnName}). Try again — the sheet may be busy.`));
+    }, GAS_TIMEOUT_MS);
+
+    const finish = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      fn();
+    };
+
     const runner = window.google!.script!.run
       .withSuccessHandler((result: unknown) => {
-        const data = result as { success?: boolean; error?: string };
-        if (data && data.success === false) reject(new Error(data.error || 'Request failed'));
-        else resolve(result as T);
+        finish(() => {
+          const data = result as { success?: boolean; error?: string };
+          if (data && data.success === false) reject(new Error(data.error || 'Request failed'));
+          else resolve(result as T);
+        });
       })
-      .withFailureHandler((err: Error) => reject(err));
+      .withFailureHandler((err: Error) => {
+        finish(() => reject(err instanceof Error ? err : new Error(String(err))));
+      });
     const fn = runner[fnName];
     if (typeof fn !== 'function') {
-      reject(new Error(`GAS function not found: ${fnName}`));
+      finish(() => reject(new Error(`GAS function not found: ${fnName}`)));
       return;
     }
     fn(...args);
@@ -55,7 +75,10 @@ function parseBody(options?: RequestInit): any {
 async function apiViaGas<T>(path: string, options?: RequestInit): Promise<T> {
   const method = (options?.method || 'GET').toUpperCase();
   const body = parseBody(options);
-  const p = path.split('?')[0];
+  // Normalize: drop query, trim, and strip a trailing slash (except root) so
+  // routes like `/kits/ABC/` or `/kits/ ` still match their regexes.
+  let p = path.split('?')[0].trim();
+  if (p.length > 1) p = p.replace(/\/+$/, '');
 
   // Scan
   if (method === 'POST' && p === '/scan') return runGas<T>('scanBarcode', body.barcode);
@@ -128,6 +151,17 @@ async function apiViaGas<T>(path: string, options?: RequestInit): Promise<T> {
   if (method === 'POST' && p === '/kits/item-status') {
     return runGas<T>('updateItemStatus', body.barcode, body.status, body.notes || '');
   }
+  // Explicit DELETE routes (kept at top level so they cannot be shadowed/missed).
+  if (method === 'DELETE') {
+    // No id → purge unlabeled/junk template rows.
+    if (p === '/kits/templates') return runGas<T>('deleteKitTemplate', '');
+    const dTpl = p.match(/^\/kits\/templates\/(.+)$/);
+    if (dTpl) return runGas<T>('deleteKitTemplate', decodeURIComponent(dTpl[1]));
+    const dType = p.match(/^\/kits\/types\/(.+)$/);
+    if (dType) return runGas<T>('deleteItemType', decodeURIComponent(dType[1]));
+    const dKit = p.match(/^\/kits\/(.+)$/);
+    if (dKit) return runGas<T>('deleteKit', decodeURIComponent(dKit[1]));
+  }
   {
     const mDelType = p.match(/^\/kits\/types\/([^/]+)$/);
     if (method === 'DELETE' && mDelType) {
@@ -143,6 +177,8 @@ async function apiViaGas<T>(path: string, options?: RequestInit): Promise<T> {
     if (method === 'POST' && mBar) return runGas<T>('generateBarcodes', decodeURIComponent(mBar[1]), body.items || []);
     const mTpl = p.match(/^\/kits\/templates\/([^/]+)\/items$/);
     if (method === 'POST' && mTpl) return runGas<T>('saveTemplateItems', decodeURIComponent(mTpl[1]), body.items || []);
+    const mDelTpl = p.match(/^\/kits\/templates\/([^/]+)$/);
+    if (method === 'DELETE' && mDelTpl) return runGas<T>('deleteKitTemplate', decodeURIComponent(mDelTpl[1]));
     const mDel = p.match(/^\/kits\/([^/]+)$/);
     if (method === 'DELETE' && mDel) return runGas<T>('deleteKit', decodeURIComponent(mDel[1]));
   }

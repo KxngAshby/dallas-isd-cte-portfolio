@@ -1,14 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getDashboard, getRegionalData } from '../../api/dashboard';
 import { sendOverdueNotices, sendReturnReminder } from '../../api/emails';
@@ -25,19 +16,55 @@ function formatDate(v: unknown) {
   return s;
 }
 
+/** CSS bar list — avoids Recharts/ResponsiveContainer crashes inside the GAS iframe. */
+function RegionBars({ regions }: { regions: { name: string; checkouts: number }[] }) {
+  const max = Math.max(1, ...regions.map((r) => r.checkouts));
+  return (
+    <div className="space-y-3">
+      {regions.map((r, i) => (
+        <div key={`${r.name}-${i}`}>
+          <div className="flex justify-between gap-2 text-sm mb-1">
+            <span className="font-medium text-[var(--navy)] truncate">{r.name}</span>
+            <span className="text-[var(--muted)] tabular-nums shrink-0">{r.checkouts}</span>
+          </div>
+          <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-[var(--navy)] transition-[width] duration-300"
+              style={{ width: `${Math.round((r.checkouts / max) * 100)}%` }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function DashboardPage() {
   const location = useLocation();
   const emailsPath = location.pathname.startsWith('/admin') ? '/admin/emails' : '/emails';
   const qc = useQueryClient();
   const { toast } = useToast();
+
   const dash = useQuery({ queryKey: ['dashboard'], queryFn: getDashboard });
+
+  // Stagger secondary calls until primary dashboard data is in (reduces GAS pile-up).
   const board = useQuery({
     queryKey: ['status-board'],
     queryFn: getStatusBoard,
+    enabled: dash.isSuccess,
     refetchInterval: 30_000,
   });
-  const overdue = useQuery({ queryKey: ['overdue-loans'], queryFn: getOverdueLoans });
-  const regional = useQuery({ queryKey: ['regional'], queryFn: getRegionalData });
+  const overdue = useQuery({
+    queryKey: ['overdue-loans'],
+    queryFn: getOverdueLoans,
+    enabled: dash.isSuccess,
+  });
+  const regional = useQuery({
+    queryKey: ['regional'],
+    queryFn: getRegionalData,
+    enabled: dash.isSuccess,
+  });
+
   const [selectedOverdue, setSelectedOverdue] = useState<Record<string, boolean>>({});
 
   const sendOverdue = useMutation({
@@ -67,54 +94,77 @@ export function DashboardPage() {
     onError: (e: Error) => toast(e.message, 'err'),
   });
 
-  if (dash.isLoading) return <Spinner label="Loading dashboard…" />;
-  if (dash.isError) {
+  const openLoans = useMemo(() => {
+    const raw = dash.data?.open_loans;
+    return Array.isArray(raw) ? raw : [];
+  }, [dash.data]);
+
+  const overdueList = useMemo(() => {
+    const raw = overdue.data?.loans;
+    return Array.isArray(raw) ? raw : [];
+  }, [overdue.data]);
+
+  const regions = useMemo(() => {
+    const raw = regional.data?.regions;
+    if (!Array.isArray(raw)) return [];
+    return raw.map((r: any) => ({
+      name: String(r?.region || r?.name || 'Unknown').replace('Region ', 'R'),
+      checkouts: Number(r?.checkouts ?? r?.count ?? r?.checked_out ?? 0) || 0,
+    }));
+  }, [regional.data]);
+
+  const boardCards = useMemo(() => {
+    const b = board.data;
+    if (!b || typeof b !== 'object') return [];
+    const careers = Array.isArray(b.careers) ? b.careers : [];
+    return [
+      {
+        label: 'Ready',
+        big: String(b.kits_ready ?? 0),
+        meta: `${b.kits_total ?? 0} kits total`,
+        hot: false,
+      },
+      {
+        label: 'Checked out',
+        big: String(b.kits_out ?? 0),
+        meta: `${b.open_loans ?? 0} open loans`,
+        hot: false,
+      },
+      {
+        label: 'Overdue',
+        big: String(b.overdue ?? 0),
+        meta: 'needs follow-up',
+        hot: Number(b.overdue) > 0,
+      },
+      ...careers.slice(0, 5).map((c: any, i: number) => ({
+        label: String(c?.career || `Career ${i + 1}`),
+        big: String(c?.total ?? 0),
+        meta: `${c?.out ?? 0} out · ${c?.ready ?? 0} ready`,
+        hot: false,
+      })),
+    ];
+  }, [board.data]);
+
+  const alerts = Array.isArray(dash.data?.alerts) ? dash.data!.alerts : [];
+  const careerAlerts = Array.isArray(dash.data?.careerAlerts) ? dash.data!.careerAlerts : [];
+  const anySelected = Object.values(selectedOverdue).some(Boolean);
+
+  if (dash.isLoading) {
     return (
       <Card>
-        <p className="text-[var(--red)] m-0">{(dash.error as Error).message}</p>
+        <Spinner label="Loading dashboard…" />
       </Card>
     );
   }
 
-  const d = dash.data!;
-  const openLoans = d.open_loans || [];
-  const overdueList = overdue.data?.loans || [];
-  const regions = (regional.data?.regions || []).map((r: any) => ({
-    name: String(r.region || r.name || 'Unknown').replace('Region ', 'R'),
-    checkouts: Number(r.checkouts ?? r.count ?? r.checked_out ?? 0),
-  }));
-
-  const b = board.data;
-  const boardCards = b
-    ? [
-        {
-          label: 'Ready',
-          big: String(b.kits_ready),
-          meta: `${b.kits_total} kits total`,
-          hot: false,
-        },
-        {
-          label: 'Checked out',
-          big: String(b.kits_out),
-          meta: `${b.open_loans} open loans`,
-          hot: false,
-        },
-        {
-          label: 'Overdue',
-          big: String(b.overdue),
-          meta: 'needs follow-up',
-          hot: b.overdue > 0,
-        },
-        ...(b.careers || []).slice(0, 5).map((c) => ({
-          label: c.career,
-          big: String(c.total),
-          meta: `${c.out} out · ${c.ready} ready`,
-          hot: false,
-        })),
-      ]
-    : [];
-
-  const anySelected = Object.values(selectedOverdue).some(Boolean);
+  if (dash.isError) {
+    return (
+      <Card title="Dashboard unavailable">
+        <p className="text-[var(--red)] m-0 mb-3">{(dash.error as Error).message}</p>
+        <Button onClick={() => void dash.refetch()}>Retry</Button>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -139,9 +189,9 @@ export function DashboardPage() {
           <p className="text-red-300 text-sm m-0">{(board.error as Error).message}</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {boardCards.map((c) => (
+            {boardCards.map((c, i) => (
               <div
-                key={`${c.label}-${c.meta}`}
+                key={`board-${i}-${c.label}`}
                 className={`rounded-xl border px-3.5 py-3.5 ${
                   c.hot ? 'border-red-500/50 bg-red-500/10' : 'border-white/10 bg-white/[0.04]'
                 }`}
@@ -172,7 +222,9 @@ export function DashboardPage() {
               type="button"
               className="text-xs font-semibold text-[var(--blue-mid)] underline bg-transparent border-0 cursor-pointer"
               onClick={() => {
-                const all = Object.fromEntries(overdueList.map((l: any) => [l.loan_id, true]));
+                const all = Object.fromEntries(
+                  overdueList.map((l: any, i: number) => [String(l.loan_id || i), true]),
+                );
                 setSelectedOverdue(all);
               }}
             >
@@ -181,25 +233,26 @@ export function DashboardPage() {
           }
         >
           <div className="max-h-56 overflow-auto rounded-xl border border-[var(--border)] mb-3">
-            {overdueList.map((l: any) => (
-              <label
-                key={l.loan_id}
-                className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-[var(--border)] text-sm cursor-pointer hover:bg-slate-50"
-              >
-                <input
-                  type="checkbox"
-                  checked={Boolean(selectedOverdue[l.loan_id])}
-                  onChange={(e) =>
-                    setSelectedOverdue((s) => ({ ...s, [l.loan_id]: e.target.checked }))
-                  }
-                  className="accent-[var(--blue)]"
-                />
-                <span className="font-medium">{l.teacher_name || l.counselor_name || '—'}</span>
-                <span className="text-[var(--muted)] truncate">
-                  · {l.campus_name || '—'} · {l.kit_name || l.kit_id}
-                </span>
-              </label>
-            ))}
+            {overdueList.map((l: any, i: number) => {
+              const id = String(l.loan_id || `row-${i}`);
+              return (
+                <label
+                  key={id}
+                  className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-[var(--border)] text-sm cursor-pointer hover:bg-slate-50"
+                >
+                  <input
+                    type="checkbox"
+                    checked={Boolean(selectedOverdue[id])}
+                    onChange={(e) => setSelectedOverdue((s) => ({ ...s, [id]: e.target.checked }))}
+                    className="accent-[var(--blue)]"
+                  />
+                  <span className="font-medium">{l.teacher_name || l.counselor_name || '—'}</span>
+                  <span className="text-[var(--muted)] truncate">
+                    · {l.campus_name || '—'} · {l.kit_name || l.kit_id}
+                  </span>
+                </label>
+              );
+            })}
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -260,8 +313,8 @@ export function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {openLoans.map((l: any) => (
-                  <tr key={l.loan_id} className="hover:bg-slate-50">
+                {openLoans.map((l: any, i: number) => (
+                  <tr key={String(l.loan_id || `loan-${i}`)} className="hover:bg-slate-50">
                     <td className="px-3 py-3 border-b border-[var(--border)] font-medium">
                       {l.teacher_name || l.counselor_name || '—'}
                     </td>
@@ -285,29 +338,19 @@ export function DashboardPage() {
       <Card title="Checkouts by region">
         {regional.isLoading ? (
           <Spinner label="Loading regions…" />
+        ) : regional.isError ? (
+          <p className="text-[var(--red)] text-sm m-0">{(regional.error as Error).message}</p>
         ) : regions.length === 0 ? (
           <p className="text-[var(--muted)] text-sm m-0">No regional data yet.</p>
         ) : (
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={regions} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={28} />
-                <Tooltip
-                  contentStyle={{ borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
-                />
-                <Bar dataKey="checkouts" fill="#003366" radius={[4, 4, 0, 0]} maxBarSize={48} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <RegionBars regions={regions} />
         )}
       </Card>
 
-      {(d.alerts?.length > 0 || d.careerAlerts?.length > 0) && (
+      {(alerts.length > 0 || careerAlerts.length > 0) && (
         <Card title="Reorder alerts">
           <div className="space-y-2">
-            {(d.alerts || []).map((a: any, i: number) => (
+            {alerts.map((a: any, i: number) => (
               <div
                 key={`a-${i}`}
                 className="bg-[var(--amber-bg)] text-[var(--amber)] rounded-lg px-3.5 py-2.5 text-sm"
@@ -315,7 +358,7 @@ export function DashboardPage() {
                 <strong>{a.type_name}</strong> — {a.available} available (threshold {a.threshold})
               </div>
             ))}
-            {(d.careerAlerts || []).map((a: any, i: number) => (
+            {careerAlerts.map((a: any, i: number) => (
               <div
                 key={`c-${i}`}
                 className="bg-[var(--amber-bg)] text-[var(--amber)] rounded-lg px-3.5 py-2.5 text-sm"

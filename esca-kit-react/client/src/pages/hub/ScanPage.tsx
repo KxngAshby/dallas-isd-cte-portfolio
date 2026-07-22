@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { Package, ScanLine } from 'lucide-react';
 import { scanBarcode, type ScanResult } from '../../api/scan';
-import { updateItemStatus } from '../../api/kits';
+import { getKitItems, updateItemStatus } from '../../api/kits';
 import { getOpenLoansForCounselor } from '../../api/loans';
 import { Button } from '../../components/Button';
 import { Spinner } from '../../components/Spinner';
@@ -12,17 +12,15 @@ import { CheckoutPanel } from './CheckoutPanel';
 import { CheckinPanel } from './CheckinPanel';
 
 type Props = {
-  barcodeInput: string;
+  scan: { code: string; nonce: number };
   setBarcodeInput: (v: string) => void;
-  scanTrigger: number;
   onRequestScanFocus?: () => void;
   onPanelActiveChange?: (active: boolean) => void;
 };
 
 export function ScanPage({
-  barcodeInput,
+  scan,
   setBarcodeInput,
-  scanTrigger,
   onRequestScanFocus,
   onPanelActiveChange,
 }: Props) {
@@ -40,7 +38,8 @@ export function ScanPage({
   const [error, setError] = useState('');
   const [notes, setNotes] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const lastTrigger = useRef(0);
+  const [lastScan, setLastScan] = useState('');
+  const lastNonce = useRef(0);
 
   const panelActive = Boolean(
     successMsg || error || result?.panel === 'checkout' || result?.panel === 'checkin' || result?.panel === 'item',
@@ -67,26 +66,65 @@ export function ScanPage({
   };
 
   useEffect(() => {
-    if (scanTrigger > 0 && scanTrigger !== lastTrigger.current) {
-      lastTrigger.current = scanTrigger;
-      const v = barcodeInput.trim();
-      if (!v) return;
-      setBusy(true);
-      setError('');
+    if (scan.nonce === 0 || scan.nonce === lastNonce.current) return;
+    lastNonce.current = scan.nonce;
+    const v = scan.code.trim();
+    if (!v) {
+      // Surface empty submits instead of silently doing nothing.
+      setLastScan('(empty) — the scanner sent no characters');
+      setError('No barcode scanned. Point the scanner at the tag and try again.');
       setResult(null);
       setSuccessMsg('');
-      scanBarcode(v)
-        .then((r) => {
-          setResult(r);
-          setBarcodeInput('');
-        })
-        .catch((e) => {
-          setError(e instanceof Error ? e.message : 'Scan failed.');
-          setBarcodeInput('');
-        })
-        .finally(() => setBusy(false));
+      return;
     }
-  }, [scanTrigger, barcodeInput, setBarcodeInput]);
+    setBusy(true);
+    setError('');
+    setResult(null);
+    setSuccessMsg('');
+    scanBarcode(v)
+      .then((r) => {
+        setLastScan(`"${v}" -> ${r?.panel || 'no panel'}`);
+        setResult(r);
+        setBarcodeInput('');
+      })
+      .catch((e) => {
+        const msg = e instanceof Error ? e.message : 'Scan failed.';
+        setLastScan(`"${v}" -> ${msg}`);
+        setError(msg);
+        setBarcodeInput('');
+      })
+      .finally(() => setBusy(false));
+  }, [scan, setBarcodeInput]);
+
+  // Scan-independent check-in: open the same panel straight from the "out" list.
+  const startCheckin = async (l: any) => {
+    setBusy(true);
+    setError('');
+    setSuccessMsg('');
+    setResult(null);
+    try {
+      let items: any[] = [];
+      if (l.kit_id) {
+        const r = (await getKitItems(l.kit_id).catch(() => null)) as { items?: any[] } | null;
+        items = r?.items || [];
+      }
+      setResult({
+        success: true,
+        panel: 'checkin',
+        kit: { name: l.kit_name || l.kit_id, kit_id: l.kit_id, kit_barcode: l.kit_barcode },
+        loan: {
+          loan_id: l.loan_id,
+          teacher_name: l.teacher_name || '',
+          due_date: l.due_date || '',
+        },
+        items,
+      } as ScanResult);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not open check-in.');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const setStatus = async (status: string) => {
     if (!result?.item?.barcode) return;
@@ -218,24 +256,45 @@ export function ScanPage({
             {mine.map((l: any) => (
               <li
                 key={l.loan_id}
-                className="flex items-start justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5 text-sm"
+                className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5 text-sm"
               >
-                <div>
+                <div className="min-w-0">
                   <strong className="text-[var(--text)]">{l.kit_name || l.kit_id}</strong>
                   {l.kit_barcode && (
                     <span className="block text-xs text-[var(--muted)] font-mono mt-0.5">
                       {l.kit_barcode}
                     </span>
                   )}
+                  <span className="block text-xs text-[var(--muted)] mt-0.5">
+                    {l.due_date ? `Due ${l.due_date}` : 'Checked out'}
+                  </span>
                 </div>
-                <span className="text-xs text-[var(--muted)] shrink-0">
-                  {l.due_date ? `Due ${l.due_date}` : 'Checked out'}
-                </span>
+                <Button
+                  size="sm"
+                  className="shrink-0 !rounded-xl"
+                  onClick={() => void startCheckin(l)}
+                >
+                  Check in
+                </Button>
               </li>
             ))}
           </ul>
           <p className="text-xs text-[var(--muted)] m-0 mt-3">
             Scan that kit&apos;s TipWeb tag to check it back in.
+          </p>
+        </div>
+      )}
+
+      {mine.length === 0 && (
+        <div className="bg-white border border-[var(--border)] rounded-2xl p-4 mb-6 shadow-sm max-w-lg mx-auto">
+          <div className="flex items-center gap-2 text-[var(--navy)] font-bold text-sm mb-2">
+            <Package size={16} />
+            Nothing checked out under your EID
+          </div>
+          <p className="text-xs text-[var(--muted)] m-0">
+            {myKits.isError
+              ? `Could not load your loans: ${(myKits.error as Error).message}`
+              : `No open loans found for EID ${eid || '(none)'}. If you just checked a kit out and it is not here, tell ESCA.`}
           </p>
         </div>
       )}
@@ -248,6 +307,11 @@ export function ScanPage({
         <p className="text-[1.05rem] text-[var(--muted)] max-w-sm mx-auto leading-relaxed m-0">
           Point the scanner at the TipWeb tag on the kit case.
         </p>
+        {lastScan && (
+          <p className="text-xs text-[var(--muted)] mt-4 m-0 font-mono break-all">
+            Last scan: {lastScan}
+          </p>
+        )}
       </div>
     </div>
   );

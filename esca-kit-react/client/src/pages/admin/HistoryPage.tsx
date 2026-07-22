@@ -66,6 +66,16 @@ export function HistoryPage() {
               render: (r) => <strong>{r.kit_name || r.kit_id}</strong>,
             },
             {
+              key: 'items',
+              header: 'Items',
+              render: (r) =>
+                r.items_count != null ? (
+                  <span className="text-xs text-[var(--muted)]">{r.items_count} confirmed</span>
+                ) : (
+                  '—'
+                ),
+            },
+            {
               key: 'who',
               header: 'Counselor',
               render: (r) => (

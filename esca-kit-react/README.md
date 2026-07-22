@@ -7,8 +7,9 @@
 > **React rebuild fork:** This repo preserves the original Google Apps Script app (`Hub.html`, `Admin.html`, `Code.gs`, `Services.gs`, `Data.gs`) and adds a React + Vite client (`client/`) plus a Node/Express API (`server/`) that talks to the same Google Sheets. Build the React app into a single HTML file with `npm run build:gas` in `client/` (writes `ReactApp.html`), then open it via `?view=react` / `?view=react-admin`.
 
 ![Platform](https://img.shields.io/badge/Platform-Google%20Apps%20Script-4285F4?style=flat-square&logo=google)
+![Frontend](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB?style=flat-square&logo=react)
 ![Status](https://img.shields.io/badge/Status-Deployed-15803d?style=flat-square)
-![Updated](https://img.shields.io/badge/Updated-June%202026-475569?style=flat-square)
+![Updated](https://img.shields.io/badge/Updated-July%202026-475569?style=flat-square)
 
 ---
 
@@ -121,11 +122,37 @@ All data lives in a single Google Sheet with 13 tabs. The schema is defined in `
 | Layer | Technology |
 |---|---|
 | Backend & deployment | Google Apps Script (JavaScript runtime) |
-| Frontend | HTML · CSS · Vanilla JavaScript (no framework) |
+| Frontend | React 19 · Vite · TypeScript · Tailwind (bundled to a single HTML file for GAS) |
+| Data fetching | TanStack Query over a dual transport (`google.script.run` in GAS, `fetch` in dev) |
+| Local dev mirror | Node · Express API against the same Google Sheets |
 | Datastore | Google Sheets |
 | Email delivery | GAS `MailApp` |
 | Version control | Git · GitHub |
 | Deployment CLI | `clasp` (Command Line Apps Script Projects) |
+
+---
+
+## Recent Work & Engineering Challenges
+
+The July 2026 iteration moved the app from the original vanilla-JS Apps Script UI to a React + Vite front end (bundled into a single `ReactApp.html` for GAS) while keeping the same Google Sheets backend. Several real production issues surfaced during the demo rollout and were root-caused and fixed:
+
+| Area | Challenge | Resolution |
+|---|---|---|
+| Check-in silently failed | Scanning a checked-out kit "did nothing" and the counselor's open loans looked empty | Root cause: `google.script.run` delivers `null` to the browser for any return payload containing a `Date` object (a date-formatted `due_date` cell). Fixed at the source in `getRows` by normalizing `Date` cell values to `MM/DD/YYYY` strings so every response serializes cleanly. |
+| Same class of bug | Admin dashboard occasionally rendered blank | The dashboard payload also carried loan `Date`s and returned `null`; the `getRows` fix resolved it, backed by a React `ErrorBoundary` so one bad page can never white-screen the whole Admin shell. |
+| Semester due dates | Overdue was "N days after checkout," but kits are loaned per semester with a fixed calendar return date | Replaced `overdue_threshold_days` with an admin-set `default_due_date`; changing it updates every open loan, and overdue math now compares against the calendar date. |
+| Scanner race condition | A fast barcode scanner (types + Enter in one tick) could submit an empty value and silently reset | The scan submit now reads the input's DOM value at submit time (not lagging React state) and surfaces empty submits instead of no-oping. |
+| Reliable check-in | Scanning is fragile on kiosk hardware | Added a scan-independent "Check in" button on the counselor's "currently have out" list; the open loan is treated as the source of truth and the scan matches either the kit sticker or the TipWeb tag. |
+| Removing kits & templates | No way to delete a physical kit or an unlabeled/junk career template | Added guarded delete: a kit checked out cannot be removed; deleting a template unlinks (never deletes) the kits using it and hard-removes blank/junk template rows. |
+| Dual-transport routing | A `DELETE /kits/...` call reported "No GAS mapping" | Hardened the client's REST-to-`google.script.run` mapper: path normalization plus explicit top-level DELETE routes. |
+| Data read correctness | `getRows` row-range was off by one | Corrected the read range so the newest sheet row is always included and no phantom trailing row is produced. |
+
+```mermaid
+flowchart LR
+    Sheet["Google Sheet cell\ndate-formatted due_date"] -->|"getValues() returns a Date"| GAS["Return object\ncontains a Date"]
+    GAS -->|"google.script.run serializes to null"| Client["Browser receives null\n-> 'no panel', empty loan lists"]
+    Fix["Fix: getRows converts\nDate cells to strings"] --> Client2["Browser receives plain JSON\n-> check-in, dashboard, loans work"]
+```
 
 ---
 

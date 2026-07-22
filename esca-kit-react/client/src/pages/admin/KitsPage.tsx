@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Boxes, Plus } from 'lucide-react';
-import { getKits, getTemplates, saveKit } from '../../api/kits';
+import { Boxes, Plus, Trash2 } from 'lucide-react';
+import { deleteKit, getKits, getTemplates, saveKit } from '../../api/kits';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
@@ -56,6 +56,19 @@ export function KitsPage() {
     onSuccess: () => {
       toast('Kit saved.', 'ok');
       setForm(null);
+      void qc.invalidateQueries({ queryKey: ['kits'] });
+    },
+    onError: (e: Error) => toast(e.message, 'err'),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (kitId: string) => {
+      const r = (await deleteKit(kitId)) as { success: boolean; error?: string };
+      if (!r.success) throw new Error(r.error || 'Could not remove kit.');
+      return r;
+    },
+    onSuccess: () => {
+      toast('Kit removed.', 'ok');
       void qc.invalidateQueries({ queryKey: ['kits'] });
     },
     onError: (e: Error) => toast(e.message, 'err'),
@@ -181,39 +194,75 @@ export function KitsPage() {
             {
               key: 'status',
               header: 'Loan Status',
-              render: (r) => (
-                <span
-                  className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
-                    r.loan_status === 'Checked Out'
-                      ? 'bg-blue-100 text-[var(--blue)]'
-                      : 'bg-[var(--green-bg)] text-[var(--green)]'
-                  }`}
-                >
-                  {r.loan_status || 'Available'}
-                </span>
-              ),
+              render: (r) => {
+                const checkedOut =
+                  String(r.loan_status || '')
+                    .trim()
+                    .toLowerCase()
+                    .replace(/\s+/g, '_') === 'checked_out';
+                return (
+                  <span
+                    className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
+                      checkedOut
+                        ? 'bg-blue-100 text-[var(--blue)]'
+                        : 'bg-[var(--green-bg)] text-[var(--green)]'
+                    }`}
+                  >
+                    {checkedOut ? 'Checked out' : 'Available'}
+                  </span>
+                );
+              },
             },
             {
               key: 'actions',
               header: '',
-              render: (r) => (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    setForm({
-                      kit_id: r.kit_id,
-                      name: r.name || '',
-                      template_id: r.template_id || '',
-                      tipweb_tag: r.tipweb_tag || r.kit_barcode || '',
-                      location: r.location || '',
-                      notes: r.notes || '',
-                    })
-                  }
-                >
-                  Edit
-                </Button>
-              ),
+              render: (r) => {
+                const checkedOut =
+                  String(r.loan_status || '')
+                    .trim()
+                    .toLowerCase()
+                    .replace(/\s+/g, '_') === 'checked_out';
+                return (
+                  <div className="flex gap-1 justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setForm({
+                          kit_id: r.kit_id,
+                          name: r.name || '',
+                          template_id: r.template_id || '',
+                          tipweb_tag: r.tipweb_tag || r.kit_barcode || '',
+                          location: r.location || '',
+                          notes: r.notes || '',
+                        })
+                      }
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={remove.isPending}
+                      onClick={() => {
+                        if (!r.kit_id) {
+                          toast('This row has no kit_id — nothing to remove.', 'err');
+                          return;
+                        }
+                        if (checkedOut) {
+                          toast('Cannot remove — this kit is checked out. Check it in first.', 'err');
+                          return;
+                        }
+                        if (window.confirm(`Remove kit "${r.name || r.kit_id}"? This cannot be undone.`)) {
+                          remove.mutate(r.kit_id);
+                        }
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
+                );
+              },
             },
           ]}
         />

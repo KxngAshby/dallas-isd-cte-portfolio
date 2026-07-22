@@ -14,6 +14,7 @@ import {
   Tags,
   Users,
 } from 'lucide-react';
+import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { Sidebar, type NavItem } from '../../components/Sidebar';
 
 const NAV: NavItem[] = [
@@ -91,7 +92,9 @@ export function AdminLayout() {
           {subtitle && <p className="text-[0.88rem] text-[var(--muted)] m-0 mt-1">{subtitle}</p>}
         </header>
         <main className="max-w-[1100px] w-full mx-auto px-4 md:px-8 py-7">
-          <Outlet />
+          <ErrorBoundary key={location.pathname} recoveryTo={useGasPaths ? '/emails' : '/admin/emails'}>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

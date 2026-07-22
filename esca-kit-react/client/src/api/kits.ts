@@ -12,6 +12,9 @@ export function saveKit(data: Record<string, any>) {
 }
 
 export function deleteKit(id: string) {
+  if (!id || !String(id).trim()) {
+    return Promise.reject(new Error('Kit ID is required — this row has no kit_id to remove.'));
+  }
   return api(`/kits/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
@@ -41,6 +44,10 @@ export function saveTemplate(data: Record<string, any>) {
     method: 'POST',
     body: JSON.stringify(data),
   });
+}
+
+export function deleteTemplate(templateId: string) {
+  return api(`/kits/templates/${encodeURIComponent(templateId)}`, { method: 'DELETE' });
 }
 
 export function saveTemplateItems(templateId: string, items: any[]) {

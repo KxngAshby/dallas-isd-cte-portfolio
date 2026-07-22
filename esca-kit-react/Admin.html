@@ -1210,8 +1210,9 @@ function renderEmailCenter() {
     '<div class="form-2col">' +
       '<div class="form-row"><label>Department Hours</label>' +
         '<input id="esDeptHours" value="' + esc(_emailSettings.dept_hours||'8:00 AM – 4:30 PM, Monday–Friday') + '" placeholder="8:00 AM – 4:30 PM, Monday–Friday"></div>' +
-      '<div class="form-row"><label>Overdue Threshold (days after checkout)</label>' +
-        '<input id="esThreshold" type="number" min="1" value="' + esc(_emailSettings.overdue_threshold_days||'90') + '"></div>' +
+      '<div class="form-row"><label>Semester return due date</label>' +
+        '<input id="esDueDate" type="date" value="' + esc(toDateInputValue_(_emailSettings.default_due_date||'')) + '">' +
+        '<span style="font-size:.8rem;color:var(--muted)">All checkouts use this date; saving updates open loans.</span></div>' +
     '</div>' +
     '<div class="form-row"><label><input type="checkbox" id="esCcPrincipal"' + (_emailSettings.cc_principal !== 'false' ? ' checked' : '') + '> CC campus principal on all emails</label></div>' +
     '<div class="form-row"><label>Additional CC</label>' +
@@ -1296,7 +1297,7 @@ function renderEmailCenter() {
   var secD = '<div class="card"><div class="card-title"><i class="fa-solid fa-triangle-exclamation" style="margin-right:8px;color:#c5221f"></i>Send Overdue Notices</div>';
   secD += '<div class="form-row" style="max-width:280px"><label>Return Deadline</label><input type="date" id="onDeadline"></div>';
   secD += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
-    '<p style="font-size:.88rem;color:var(--muted)">Loans overdue beyond the configured threshold.</p>' +
+    '<p style="font-size:.88rem;color:var(--muted)">Open loans past the semester return due date.</p>' +
     '<label style="display:flex;align-items:center;gap:7px;font-size:.88rem;cursor:pointer"><input type="checkbox" id="onSelectAll" onchange="toggleSelectAll(\'onRow\',this.checked)"> Select All</label>' +
     '</div>';
   if (_overdueLoans.length === 0) {
@@ -1324,27 +1325,58 @@ function renderEmailCenter() {
   setMain(secA + secB + secC + secD);
 }
 
+function toDateInputValue_(raw) {
+  if (!raw) return '';
+  var s = String(raw).trim();
+  var ymd = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (ymd) return ymd[1] + '-' + ymd[2] + '-' + ymd[3];
+  var mdy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mdy) {
+    var mm = ('0' + mdy[1]).slice(-2);
+    var dd = ('0' + mdy[2]).slice(-2);
+    return mdy[3] + '-' + mm + '-' + dd;
+  }
+  var d = new Date(s);
+  if (isNaN(d.getTime())) return '';
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+
 function saveEmailSettings() {
   var sig         = (document.getElementById('esDeptSig')     ||{}).value || '';
   var replyTo     = (document.getElementById('esDeptReplyTo') ||{}).value || '';
   var hours       = (document.getElementById('esDeptHours')   ||{}).value || '';
-  var thresh      = (document.getElementById('esThreshold')   ||{}).value || '90';
+  var dueDate     = (document.getElementById('esDueDate')     ||{}).value || '';
   var ccPrincipal = document.getElementById('esCcPrincipal').checked ? 'true' : 'false';
   var extraCc     = (document.getElementById('esExtraCc')     ||{}).value || '';
   var extraBcc    = (document.getElementById('esExtraBcc')    ||{}).value || '';
-  var pending  = 7;
+  var pending  = dueDate ? 7 : 6;
   var hadError = false;
+  var updatedLoans = null;
   function done(r) {
     if (r && !r.success) hadError = true;
+    if (r && typeof r.updated === 'number') updatedLoans = r.updated;
     if (--pending === 0) {
       if (hadError) toast('Error saving some settings.', 'err');
-      else { toast('Settings saved.', 'ok'); _emailSettings.dept_signature = sig; _emailSettings.dept_reply_to = replyTo; _emailSettings.dept_hours = hours; _emailSettings.overdue_threshold_days = thresh; _emailSettings.cc_principal = ccPrincipal; _emailSettings.extra_cc = extraCc; _emailSettings.extra_bcc = extraBcc; }
+      else {
+        var msg = 'Settings saved.';
+        if (typeof updatedLoans === 'number') msg += ' Updated due date on ' + updatedLoans + ' open loan' + (updatedLoans === 1 ? '' : 's') + '.';
+        toast(msg, 'ok');
+        _emailSettings.dept_signature = sig;
+        _emailSettings.dept_reply_to = replyTo;
+        _emailSettings.dept_hours = hours;
+        if (dueDate) _emailSettings.default_due_date = dueDate;
+        _emailSettings.cc_principal = ccPrincipal;
+        _emailSettings.extra_cc = extraCc;
+        _emailSettings.extra_bcc = extraBcc;
+      }
     }
   }
   google.script.run.withSuccessHandler(done).withFailureHandler(function(){ hadError=true; done(null); }).saveSetting('dept_signature', sig);
   google.script.run.withSuccessHandler(done).withFailureHandler(function(){ hadError=true; done(null); }).saveSetting('dept_reply_to', replyTo);
   google.script.run.withSuccessHandler(done).withFailureHandler(function(){ hadError=true; done(null); }).saveSetting('dept_hours', hours);
-  google.script.run.withSuccessHandler(done).withFailureHandler(function(){ hadError=true; done(null); }).saveSetting('overdue_threshold_days', thresh);
+  if (dueDate) {
+    google.script.run.withSuccessHandler(done).withFailureHandler(function(){ hadError=true; done(null); }).saveSetting('default_due_date', dueDate);
+  }
   google.script.run.withSuccessHandler(done).withFailureHandler(function(){ hadError=true; done(null); }).saveSetting('cc_principal', ccPrincipal);
   google.script.run.withSuccessHandler(done).withFailureHandler(function(){ hadError=true; done(null); }).saveSetting('extra_cc', extraCc);
   google.script.run.withSuccessHandler(done).withFailureHandler(function(){ hadError=true; done(null); }).saveSetting('extra_bcc', extraBcc);

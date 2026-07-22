@@ -89,10 +89,30 @@ function hdrs_(sh) {
 // Each object also has _row (1-based sheet row index) for updates.
 function getRows(tab) {
   const sh = ss_().getSheetByName(tab);
-  if (!sh || sh.getLastRow() <= 1) return [];
+  if (!sh) return [];
+  const last = sh.getLastRow();
+  if (last <= 1) return [];
   const h = hdrs_(sh);
-  return sh.getRange(2, 1, sh.getLastRow() - 1, h.length).getValues()
-    .map((row, i) => { const o = {}; h.forEach((k, j) => o[k] = row[j]); o._row = i + 2; return o; });
+  const tz = Session.getScriptTimeZone();
+  // Rows 2..last inclusive → numRows = last - 1 (row 1 is the header).
+  // IMPORTANT: convert Date cell values to strings. google.script.run silently
+  // delivers `null` to the client for objects that contain Date values (e.g. a
+  // date-formatted due_date), which breaks check-in, open-loan lists, and the
+  // dashboard. Strings serialize cleanly and still parse for overdue math.
+  return sh.getRange(2, 1, last - 1, h.length).getValues()
+    .map((row, i) => {
+      const o = {};
+      h.forEach((k, j) => {
+        const v = row[j];
+        o[k] = (v instanceof Date) ? Utilities.formatDate(v, tz, 'MM/dd/yyyy') : v;
+      });
+      o._row = i + 2;
+      return o;
+    });
+}
+
+function isOpenLoan_(l) {
+  return String(l && l.status != null ? l.status : '').trim().toLowerCase() === LOAN_ST.OPEN;
 }
 
 function findBy(tab, field, val) {

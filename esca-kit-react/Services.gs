@@ -28,6 +28,67 @@ function isConsumable_(type) {
   return v === true || v === 'TRUE' || v === 'true';
 }
 
+/** Parse due dates from Sheets (Date), MM/DD/YYYY, or YYYY-MM-DD → local midnight Date. */
+function parseDueDate_(value) {
+  if (value === null || value === undefined || value === '') return null;
+  if (value instanceof Date) {
+    if (isNaN(value.getTime())) return null;
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+  const s = String(value).trim();
+  const mdy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mdy) {
+    return new Date(parseInt(mdy[3], 10), parseInt(mdy[1], 10) - 1, parseInt(mdy[2], 10));
+  }
+  const ymd = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (ymd) {
+    return new Date(parseInt(ymd[1], 10), parseInt(ymd[2], 10) - 1, parseInt(ymd[3], 10));
+  }
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return null;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function formatDueDateStr_(d) {
+  if (!d || isNaN(d.getTime())) return '';
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return mm + '/' + dd + '/' + d.getFullYear();
+}
+
+function startOfToday_() {
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate());
+}
+
+/** Shared semester return date from Settings (MM/DD/YYYY). Falls back to +90 days if unset. */
+function resolveDefaultDueDateStr_() {
+  const parsed = parseDueDate_(getSetting('default_due_date'));
+  if (parsed) return formatDueDateStr_(parsed);
+  const fallback = startOfToday_();
+  fallback.setDate(fallback.getDate() + 90);
+  return formatDueDateStr_(fallback);
+}
+
+function isLoanOverdue_(loan) {
+  const due = parseDueDate_(loan && loan.due_date);
+  if (!due) return false;
+  return due < startOfToday_();
+}
+
+/** Persist semester due date and stamp it onto every open loan. */
+function applyDefaultDueDate_(value) {
+  const d = parseDueDate_(value);
+  if (!d) throw new Error('Invalid due date.');
+  const str = formatDueDateStr_(d);
+  setSetting('default_due_date', str);
+  const open = getRows('Loans').filter(isOpenLoan_);
+  open.forEach(function(l) {
+    updateRow('Loans', l._row, { due_date: str });
+  });
+  return { due_date: str, updated: open.length };
+}
+
 function getTemplate_(templateId) {
   if (!templateId) return null;
   return findBy('KitTemplates', 'template_id', templateId);
@@ -44,22 +105,41 @@ function enrichKit_(kit) {
 // ── SCAN ROUTER ─────────────────────────────────────────────────────────────
 // Called on every scan. Returns the correct panel type + data for the client.
 
+function isKitCheckedOut_(kit) {
+  var s = String(kit && kit.loan_status != null ? kit.loan_status : '').trim().toLowerCase().replace(/\s+/g, '_');
+  return s === KIT_LOAN_ST.CHECKED_OUT;
+}
+
+// Match a scanned code against the kit case sticker OR the TipWeb asset tag.
+function findKitByScan_(barcode) {
+  const b = String(barcode).trim();
+  if (!b) return null;
+  const byBarcode = findBy('Kits', 'kit_barcode', b);
+  if (byBarcode) return byBarcode;
+  return getRows('Kits').find(function(k) { return String(k.tipweb_tag || '').trim() === b; }) || null;
+}
+
 function scanBarcode(barcode) {
   try {
     checkAuth_();
     barcode = String(barcode).trim();
+    if (!barcode) return { success: false, error: 'No barcode scanned. Try again.' };
 
-    // Is this a kit-level barcode (on the case)?
-    const kit = findBy('Kits', 'kit_barcode', barcode);
+    // Is this a kit-level barcode (case sticker or TipWeb tag)?
+    const kit = findKitByScan_(barcode);
     if (kit) {
       const types = getRows('ItemTypes');
       const items = findAllBy('KitItems', 'kit_id', kit.kit_id).map(i => {
         const t = types.find(t => t.type_id === i.type_id);
         return Object.assign(strip_(i), { type_name: t ? t.name : i.type_id, is_consumable: isConsumable_(t) });
       });
-      if (kit.loan_status === KIT_LOAN_ST.CHECKED_OUT) {
-        const loan = getRows('Loans').find(l => l.kit_id === kit.kit_id && l.status === LOAN_ST.OPEN) || null;
-        return { success: true, panel: 'checkin', kit: enrichKit_(kit), loan: loan ? strip_(loan) : null, items };
+      // Open loan is the source of truth for check-in (loan_status can lag)
+      const openLoan = getRows('Loans').find(l => l.kit_id === kit.kit_id && isOpenLoan_(l)) || null;
+      if (openLoan || isKitCheckedOut_(kit)) {
+        if (!openLoan) {
+          return { success: false, error: 'This kit is marked checked out but has no open loan on record. Fix it in Admin → Kits.' };
+        }
+        return { success: true, panel: 'checkin', kit: enrichKit_(kit), loan: strip_(openLoan), items };
       }
       const ready = items.length > 0 && items.every(i => i.status === STATUS.AVAILABLE);
       return { success: true, panel: 'checkout', kit: enrichKit_(kit), items, ready };
@@ -118,11 +198,7 @@ function checkoutKit(kitId, tipwebTag, teacherName, confirmedBarcodes, campusId,
     }
 
     const now = new Date();
-    const threshDays = parseInt(getSetting('overdue_threshold_days') || '90', 10) || 90;
-    const dueDate = new Date(now.getTime() + threshDays * 24 * 60 * 60 * 1000);
-    const dueMm = String(dueDate.getMonth() + 1).padStart(2, '0');
-    const dueDd = String(dueDate.getDate()).padStart(2, '0');
-    const dueDateStr = dueMm + '/' + dueDd + '/' + dueDate.getFullYear();
+    const dueDateStr = resolveDefaultDueDateStr_();
 
     const loanId = nextId('LOAN');
     appendRow('Loans', {
@@ -136,18 +212,24 @@ function checkoutKit(kitId, tipwebTag, teacherName, confirmedBarcodes, campusId,
       return_type: '', notes: forceCheckout ? 'Checkout override: kit not fully ready' : '', status: LOAN_ST.OPEN,
     });
 
+    let itemsConfirmed = 0;
     (confirmedBarcodes || []).forEach(b => {
       const it = findBy('KitItems', 'barcode', b);
-      if (it) appendRow('CheckoutItems', { loan_id: loanId, barcode: b, type_id: it.type_id, status_at_checkout: it.status, confirmed: 'Y' });
+      if (it) {
+        appendRow('CheckoutItems', { loan_id: loanId, barcode: b, type_id: it.type_id, status_at_checkout: it.status, confirmed: 'Y' });
+        itemsConfirmed++;
+      }
     });
 
-    updateRow('Kits', kit._row, { loan_status: KIT_LOAN_ST.CHECKED_OUT });
-    const auditNote = forceCheckout
+    // Re-find the kit row so loan_status is never written to a stale row index.
+    const kitRow = findBy('Kits', 'kit_id', kitId) || kit;
+    updateRow('Kits', kitRow._row, { loan_status: KIT_LOAN_ST.CHECKED_OUT });
+    const auditNote = (forceCheckout
       ? `Loan:${loanId} TipWeb:${tipwebTag || 'N/A'} OVERRIDE not-ready:${notReady.length}`
-      : `Loan:${loanId} TipWeb:${tipwebTag || 'N/A'}`;
+      : `Loan:${loanId} TipWeb:${tipwebTag || 'N/A'}`) + ` items:${itemsConfirmed}`;
     logAudit(kit.kit_barcode, kitId, 'checkout', '', '', user, auditNote);
     try { sendCheckoutEmail(loanId); } catch (_) {}
-    return { success: true, loanId };
+    return { success: true, loanId: loanId, itemsConfirmed: itemsConfirmed };
   } catch (e) { return { success: false, error: e.message }; }
 }
 
@@ -196,7 +278,10 @@ function getKitTemplates() {
     const tItems = getRows('TemplateItems');
     const kits   = getRows('Kits').filter(k => k.active !== 'FALSE');
     templates.forEach(t => {
-      t.kit_count = kits.filter(k => k.template_id === t.template_id).length;
+      // Only count real links — a blank template_id must not match blank-id kits.
+      t.kit_count = t.template_id
+        ? kits.filter(k => k.template_id && k.template_id === t.template_id).length
+        : 0;
       t.contents  = tItems.filter(i => i.template_id === t.template_id).map(i => {
         const type = types.find(x => x.type_id === i.type_id);
         return Object.assign(strip_(i), { type_name: type ? type.name : i.type_id });
@@ -216,6 +301,40 @@ function saveKitTemplate(data) {
     const templateId = nextId('TPL');
     appendRow('KitTemplates', Object.assign({}, data, { template_id: templateId, active: 'TRUE' }));
     return { success: true, template_id: templateId };
+  } catch (e) { return { success: false, error: e.message }; }
+}
+
+function deleteKitTemplate(templateId) {
+  try {
+    checkAuth_();
+    const id = String(templateId == null ? '' : templateId).trim();
+
+    // Junk / unlabeled rows: no real id, or blank career+name. Hard-delete them
+    // so they disappear from Career Templates entirely.
+    if (!id) {
+      const tplSh = ss_().getSheetByName('KitTemplates');
+      const junk = getRows('KitTemplates').filter(function(r){
+        return !String(r.template_id || '').trim()
+          || (!String(r.career || '').trim() && !String(r.name || '').trim());
+      });
+      if (!junk.length) return { success: false, error: 'Nothing to remove — no unlabeled template rows found.' };
+      junk.slice().sort(function(a, b){ return b._row - a._row; }).forEach(function(r){ tplSh.deleteRow(r._row); });
+      return { success: true, removed: junk.length };
+    }
+
+    const t = findBy('KitTemplates', 'template_id', id);
+    if (!t) return { success: false, error: 'Template not found.' };
+
+    // Unlink any kits that point at this template (do not delete the kits).
+    getRows('Kits').filter(function(k){ return k.template_id === id; })
+      .forEach(function(k){ updateRow('Kits', k._row, { template_id: '' }); });
+
+    // Soft-delete the template and clear its expected-contents rows.
+    updateRow('KitTemplates', t._row, { active: 'FALSE' });
+    const sh = ss_().getSheetByName('TemplateItems');
+    getRows('TemplateItems').filter(function(r){ return r.template_id === id; })
+      .slice().reverse().forEach(function(r){ sh.deleteRow(r._row); });
+    return { success: true };
   } catch (e) { return { success: false, error: e.message }; }
 }
 
@@ -471,7 +590,12 @@ function deleteKit(kitId) {
   try {
     checkAuth_();
     const k = findBy('Kits', 'kit_id', kitId);
-    if (k) updateRow('Kits', k._row, { active: 'FALSE' });
+    if (!k) return { success: false, error: 'Kit not found.' };
+    const openLoan = getRows('Loans').find(function(l){ return l.kit_id === kitId && isOpenLoan_(l); });
+    if (openLoan || isKitCheckedOut_(k)) {
+      return { success: false, error: 'Cannot remove — this kit is checked out. Check it in first.' };
+    }
+    updateRow('Kits', k._row, { active: 'FALSE' });
     return { success: true };
   } catch (e) { return { success: false, error: e.message }; }
 }
@@ -561,7 +685,7 @@ function getRegionalData() {
       const region = l.region || 'No Region Assigned';
       if (!byRegion[region]) byRegion[region] = { region, checkouts: 0, open_loans: 0, campuses: {} };
       byRegion[region].checkouts++;
-      if (l.status === LOAN_ST.OPEN) byRegion[region].open_loans++;
+      if (isOpenLoan_(l)) byRegion[region].open_loans++;
       if (l.campus_name) byRegion[region].campuses[l.campus_name] = true;
     });
     const regions = Object.keys(byRegion).map(k => {
@@ -634,7 +758,7 @@ function getDashboardData() {
       };
     });
 
-    const openLoans = getRows('Loans').filter(l => l.status === LOAN_ST.OPEN).map(function(l) {
+    const openLoans = getRows('Loans').filter(isOpenLoan_).map(function(l) {
       const kit = kits.find(function(k){ return k.kit_id === l.kit_id; }) || null;
       const row = strip_(l);
       row.kit_name = kit ? (kit.name || '') : '';
@@ -675,13 +799,27 @@ function getSettings() {
     const ADMIN_URL = 'https://script.google.com/a/macros/dallasisd.org/s/AKfycbw21YOF02b0p6wOumTh4-UugS0svYiCeoQYRauLqz0WtNsjeKylG3QQtra172rtQlO7KA/exec?view=admin';
     if (getSetting('url_counselor') !== HUB_URL) setSetting('url_counselor', HUB_URL);
     if (getSetting('url_admin') !== ADMIN_URL) setSetting('url_admin', ADMIN_URL);
+    // Migrate installs that still only have the old day-threshold setting
+    if (!getSetting('default_due_date')) {
+      const seedDue = startOfToday_();
+      seedDue.setDate(seedDue.getDate() + 90);
+      setSetting('default_due_date', formatDueDateStr_(seedDue));
+    }
     return { success: true, settings: getRows('Settings').map(strip_) };
   }
   catch (e) { return { success: false, error: e.message }; }
 }
 
 function saveSetting(key, value) {
-  try { checkAuth_(); setSetting(key, value); return { success: true }; }
+  try {
+    checkAuth_();
+    if (key === 'default_due_date') {
+      const result = applyDefaultDueDate_(value);
+      return { success: true, due_date: result.due_date, updated: result.updated };
+    }
+    setSetting(key, value);
+    return { success: true };
+  }
   catch (e) { return { success: false, error: e.message }; }
 }
 
@@ -734,7 +872,11 @@ function runSetup() {
   }
 
   // Seed email-related settings if not already present
-  if (!getSetting('overdue_threshold_days')) setSetting('overdue_threshold_days', '90');
+  if (!getSetting('default_due_date')) {
+    const seedDue = startOfToday_();
+    seedDue.setDate(seedDue.getDate() + 90);
+    setSetting('default_due_date', formatDueDateStr_(seedDue));
+  }
   if (!getSetting('dept_hours'))             setSetting('dept_hours',             '8:00 AM – 4:30 PM, Monday–Friday');
   if (!getSetting('dept_signature'))         setSetting('dept_signature',         'CTE Department, Dallas ISD');
   if (!getSetting('dept_reply_to'))          setSetting('dept_reply_to',          '');
@@ -786,7 +928,7 @@ function getOpenLoans() {
   try {
     checkAuth_();
     const kits = getRows('Kits');
-    const loans = getRows('Loans').filter(function(l){ return l.status === LOAN_ST.OPEN; });
+    const loans = getRows('Loans').filter(isOpenLoan_);
     const result = loans.map(function(l) {
       const counselor = _findCounselorForLoan_(l);
       const kit = kits.find(function(k){ return k.kit_id === l.kit_id; }) || null;
@@ -814,7 +956,7 @@ function getOpenLoansForCounselor(eid) {
     const eidStr = String(eid).trim();
     const kits = getRows('Kits');
     const loans = getRows('Loans').filter(function(l) {
-      if (l.status !== LOAN_ST.OPEN) return false;
+      if (!isOpenLoan_(l)) return false;
       return String(l.counselor_eid || '').trim() === eidStr;
     }).map(function(l) {
       const kit = kits.find(function(k){ return k.kit_id === l.kit_id; }) || null;
@@ -837,6 +979,7 @@ function getLoanHistory(query) {
     checkAuth_();
     const q = String(query || '').trim().toLowerCase();
     const kits = getRows('Kits');
+    const coItems = getRows('CheckoutItems');
     const loans = getRows('Loans')
       .map(function(l) {
         const kit = kits.find(function(k){ return k.kit_id === l.kit_id; }) || null;
@@ -856,6 +999,7 @@ function getLoanHistory(query) {
           due_date: l.due_date || '',
           return_type: l.return_type || '',
           status: l.status || '',
+          items_count: coItems.filter(function(c){ return c.loan_id === l.loan_id; }).length,
         };
       })
       .sort(function(a, b) {
@@ -878,14 +1022,8 @@ function getStatusBoard() {
     checkAuth_();
     const kits = getRows('Kits').filter(function(k){ return k.active !== 'FALSE'; });
     const templates = getRows('KitTemplates').filter(function(t){ return t.active !== 'FALSE'; });
-    const openLoans = getRows('Loans').filter(function(l){ return l.status === LOAN_ST.OPEN; });
-    const threshDays = parseInt(getSetting('overdue_threshold_days') || '90', 10) || 90;
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - threshDays);
-    const overdue = openLoans.filter(function(l) {
-      const co = l.checked_out_at ? new Date(l.checked_out_at) : null;
-      return co && co < cutoff;
-    });
+    const openLoans = getRows('Loans').filter(isOpenLoan_);
+    const overdue = openLoans.filter(isLoanOverdue_);
 
     const byCareer = templates.map(function(tpl) {
       const kitList = kits.filter(function(k){ return k.template_id === tpl.template_id; });
@@ -922,15 +1060,9 @@ function getStatusBoard() {
 function getOverdueLoans() {
   try {
     checkAuth_();
-    const threshDays = parseInt(getSetting('overdue_threshold_days') || '90', 10);
-    const cutoff     = new Date();
-    cutoff.setDate(cutoff.getDate() - threshDays);
-
     const kits = getRows('Kits');
     const loans = getRows('Loans').filter(function(l) {
-      if (l.status !== LOAN_ST.OPEN) return false;
-      const coDate = l.checked_out_at ? new Date(l.checked_out_at) : null;
-      return coDate && coDate < cutoff;
+      return isOpenLoan_(l) && isLoanOverdue_(l);
     });
 
     const result = loans.map(function(l) {
@@ -939,6 +1071,7 @@ function getOverdueLoans() {
       const tpl       = kit ? getTemplate_(kit.template_id) : null;
       const coDate    = l.checked_out_at ? new Date(l.checked_out_at) : null;
       const monthName = coDate ? coDate.toLocaleString('en-US', { month: 'long', timeZone: 'America/Chicago' }) : '';
+      const dueParsed = parseDueDate_(l.due_date);
       return {
         loan_id:         l.loan_id,
         kit_id:          l.kit_id,
@@ -947,6 +1080,7 @@ function getOverdueLoans() {
         campus_name:     l.campus_name || '',
         teacher_name:    l.teacher_name || '',
         checked_out_at:  l.checked_out_at || '',
+        due_date:        dueParsed ? formatDueDateStr_(dueParsed) : (l.due_date || ''),
         checkout_month:  monthName,
         counselor_email: counselor ? (counselor.email || '') : '',
         counselor_name:  counselor ? (counselor.name  || l.teacher_name || '') : (l.teacher_name || ''),

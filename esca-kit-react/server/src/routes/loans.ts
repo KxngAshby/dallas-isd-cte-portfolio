@@ -10,7 +10,16 @@ import {
   updateRow,
 } from '../sheets/client.js';
 import { KIT_LOAN_ST, LOAN_ST, STATUS } from '../sheets/schema.js';
-import { errMsg, getApiUser, getTemplate_, strip_ } from '../lib/helpers.js';
+import {
+  errMsg,
+  formatDueDateStr_,
+  getApiUser,
+  getTemplate_,
+  isLoanOverdue_,
+  parseDueDate_,
+  startOfToday_,
+  strip_,
+} from '../lib/helpers.js';
 import {
   resolveCounselorForLoan,
   sendCheckinEmail,
@@ -70,11 +79,13 @@ router.post('/checkout', async (req, res) => {
     }
 
     const now = new Date();
-    const threshDays = parseInt((await getSetting('overdue_threshold_days')) || '90', 10) || 90;
-    const dueDate = new Date(now.getTime() + threshDays * 24 * 60 * 60 * 1000);
-    const dueMm = String(dueDate.getMonth() + 1).padStart(2, '0');
-    const dueDd = String(dueDate.getDate()).padStart(2, '0');
-    const dueDateStr = `${dueMm}/${dueDd}/${dueDate.getFullYear()}`;
+    const parsedDefault = parseDueDate_(await getSetting('default_due_date'));
+    let dueDateStr = formatDueDateStr_(parsedDefault);
+    if (!dueDateStr) {
+      const fallback = startOfToday_();
+      fallback.setDate(fallback.getDate() + 90);
+      dueDateStr = formatDueDateStr_(fallback);
+    }
 
     const loanId = await nextId('LOAN');
     await appendRow('Loans', {
@@ -97,6 +108,7 @@ router.post('/checkout', async (req, res) => {
       status: LOAN_ST.OPEN,
     });
 
+    let itemsConfirmed = 0;
     for (const b of confirmedBarcodes || []) {
       const it = await findBy('KitItems', 'barcode', b);
       if (it) {
@@ -107,20 +119,24 @@ router.post('/checkout', async (req, res) => {
           status_at_checkout: it.status,
           confirmed: 'Y',
         });
+        itemsConfirmed++;
       }
     }
 
-    await updateRow('Kits', kit._row, { loan_status: KIT_LOAN_ST.CHECKED_OUT });
-    const auditNote = forceCheckout
-      ? `Loan:${loanId} TipWeb:${tipwebTag || 'N/A'} OVERRIDE not-ready:${notReady.length}`
-      : `Loan:${loanId} TipWeb:${tipwebTag || 'N/A'}`;
+    // Re-find the kit row so loan_status is never written to a stale row index.
+    const kitRow = (await findBy('Kits', 'kit_id', kitId)) || kit;
+    await updateRow('Kits', kitRow._row, { loan_status: KIT_LOAN_ST.CHECKED_OUT });
+    const auditNote =
+      (forceCheckout
+        ? `Loan:${loanId} TipWeb:${tipwebTag || 'N/A'} OVERRIDE not-ready:${notReady.length}`
+        : `Loan:${loanId} TipWeb:${tipwebTag || 'N/A'}`) + ` items:${itemsConfirmed}`;
     await logAudit(String(kit.kit_barcode || ''), String(kitId), 'checkout', '', '', user, auditNote);
     try {
       await sendCheckoutEmail(loanId);
     } catch {
       /* ignore */
     }
-    res.json({ success: true, loanId });
+    res.json({ success: true, loanId, itemsConfirmed });
   } catch (e) {
     res.json({ success: false, error: errMsg(e) });
   }
@@ -265,16 +281,10 @@ router.get('/open-by-eid/:eid', async (req, res) => {
 /** GET /overdue */
 router.get('/overdue', async (_req, res) => {
   try {
-    const threshDays = parseInt((await getSetting('overdue_threshold_days')) || '90', 10);
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - threshDays);
-
     const kits = await getRows('Kits');
-    const loans = (await getRows('Loans')).filter((l) => {
-      if (l.status !== LOAN_ST.OPEN) return false;
-      const coDate = l.checked_out_at ? new Date(String(l.checked_out_at)) : null;
-      return coDate && !isNaN(coDate.getTime()) && coDate < cutoff;
-    });
+    const loans = (await getRows('Loans')).filter(
+      (l) => l.status === LOAN_ST.OPEN && isLoanOverdue_(l),
+    );
 
     const result = [];
     for (const l of loans) {
@@ -285,6 +295,7 @@ router.get('/overdue', async (_req, res) => {
       const monthName = coDate
         ? coDate.toLocaleString('en-US', { month: 'long', timeZone: 'America/Chicago' })
         : '';
+      const dueParsed = parseDueDate_(l.due_date);
       result.push({
         loan_id: l.loan_id,
         kit_id: l.kit_id,
@@ -293,6 +304,7 @@ router.get('/overdue', async (_req, res) => {
         campus_name: l.campus_name || '',
         teacher_name: l.teacher_name || '',
         checked_out_at: l.checked_out_at || '',
+        due_date: dueParsed ? formatDueDateStr_(dueParsed) : l.due_date || '',
         checkout_month: monthName,
         counselor_email: counselor ? counselor.email || '' : '',
         counselor_name: counselor
@@ -313,6 +325,7 @@ router.get('/history', async (req, res) => {
       .trim()
       .toLowerCase();
     const kits = await getRows('Kits');
+    const coItems = await getRows('CheckoutItems');
     const loans = (await getRows('Loans'))
       .map((l) => {
         const kit = kits.find((k) => k.kit_id === l.kit_id) || null;
@@ -330,6 +343,7 @@ router.get('/history', async (req, res) => {
           due_date: l.due_date || '',
           return_type: l.return_type || '',
           status: l.status || '',
+          items_count: coItems.filter((c) => c.loan_id === l.loan_id).length,
         };
       })
       .sort((a, b) => String(b.checked_out_at).localeCompare(String(a.checked_out_at)));
@@ -354,13 +368,7 @@ router.get('/status-board', async (_req, res) => {
     const kits = (await getRows('Kits')).filter((k) => k.active !== 'FALSE');
     const templates = (await getRows('KitTemplates')).filter((t) => t.active !== 'FALSE');
     const openLoans = (await getRows('Loans')).filter((l) => l.status === LOAN_ST.OPEN);
-    const threshDays = parseInt((await getSetting('overdue_threshold_days')) || '90', 10) || 90;
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - threshDays);
-    const overdue = openLoans.filter((l) => {
-      const co = l.checked_out_at ? new Date(String(l.checked_out_at)) : null;
-      return co && !isNaN(co.getTime()) && co < cutoff;
-    });
+    const overdue = openLoans.filter((l) => isLoanOverdue_(l));
 
     const careers = templates
       .map((tpl) => {

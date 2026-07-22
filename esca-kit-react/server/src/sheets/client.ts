@@ -280,7 +280,13 @@ export async function ensureSchema(): Promise<void> {
       ['next_seq', '1'],
       ['schema_version', '2'],
       ['allowlist', ''],
-      ['overdue_threshold_days', '90'],
+      ['default_due_date', (() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 90);
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${mm}/${dd}/${d.getFullYear()}`;
+      })()],
       ['dept_hours', '8:00 AM – 4:30 PM, Monday–Friday'],
       ['dept_signature', 'CTE Department, Dallas ISD'],
       ['dept_reply_to', ''],

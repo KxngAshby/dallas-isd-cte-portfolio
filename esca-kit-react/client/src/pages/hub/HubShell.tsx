@@ -11,18 +11,25 @@ const IDLE_MS = 8 * 60 * 1000;
 export function HubShell() {
   const { signedIn, name, campusName, reset } = useCounselor();
   const [barcodeInput, setBarcodeInput] = useState('');
-  const [scanTrigger, setScanTrigger] = useState(0);
+  const [scan, setScan] = useState<{ code: string; nonce: number }>({ code: '', nonce: 0 });
   const [panelActive, setPanelActive] = useState(false);
   const scanRef = useRef<HTMLInputElement>(null);
 
   const initial = (name || '?').trim().charAt(0).toUpperCase() || '?';
+
+  // Read the code straight from the input DOM at submit time so a fast scanner
+  // (types + Enter in the same tick) never fires with a stale/empty state value.
+  const submitScan = () => {
+    const raw = scanRef.current?.value ?? barcodeInput;
+    setScan((s) => ({ code: raw.trim(), nonce: s.nonce + 1 }));
+  };
 
   useEffect(() => {
     if (signedIn && !panelActive) {
       const t = setTimeout(() => scanRef.current?.focus(), 80);
       return () => clearTimeout(t);
     }
-  }, [signedIn, scanTrigger, panelActive]);
+  }, [signedIn, scan.nonce, panelActive]);
 
   // Auto sign-out after idle so the next counselor does not inherit the session
   useEffect(() => {
@@ -87,7 +94,10 @@ export function HubShell() {
                 value={barcodeInput}
                 onChange={(e) => setBarcodeInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') setScanTrigger((n) => n + 1);
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    submitScan();
+                  }
                 }}
                 placeholder="Scan TipWeb tag on the kit case…"
                 autoComplete="off"
@@ -95,7 +105,7 @@ export function HubShell() {
                 spellCheck={false}
                 className="flex-1 px-4 py-3.5 text-[1.1rem] border-0 rounded-2xl outline-none bg-white text-[var(--text)] shadow-sm focus:shadow-[0_0_0_3px_rgba(56,189,248,0.35)]"
               />
-              <Button size="lg" onClick={() => setScanTrigger((n) => n + 1)} className="!px-5 !rounded-2xl">
+              <Button size="lg" onClick={submitScan} className="!px-5 !rounded-2xl">
                 <ScanBarcode size={20} /> Scan
               </Button>
             </div>
@@ -105,9 +115,8 @@ export function HubShell() {
 
       <main className="flex-1 max-w-[720px] w-full mx-auto px-5 py-7 pb-16 bg-[radial-gradient(900px_400px_at_15%_0%,rgba(0,86,179,0.1),transparent_55%),linear-gradient(180deg,#f4f7fb,#e8eef5)]">
         <ScanPage
-          barcodeInput={barcodeInput}
+          scan={scan}
           setBarcodeInput={setBarcodeInput}
-          scanTrigger={scanTrigger}
           onRequestScanFocus={() => scanRef.current?.focus()}
           onPanelActiveChange={setPanelActive}
         />

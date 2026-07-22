@@ -1,7 +1,14 @@
 import { Router } from 'express';
 import { findBy, findAllBy, getRows } from '../sheets/client.js';
-import { KIT_LOAN_ST, LOAN_ST, STATUS } from '../sheets/schema.js';
-import { enrichKit_, errMsg, isConsumable_, strip_ } from '../lib/helpers.js';
+import { STATUS } from '../sheets/schema.js';
+import {
+  enrichKit_,
+  errMsg,
+  isConsumable_,
+  isKitCheckedOut_,
+  isOpenLoan_,
+  strip_,
+} from '../lib/helpers.js';
 
 const router = Router();
 
@@ -10,11 +17,16 @@ router.post('/', async (req, res) => {
   try {
     const barcode = String(req.body?.barcode ?? '').trim();
     if (!barcode) {
-      res.json({ success: false, error: 'Barcode is required.' });
+      res.json({ success: false, error: 'No barcode scanned. Try again.' });
       return;
     }
 
-    const kit = await findBy('Kits', 'kit_barcode', barcode);
+    // Match the case sticker OR the TipWeb asset tag.
+    let kit = await findBy('Kits', 'kit_barcode', barcode);
+    if (!kit) {
+      const allKits = await getRows('Kits');
+      kit = allKits.find((k) => String(k.tipweb_tag ?? '').trim() === barcode) || null;
+    }
     if (kit) {
       const types = await getRows('ItemTypes');
       const items = (await findAllBy('KitItems', 'kit_id', kit.kit_id)).map((i) => {
@@ -25,15 +37,24 @@ router.post('/', async (req, res) => {
         });
       });
 
-      if (kit.loan_status === KIT_LOAN_ST.CHECKED_OUT) {
-        const loans = await getRows('Loans');
-        const loan =
-          loans.find((l) => l.kit_id === kit.kit_id && l.status === LOAN_ST.OPEN) || null;
+      // Open loan is the source of truth for check-in (loan_status can lag).
+      const loans = await getRows('Loans');
+      const openLoan =
+        loans.find((l) => l.kit_id === kit!.kit_id && isOpenLoan_(l)) || null;
+      if (openLoan || isKitCheckedOut_(kit)) {
+        if (!openLoan) {
+          res.json({
+            success: false,
+            error:
+              'This kit is marked checked out but has no open loan on record. Fix it in Admin → Kits.',
+          });
+          return;
+        }
         res.json({
           success: true,
           panel: 'checkin',
           kit: await enrichKit_(kit),
-          loan: loan ? strip_(loan) : null,
+          loan: strip_(openLoan),
           items,
         });
         return;
